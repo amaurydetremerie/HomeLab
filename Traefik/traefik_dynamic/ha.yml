@@ -1,0 +1,26 @@
+http:
+  services:
+    ha:
+      loadBalancer:
+        servers:
+          - url: "http://{{ip.home-assistant}}:8123"
+
+  routers:
+    ha:
+      rule: "Host(`{{domain.home-assistant}}`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
+    ha-secure:
+      rule: "Host(`{{domain.home-assistant}}`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "ha@file"
+      tls:
+        certResolver: letsencrypt-ecdsa
+        options: mintls13

@@ -1,0 +1,26 @@
+http:
+  services:
+    nas:
+      loadBalancer:
+        servers:
+          - url: "http://{{ip.truenas}}"
+
+  routers:
+    nas:
+      rule: "Host(`{{domain.truenas}}`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
+    nas-secure:
+      rule: "Host(`{{domain.truenas}}`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "nas@file"
+      tls:
+        certResolver: letsencrypt-ecdsa
+        options: mintls13

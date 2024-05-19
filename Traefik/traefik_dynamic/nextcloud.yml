@@ -1,0 +1,35 @@
+http:
+  services:
+    nextcloud:
+      loadBalancer:
+        servers:
+          - url: "http://{{ip.nextcloud}}:80"
+  routers:
+    nextcloud:
+      rule: "Host(`{{domain.nextcloud}}`)"
+      entryPoints:
+        - "web"
+      service: "nextcloud@file"
+      priority: 2
+    nextcloud-acme:
+      rule: "Host(`{{domain.nextcloud}}`) && PathPrefix(`/.well-known/acme-challenge/`)"
+      entryPoints:
+        - "web"
+      service: "nextcloud@file"
+      priority: 1001
+
+tcp:
+  services:
+    nextcloud-secure-tcp:
+      loadBalancer:
+        servers:
+          - address: "{{ip.nextcloud}}:443"
+  routers:
+    nextcloud-secure-tcp:
+      rule: "HostSNI(`{{domain.nextcloud}}`)"
+      entryPoints:
+        - "websecure"
+      service: "nextcloud-secure-tcp@file"
+      priority: 2
+      tls:
+        passthrough: true

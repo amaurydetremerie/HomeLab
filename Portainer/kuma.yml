@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  heimdall:
+    container_name: UptimeKuma
+    image: louislam/uptime-kuma:latest
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.heimdall.rule=Host(`kuma.{{domain.portainer}}`)
+      - traefik.http.routers.heimdall.entrypoints=websecure
+      - traefik.http.services.heimdall.loadbalancer.server.port=3001
+      - traefik.http.routers.heimdall.service=kuma
+      - traefik.http.routers.heimdall.tls.certresolver=leresolver
+    volumes:
+      - uptime-kuma:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external: true
+
+volumes:
+  uptime-kuma:
+    external: true

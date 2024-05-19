@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  heimdall:
+    container_name: FlareSolverr
+    image: 	flaresolverr/flaresolverr:latest
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.heimdall.rule=Host(`flaresolverr.{{domain.portainer}}`)
+      - traefik.http.routers.heimdall.entrypoints=websecure
+      - traefik.http.services.heimdall.loadbalancer.server.port=8191
+      - traefik.http.routers.heimdall.service=flaresolverr
+      - traefik.http.routers.heimdall.tls.certresolver=leresolver
+    environment:
+      - TZ=Europe/Brussels
+    restart: unless-stopped
+    networks:
+      - traefik
+
+networks:
+  traefik:
+    external: true

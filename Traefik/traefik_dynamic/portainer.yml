@@ -1,0 +1,36 @@
+http:
+  services:
+    portainer-wildcard:
+      loadBalancer:
+        servers:
+          - url: "http://{{ip.portainer}}"
+  routers:
+    portainer-wildcard:
+      rule: "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.{{domain.portainer}}`) || Host(`{{domain.portainer}}`)"
+      entryPoints:
+        - "web"
+      service: "portainer-wildcard@file"
+      priority: 2
+    portainer-wildcard-acme:
+      rule: "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.{{domain.portainer}}`) && PathPrefix(`/.well-known/acme-challenge/`) || Host(`{{domain.portainer}}`) && PathPrefix(`/.well-known/acme-challenge/`)"
+      entryPoints:
+        - "web"
+      service: "portainer-wildcard@file"
+      priority: 1001
+
+tcp:
+  services:
+    portainer-secure-wildcard-tcp:
+      loadBalancer:
+        servers:
+          - address: "{{ip.portainer}}:443"
+
+  routers:
+    portainer-secure-wildcard-tcp:
+      rule: "HostSNIRegexp(`{subdomain:[a-zA-Z0-9-]+}.{{domain.portainer}}`) || HostSNI(`{{domain.portainer}}`)"
+      entryPoints:
+        - "websecure"
+      service: "portainer-secure-wildcard-tcp@file"
+      priority: 2
+      tls:
+        passthrough: true

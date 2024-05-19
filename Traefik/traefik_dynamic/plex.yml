@@ -1,0 +1,40 @@
+http:
+  services:
+    plex:
+      loadBalancer:
+        servers:
+          - url: "http://{{ip.plex}}:32400"
+
+  routers:
+    plex:
+      rule: "Host(`{{domain.plex}}`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
+    plex-secure:
+      rule: "Host(`{{domain.plex}}`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "plex@file"
+      tls:
+        certResolver: letsencrypt-ecdsa
+        options: mintls13
+
+tcp:
+  services:
+    plex-tcp:
+      loadBalancer:
+        servers:
+          - address: "{{ip.plex}}:32400"
+
+  routers:
+    plex-tcp:
+      rule: "HostSNI(`*`)"
+      entryPoints:
+        - "plex"
+      service: "plex-tcp@file"

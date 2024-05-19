@@ -1,0 +1,13 @@
+http:
+  middlewares:
+    security:
+      headers:
+        accessControlMaxAge: 100
+        addVaryHeader: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        frameDeny: true
+        sslRedirect: true
+        customFrameOptionsValue: "SAMEORIGIN"
+        referrerPolicy: "same-origin"
+        featurePolicy: "vibrate 'self'"

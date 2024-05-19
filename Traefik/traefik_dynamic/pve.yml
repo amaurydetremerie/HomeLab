@@ -1,0 +1,99 @@
+http:
+  services:
+    pve:
+      loadBalancer:
+        serversTransport: pve-transport
+        servers:
+          - url: "https://{{ip.pve.1}}:8006"
+          - url: "https://{{ip.pve.2}}:8006"
+    pve1:
+      loadBalancer:
+        serversTransport: pve1-transport
+        servers:
+          - url: "https://{{ip.pve.1}}:8006"
+    pve2:
+      loadBalancer:
+        serversTransport: pve2-transport
+        servers:
+          - url: "https://{{ip.pve.2}}:8006"
+    pve3:
+      loadBalancer:
+        serversTransport: pve3-transport
+        servers:
+          - url: "https://{{ip.pve.3}}:8006"
+
+  routers:
+    pve:
+      rule: "Host(`{{domain.pve}}`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
+    pve-secure:
+      rule: "Host(`{{domain.pve}}`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "pve@file"
+      tls: {}
+    pve1:
+      rule: "Host(`1.{{domain.pve}}`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
+    pve1-secure:
+      rule: "Host(`1.{{domain.pve}}`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "pve1@file"
+      tls: { }
+    pve2:
+      rule: "Host(`2.{{domain.pve}}`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
+    pve2-secure:
+      rule: "Host(`2.{{domain.pve}}`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "pve2@file"
+      tls: { }
+    pve3:
+      rule: "Host(`3.{{domain.pve}}`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
+    pve3-secure:
+      rule: "Host(`3.{{domain.pve}}`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "pve3@file"
+      tls: { }
+
+  serversTransports:
+    pve-transport:
+      insecureSkipVerify: true
+    pve1-transport:
+      insecureSkipVerify: true
+    pve2-transport:
+      insecureSkipVerify: true
+    pve3-transport:
+      insecureSkipVerify: true

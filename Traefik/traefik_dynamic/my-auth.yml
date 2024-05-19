@@ -1,0 +1,7 @@
+http:
+  middlewares:
+    my-auth:
+      digestauth:
+        headerField: "X-WebAuth-User"
+        users:
+          - "{{security.basic-auth}}"
