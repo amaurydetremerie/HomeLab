@@ -11,7 +11,7 @@ spec:
     namespace: argocd
     server: 'https://kubernetes.default.svc'
   source:
-    path: Kubernetes/K3S/ArgoCD
+    path: Kubernetes/K3S/ArgoCD/Manifest
     repoURL: 'https://gitlab.com/amaurydetremerie/HomeLabMirror.git'
     targetRevision: HEAD
   project: default
