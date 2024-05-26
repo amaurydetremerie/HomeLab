@@ -14,8 +14,8 @@ spec:
     - ReadWriteMany
   storageClassName: nfs
   nfs:
-    server: <path:secrets/global#nfs-server>
-    path: <path:secrets/global#nfs-share>
+    server: <path:secrets/data/global#nfs-server>
+    path: <path:secrets/data/global#nfs-share>
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
