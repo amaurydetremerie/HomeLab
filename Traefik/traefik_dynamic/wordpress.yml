@@ -3,16 +3,16 @@ http:
     wordpress:
       loadBalancer:
         servers:
-          - url: "http://{{ip.wordpress}}:80"
+          - url: "http://<WORDPRES_CT_IP>:80"
   routers:
     wordpress:
-      rule: "Host(`{{domain.wordpress}}`)"
+      rule: "Host(`wordpress.wiserisk.be`)"
       entryPoints:
         - "web"
       service: "wordpress@file"
       priority: 2
     wordpress-acme:
-      rule: "Host(`{{domain.wordpress}}`) && PathPrefix(`/.well-known/acme-challenge/`)"
+      rule: "Host(`wordpress.wiserisk.be`) && PathPrefix(`/.well-known/acme-challenge/`)"
       entryPoints:
         - "web"
       service: "wordpress@file"
@@ -23,10 +23,10 @@ tcp:
     wordpress-secure-tcp:
       loadBalancer:
         servers:
-          - address: "{{ip.wordpress}}:443"
+          - address: "<WORDPRES_CT_IP>:443"
   routers:
     wordpress-secure-tcp:
-      rule: "HostSNI(`{{domain.wordpress}}`)"
+      rule: "HostSNI(`wordpress.wiserisk.be`)"
       entryPoints:
         - "websecure"
       service: "wordpress-secure-tcp@file"

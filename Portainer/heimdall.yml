@@ -6,7 +6,7 @@ services:
     image: lscr.io/linuxserver/heimdall:latest
     labels:
       - traefik.enable=true
-      - traefik.http.routers.heimdall.rule=Host(`dashboard.{{domain.portainer}}`)
+      - traefik.http.routers.heimdall.rule=Host(`dashboard.portainer.wiserisk.be`)
       - traefik.http.routers.heimdall.entrypoints=websecure
       - traefik.http.services.heimdall.loadbalancer.server.port=80
       - traefik.http.routers.heimdall.service=heimdall

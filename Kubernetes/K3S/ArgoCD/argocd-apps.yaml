@@ -1,0 +1,271 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+spec:
+  plugin:
+    name: argocd-vault-plugin
+  destination:
+    name: ''
+    namespace: argocd
+    server: 'https://kubernetes.default.svc'
+  source:
+    path: Kubernetes/K3S/ArgoCD
+    repoURL: 'https://gitlab.com/amaurydetremerie/HomeLabMirror.git'
+    targetRevision: HEAD
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: false
+      selfHeal: false
+    retry:
+      limit: 2
+      backoff:
+        duration: 5s
+        maxDuration: 3m0s
+        factor: 2
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd-kustomize
+  namespace: argocd
+spec:
+  plugin:
+    name: argocd-vault-plugin
+  destination:
+    name: ''
+    namespace: argocd
+    server: 'https://kubernetes.default.svc'
+  source:
+    path: Kubernetes/K3S/ArgoCD/Kustomization
+    repoURL: 'https://gitlab.com/amaurydetremerie/HomeLabMirror.git'
+    targetRevision: HEAD
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: false
+      selfHeal: false
+    retry:
+      limit: 2
+      backoff:
+        duration: 5s
+        maxDuration: 3m0s
+        factor: 2
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: portainer
+  namespace: argocd
+spec:
+  plugin:
+    name: argocd-vault-plugin
+  destination:
+    name: ''
+    namespace: management
+    server: 'https://kubernetes.default.svc'
+  source:
+    path: Kubernetes/K3S/Portainer
+    repoURL: 'https://gitlab.com/amaurydetremerie/HomeLabMirror.git'
+    targetRevision: HEAD
+    plugin: {}
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: false
+      selfHeal: false
+    retry:
+      limit: 2
+      backoff:
+        duration: 5s
+        maxDuration: 3m0s
+        factor: 2
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik
+  namespace: argocd
+spec:
+  plugin:
+    name: argocd-vault-plugin
+  destination:
+    name: ''
+    namespace: kube-system
+    server: 'https://kubernetes.default.svc'
+  source:
+    path: Kubernetes/K3S/Traefik
+    repoURL: 'https://gitlab.com/amaurydetremerie/HomeLabMirror.git'
+    targetRevision: HEAD
+    plugin: {}
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: false
+      selfHeal: false
+    retry:
+      limit: 2
+      backoff:
+        duration: 5s
+        maxDuration: 3m0s
+        factor: 2
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: uptime-kuma
+  namespace: argocd
+spec:
+  plugin:
+    name: argocd-vault-plugin
+  destination:
+    name: ''
+    namespace: monitoring
+    server: 'https://kubernetes.default.svc'
+  source:
+    path: Kubernetes/K3S/UptimeKuma
+    repoURL: 'https://gitlab.com/amaurydetremerie/HomeLabMirror.git'
+    targetRevision: HEAD
+    plugin: {}
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: false
+      selfHeal: false
+    retry:
+      limit: 2
+      backoff:
+        duration: 5s
+        maxDuration: 3m0s
+        factor: 2
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: homepage
+  namespace: argocd
+spec:
+  plugin:
+    name: argocd-vault-plugin
+  destination:
+    name: ''
+    namespace: private
+    server: 'https://kubernetes.default.svc'
+  source:
+    path: Kubernetes/K3S/Homepage
+    repoURL: 'https://gitlab.com/amaurydetremerie/HomeLabMirror.git'
+    targetRevision: HEAD
+    plugin: {}
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: false
+      selfHeal: false
+    retry:
+      limit: 2
+      backoff:
+        duration: 5s
+        maxDuration: 3m0s
+        factor: 2
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: flaresolverr
+  namespace: argocd
+spec:
+  plugin:
+    name: argocd-vault-plugin
+  destination:
+    name: ''
+    namespace: service
+    server: 'https://kubernetes.default.svc'
+  source:
+    path: Kubernetes/K3S/FlareSolverr
+    repoURL: 'https://gitlab.com/amaurydetremerie/HomeLabMirror.git'
+    targetRevision: HEAD
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: false
+      selfHeal: false
+    retry:
+      limit: 2
+      backoff:
+        duration: 5s
+        maxDuration: 3m0s
+        factor: 2
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vault
+  namespace: argocd
+spec:
+  destination:
+    name: ''
+    namespace: secure
+    server: 'https://kubernetes.default.svc'
+  source:
+    path: Kubernetes/K3S/Vault
+    repoURL: 'https://gitlab.com/amaurydetremerie/HomeLabMirror.git'
+    targetRevision: HEAD
+    plugin: {}
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: false
+      selfHeal: false
+    retry:
+      limit: 2
+      backoff:
+        duration: 5s
+        maxDuration: 3m0s
+        factor: 2
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: test
+  namespace: argocd
+spec:
+  destination:
+    name: ''
+    namespace: default
+    server: 'https://kubernetes.default.svc'
+  source:
+    path: Kubernetes/K3S/test
+    repoURL: 'https://gitlab.com/amaurydetremerie/HomeLabMirror.git'
+    targetRevision: HEAD
+    plugin: {}
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: false
+      selfHeal: false
+    retry:
+      limit: 2
+      backoff:
+        duration: 5s
+        maxDuration: 3m0s
+        factor: 2

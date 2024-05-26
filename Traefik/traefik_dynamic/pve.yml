@@ -4,34 +4,34 @@ http:
       loadBalancer:
         serversTransport: pve-transport
         servers:
-          - url: "https://{{ip.pve.1}}:8006"
-          - url: "https://{{ip.pve.2}}:8006"
+          - url: "https://10.0.0.80:8006"
+          - url: "https://10.0.0.81:8006"
     pve1:
       loadBalancer:
         serversTransport: pve1-transport
         servers:
-          - url: "https://{{ip.pve.1}}:8006"
+          - url: "https://10.0.0.80:8006"
     pve2:
       loadBalancer:
         serversTransport: pve2-transport
         servers:
-          - url: "https://{{ip.pve.2}}:8006"
+          - url: "https://10.0.0.81:8006"
     pve3:
       loadBalancer:
         serversTransport: pve3-transport
         servers:
-          - url: "https://{{ip.pve.3}}:8006"
+          - url: "https://10.0.0.82:8006"
 
   routers:
     pve:
-      rule: "Host(`{{domain.pve}}`)"
+      rule: "Host(`pve.wiserisk.be`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
     pve-secure:
-      rule: "Host(`{{domain.pve}}`)"
+      rule: "Host(`pve.wiserisk.be`)"
       entryPoints:
         - "websecure"
       middlewares:
@@ -40,14 +40,14 @@ http:
       service: "pve@file"
       tls: {}
     pve1:
-      rule: "Host(`1.{{domain.pve}}`)"
+      rule: "Host(`1.pve.wiserisk.be`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
     pve1-secure:
-      rule: "Host(`1.{{domain.pve}}`)"
+      rule: "Host(`1.pve.wiserisk.be`)"
       entryPoints:
         - "websecure"
       middlewares:
@@ -56,14 +56,14 @@ http:
       service: "pve1@file"
       tls: { }
     pve2:
-      rule: "Host(`2.{{domain.pve}}`)"
+      rule: "Host(`2.pve.wiserisk.be`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
     pve2-secure:
-      rule: "Host(`2.{{domain.pve}}`)"
+      rule: "Host(`2.pve.wiserisk.be`)"
       entryPoints:
         - "websecure"
       middlewares:
@@ -72,14 +72,14 @@ http:
       service: "pve2@file"
       tls: { }
     pve3:
-      rule: "Host(`3.{{domain.pve}}`)"
+      rule: "Host(`3.pve.wiserisk.be`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
     pve3-secure:
-      rule: "Host(`3.{{domain.pve}}`)"
+      rule: "Host(`3.pve.wiserisk.be`)"
       entryPoints:
         - "websecure"
       middlewares:

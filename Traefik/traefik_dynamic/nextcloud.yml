@@ -3,16 +3,16 @@ http:
     nextcloud:
       loadBalancer:
         servers:
-          - url: "http://{{ip.nextcloud}}:80"
+          - url: "http://10.100.0.103:80"
   routers:
     nextcloud:
-      rule: "Host(`{{domain.nextcloud}}`)"
+      rule: "Host(`nextcloud.wiserisk.be`)"
       entryPoints:
         - "web"
       service: "nextcloud@file"
       priority: 2
     nextcloud-acme:
-      rule: "Host(`{{domain.nextcloud}}`) && PathPrefix(`/.well-known/acme-challenge/`)"
+      rule: "Host(`nextcloud.wiserisk.be`) && PathPrefix(`/.well-known/acme-challenge/`)"
       entryPoints:
         - "web"
       service: "nextcloud@file"
@@ -23,10 +23,10 @@ tcp:
     nextcloud-secure-tcp:
       loadBalancer:
         servers:
-          - address: "{{ip.nextcloud}}:443"
+          - address: "10.100.0.103:443"
   routers:
     nextcloud-secure-tcp:
-      rule: "HostSNI(`{{domain.nextcloud}}`)"
+      rule: "HostSNI(`nextcloud.wiserisk.be`)"
       entryPoints:
         - "websecure"
       service: "nextcloud-secure-tcp@file"

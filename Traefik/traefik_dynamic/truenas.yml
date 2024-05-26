@@ -3,18 +3,18 @@ http:
     nas:
       loadBalancer:
         servers:
-          - url: "http://{{ip.truenas}}"
+          - url: "http://10.100.0.106"
 
   routers:
     nas:
-      rule: "Host(`{{domain.truenas}}`)"
+      rule: "Host(`truenas.wiserisk.be`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
     nas-secure:
-      rule: "Host(`{{domain.truenas}}`)"
+      rule: "Host(`truenas.wiserisk.be`)"
       entryPoints:
         - "websecure"
       middlewares:

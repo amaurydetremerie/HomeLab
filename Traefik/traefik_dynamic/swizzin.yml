@@ -3,16 +3,16 @@ http:
     swizzin:
       loadBalancer:
         servers:
-          - url: "http://{{ip.swizzin}}:80"
+          - url: "http://10.100.0.105:80"
   routers:
     swizzin:
-      rule: "Host(`{{domain.swizzin}}`)"
+      rule: "Host(`swizzin.wiserisk.be`)"
       entryPoints:
         - "web"
       service: "noop@internal"
       priority: 2
     swizzin-acme:
-      rule: "Host(`{{domain.swizzin}}`) && PathPrefix(`/.well-known/acme-challenge/`)"
+      rule: "Host(`swizzin.wiserisk.be`) && PathPrefix(`/.well-known/acme-challenge/`)"
       entryPoints:
         - "web"
       service: "swizzin@file"
@@ -23,10 +23,10 @@ tcp:
     swizzin-secure-tcp:
       loadBalancer:
         servers:
-          - address: "{{ip.swizzin}}:443"
+          - address: "10.100.0.105:443"
   routers:
     swizzin-secure-tcp:
-      rule: "HostSNI(`{{domain.swizzin}}`)"
+      rule: "HostSNI(`swizzin.wiserisk.be`)"
       entryPoints:
         - "websecure"
       service: "swizzin-secure-tcp@file"

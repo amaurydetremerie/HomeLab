@@ -3,18 +3,18 @@ http:
     plex:
       loadBalancer:
         servers:
-          - url: "http://{{ip.plex}}:32400"
+          - url: "http://10.100.0.104:32400"
 
   routers:
     plex:
-      rule: "Host(`{{domain.plex}}`)"
+      rule: "Host(`plex.wiserisk.be`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
     plex-secure:
-      rule: "Host(`{{domain.plex}}`)"
+      rule: "Host(`plex.wiserisk.be`)"
       entryPoints:
         - "websecure"
       middlewares:
@@ -30,7 +30,7 @@ tcp:
     plex-tcp:
       loadBalancer:
         servers:
-          - address: "{{ip.plex}}:32400"
+          - address: "10.100.0.104:32400"
 
   routers:
     plex-tcp:

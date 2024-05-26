@@ -9,8 +9,8 @@ spec:
     - ReadWriteMany
   storageClassName: nfs
   nfs:
-    server: {{ip.truenas}}
-    path: "{{nfs.k3s}}"
+    server: <path:secrets/global#nfs-server>
+    path: <path:secrets/global#nfs-share>
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -74,7 +74,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
   rules:
-    - host: whoami.{{domain.k3s}}
+    - host: whoami.k3s.wiserisk.be
       http:
         paths:
           - path: /

@@ -7,14 +7,14 @@ http:
 
   routers:
     traefik:
-      rule: "Host(`{{domain.traefik}}`)"
+      rule: "Host(`traefik.wiserisk.be`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
     traefik-secure:
-      rule: "Host(`{{domain.traefik}}`)"
+      rule: "Host(`traefik.wiserisk.be`)"
       entryPoints:
         - "websecure"
       middlewares:

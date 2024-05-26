@@ -14,8 +14,8 @@ spec:
     - ReadWriteMany
   storageClassName: nfs
   nfs:
-    server: {{ip.truenas}}
-    path: "{{nfs.k3s}}"
+    server: <path:secrets/global#nfs-server>
+    path: <path:secrets/global#nfs-share>
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -148,9 +148,20 @@ metadata:
   namespace: management
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    gethomepage.dev/href: "https://portainer.k3s.wiserisk.be"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/description: Portainer
+    gethomepage.dev/group: K3S
+    gethomepage.dev/icon: portainer.svg
+    gethomepage.dev/app: portainer
+    gethomepage.dev/name: Portainer
+    gethomepage.dev/widget.type: "portainer"
+    gethomepage.dev/widget.url: "https://portainer.k3s.wiserisk.be"
+    gethomepage.dev/widget.env: "1"
+    gethomepage.dev/widget.key: <path:secrets/data/portainer#api-key>
 spec:
   rules:
-    - host: portainer.{{domain.k3s}}
+    - host: portainer.k3s.wiserisk.be
       http:
         paths:
           - path: /

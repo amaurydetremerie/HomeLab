@@ -3,16 +3,16 @@ http:
     portainer-wildcard:
       loadBalancer:
         servers:
-          - url: "http://{{ip.portainer}}"
+          - url: "http://10.100.0.101"
   routers:
     portainer-wildcard:
-      rule: "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.{{domain.portainer}}`) || Host(`{{domain.portainer}}`)"
+      rule: "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.portainer.wiserisk.be`) || Host(`portainer.wiserisk.be`)"
       entryPoints:
         - "web"
       service: "portainer-wildcard@file"
       priority: 2
     portainer-wildcard-acme:
-      rule: "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.{{domain.portainer}}`) && PathPrefix(`/.well-known/acme-challenge/`) || Host(`{{domain.portainer}}`) && PathPrefix(`/.well-known/acme-challenge/`)"
+      rule: "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.portainer.wiserisk.be`) && PathPrefix(`/.well-known/acme-challenge/`) || Host(`portainer.wiserisk.be`) && PathPrefix(`/.well-known/acme-challenge/`)"
       entryPoints:
         - "web"
       service: "portainer-wildcard@file"
@@ -23,11 +23,11 @@ tcp:
     portainer-secure-wildcard-tcp:
       loadBalancer:
         servers:
-          - address: "{{ip.portainer}}:443"
+          - address: "10.100.0.101:443"
 
   routers:
     portainer-secure-wildcard-tcp:
-      rule: "HostSNIRegexp(`{subdomain:[a-zA-Z0-9-]+}.{{domain.portainer}}`) || HostSNI(`{{domain.portainer}}`)"
+      rule: "HostSNIRegexp(`{subdomain:[a-zA-Z0-9-]+}.portainer.wiserisk.be`) || HostSNI(`portainer.wiserisk.be`)"
       entryPoints:
         - "websecure"
       service: "portainer-secure-wildcard-tcp@file"

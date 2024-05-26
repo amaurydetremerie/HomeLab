@@ -3,18 +3,18 @@ http:
     k3s-wildcard:
       loadBalancer:
         servers:
-          - url: "http://{{ip.k3s.1}}"
-          - url: "http://{{ip.k3s.2}}"
-          - url: "http://{{ip.k3s.3}}"
+          - url: "http://10.100.0.201"
+          - url: "http://10.100.0.202"
+          - url: "http://10.100.0.203"
   routers:
     k3s-wildcard:
-      rule: "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.{{domain.k3s}}`) || Host(`{{domain.k3s}}`)"
+      rule: "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.be`) || Host(`k3s.wiserisk.be`)"
       entryPoints:
         - "web"
       service: "k3s-wildcard@file"
       priority: 2
     k3s-wildcard-acme:
-      rule: "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.{{domain.k3s}}`) && PathPrefix(`/.well-known/acme-challenge/`) || Host(`{{domain.k3s}}`) && PathPrefix(`/.well-known/acme-challenge/`)"
+      rule: "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.be`) && PathPrefix(`/.well-known/acme-challenge/`) || Host(`k3s.wiserisk.be`) && PathPrefix(`/.well-known/acme-challenge/`)"
       entryPoints:
         - "web"
       service: "k3s-wildcard@file"
@@ -25,19 +25,19 @@ tcp:
     k3s-secure-wildcard-tcp:
       loadBalancer:
         servers:
-          - address: "{{ip.k3s.1}}:443"
-          - address: "{{ip.k3s.2}}:443"
-          - address: "{{ip.k3s.3}}:443"
+          - address: "10.100.0.201:443"
+          - address: "10.100.0.202:443"
+          - address: "10.100.0.203:443"
     k3s-management-tcp:
       loadBalancer:
         servers:
-          - address: "{{ip.k3s.1}}:6443"
-          - address: "{{ip.k3s.2}}:6443"
-          - address: "{{ip.k3s.3}}:6443"
+          - address: "10.100.0.201:6443"
+          - address: "10.100.0.202:6443"
+          - address: "10.100.0.203:6443"
 
   routers:
     k3s-secure-wildcard-tcp:
-      rule: "HostSNIRegexp(`{subdomain:[a-zA-Z0-9-]+}.{{domain.k3s}}`) || HostSNI(`{{domain.k3s}}`)"
+      rule: "HostSNIRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.be`) || HostSNI(`k3s.wiserisk.be`)"
       entryPoints:
         - "websecure"
       service: "k3s-secure-wildcard-tcp@file"

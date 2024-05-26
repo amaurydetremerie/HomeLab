@@ -9,8 +9,8 @@ spec:
     - ReadWriteMany
   storageClassName: nfs
   nfs:
-    server: {{ip.truenas}}
-    path: "{{nfs.k3s}}"
+    server: <path:secrets/data/global#nfs-server>
+    path: <path:secrets/data/global#nfs-share>
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -37,13 +37,13 @@ spec:
       - "--api.insecure=true"
       - "--log.level=DEBUG"
       - "--entryPoints.acme"
-      - "--certificatesResolvers.letsencrypt-ecdsa.acme.email={{MAIL}}"
+      - "--certificatesResolvers.letsencrypt-ecdsa.acme.email=<path:secrets/data/global#mail>"
       - "--certificatesResolvers.letsencrypt-ecdsa.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
       - "--certificatesResolvers.letsencrypt-ecdsa.acme.storage=/data/acme.json"
       - "--certificatesResolvers.letsencrypt-ecdsa.acme.keyType=EC384"
       - "--certificatesResolvers.letsencrypt-ecdsa.acme.httpChallenge.entryPoint=acme"
       - "--certificatesResolvers.letsencrypt-ecdsa.acme.tlsChallenge=true"
-      - "--certificatesResolvers.letsencrypt-rsa2048.acme.email={{MAIL}}"
+      - "--certificatesResolvers.letsencrypt-rsa2048.acme.email=<path:secrets/data/global#mail>"
       - "--certificatesResolvers.letsencrypt-rsa2048.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
       - "--certificatesResolvers.letsencrypt-rsa2048.acme.storage=/data/acme.json"
       - "--certificatesResolvers.letsencrypt-rsa2048.acme.keyType=RSA2048"
