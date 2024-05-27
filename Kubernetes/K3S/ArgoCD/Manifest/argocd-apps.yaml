@@ -4,8 +4,6 @@ metadata:
   name: argocd
   namespace: argocd
 spec:
-  plugin:
-    name: argocd-vault-plugin
   destination:
     name: ''
     namespace: argocd
@@ -34,8 +32,6 @@ metadata:
   name: argocd-kustomize
   namespace: argocd
 spec:
-  plugin:
-    name: argocd-vault-plugin
   destination:
     name: ''
     namespace: argocd
@@ -64,8 +60,6 @@ metadata:
   name: portainer
   namespace: argocd
 spec:
-  plugin:
-    name: argocd-vault-plugin
   destination:
     name: ''
     namespace: management
@@ -95,8 +89,6 @@ metadata:
   name: traefik
   namespace: argocd
 spec:
-  plugin:
-    name: argocd-vault-plugin
   destination:
     name: ''
     namespace: kube-system
@@ -126,8 +118,6 @@ metadata:
   name: uptime-kuma
   namespace: argocd
 spec:
-  plugin:
-    name: argocd-vault-plugin
   destination:
     name: ''
     namespace: monitoring
@@ -157,8 +147,6 @@ metadata:
   name: homepage
   namespace: argocd
 spec:
-  plugin:
-    name: argocd-vault-plugin
   destination:
     name: ''
     namespace: private
@@ -188,8 +176,6 @@ metadata:
   name: flaresolverr
   namespace: argocd
 spec:
-  plugin:
-    name: argocd-vault-plugin
   destination:
     name: ''
     namespace: service
