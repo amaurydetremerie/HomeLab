@@ -238,7 +238,35 @@ spec:
     namespace: system-upgrade
     server: 'https://kubernetes.default.svc'
   source:
-    path: Kubernetes/K3S/Upgrade
+    path: Kubernetes/K3S/Upgrade/Manifest
+    repoURL: 'https://gitlab.com/amaurydetremerie/HomeLabMirror.git'
+    targetRevision: HEAD
+  project: default
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: false
+      selfHeal: false
+    retry:
+      limit: 2
+      backoff:
+        duration: 5s
+        maxDuration: 3m0s
+        factor: 2
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: system-upgrade
+  namespace: argocd
+spec:
+  destination:
+    name: ''
+    namespace: system-upgrade-plans
+    server: 'https://kubernetes.default.svc'
+  source:
+    path: Kubernetes/K3S/Upgrade/Plans
     repoURL: 'https://gitlab.com/amaurydetremerie/HomeLabMirror.git'
     targetRevision: HEAD
   project: default
