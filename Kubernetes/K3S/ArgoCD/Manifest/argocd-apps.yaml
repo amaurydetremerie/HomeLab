@@ -241,7 +241,6 @@ spec:
     path: Kubernetes/K3S/Upgrade
     repoURL: 'https://gitlab.com/amaurydetremerie/HomeLabMirror.git'
     targetRevision: HEAD
-    plugin: {}
   project: default
   syncPolicy:
     syncOptions:
