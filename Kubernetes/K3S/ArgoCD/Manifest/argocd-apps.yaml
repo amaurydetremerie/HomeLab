@@ -230,15 +230,15 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: test
+  name: system-upgrade
   namespace: argocd
 spec:
   destination:
     name: ''
-    namespace: default
+    namespace: system-upgrade
     server: 'https://kubernetes.default.svc'
   source:
-    path: Kubernetes/K3S/test
+    path: Kubernetes/K3S/Upgrade
     repoURL: 'https://gitlab.com/amaurydetremerie/HomeLabMirror.git'
     targetRevision: HEAD
     plugin: {}

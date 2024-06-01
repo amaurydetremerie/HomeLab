@@ -30,10 +30,12 @@ All my servers run under Proxmox, and my data is managed in a TrueNas Scale virt
 7) Setup Uptime Kuma in K3S and remove it from Portainer CT
    1) Check [Gatus](https://github.com/TwiN/gatus) to deploy health check with declarative configuration
 8) Migrate all apps from Portainer CT to K3S
+9) Find a way to replace secrets in files
+   1) Using Vault, Based on https://devopscube.com/vault-in-kubernetes/
+10) Configure [Homepage](Kubernetes/K3S/Homepage/homepage.yaml#L8)
 ### To Do
-9) Configure [Homepage](Kubernetes/K3S/Homepage/homepage.yaml#L8)
-10) Check to migrate CT in K3S
-11) Find some new interesting apps
+11) Check to migrate CT in K3S
+12) Find some new interesting apps
     1) [FireflyIII](https://firefly-iii.org/)
     2) [ActualBudget](https://actualbudget.org/)
     3) [Paisa](https://paisa.fyi/)
@@ -41,8 +43,6 @@ All my servers run under Proxmox, and my data is managed in a TrueNas Scale virt
     5) [Tautulli](https://tautulli.com/)
     6) [Speedtest Tracker](https://docs.speedtest-tracker.dev/)
     7) [Authelia](https://www.authelia.com/)
-12) Find a way to replace secrets in files (ArgoCD for K3S ? Env variables ?)
-    1) Using Vault, Based on https://devopscube.com/vault-in-kubernetes/
 13) Install Proxmox on Dell Optiplex
 14) Move one K3S Instance on each server
 15) Move Traefik Principal CT in K3S (What about LB ? Is it possible to use Ingress Controller to call external service like TrueNas or Pve ? What happen if home disconnected and service going to offsite ?)
