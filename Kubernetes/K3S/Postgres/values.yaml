@@ -1,0 +1,14 @@
+global:
+  postgresql:
+    postgresqlPassword: <path:secrets/data/postgres#mainPassword>
+    postgresqlUsername: <path:secrets/data/postgres#mainUsername>
+    postgresqlDatabase: <path:secrets/data/postgres#mainDatabase>
+primary:
+  persistence:
+    enabled: true
+    existingClaim: pvc-nfs-k3s-postgres
+postgresqlDatabase:
+  extraDatabases:
+    - name: <path:secrets/data/postgres#secondDatabase>
+      user: <path:secrets/data/postgres#secondUsername>
+      password: <path:secrets/data/postgres#secondPassword>
