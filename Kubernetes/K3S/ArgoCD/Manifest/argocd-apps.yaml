@@ -269,6 +269,7 @@ spec:
     path: Kubernetes/K3S/Postgres
     repoURL: 'https://gitlab.com/amaurydetremerie/HomeLabMirror.git'
     targetRevision: HEAD
+    plugin: {}
   project: default
   syncPolicy:
     syncOptions:
