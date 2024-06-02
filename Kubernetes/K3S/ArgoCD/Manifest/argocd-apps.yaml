@@ -267,7 +267,7 @@ spec:
   sources:
     - repoURL: 'https://gitlab.com/amaurydetremerie/HomeLabMirror.git'
       targetRevision: HEAD
-      path: K3S/Postgres
+      path: Kubernetes/K3S/Postgres
       plugin: {}
       ref: values
     - repoURL: https://charts.bitnami.com/bitnami
@@ -275,7 +275,7 @@ spec:
       chart: postgresql
       helm:
         valueFiles:
-          - $values/K3S/Postgres/values.yaml
+          - $values/Kubernetes/K3S/Postgres/values.yaml
   project: default
   syncPolicy:
     syncOptions:
