@@ -262,20 +262,13 @@ metadata:
   namespace: argocd
 spec:
   destination:
+    name: ''
     namespace: database
     server: 'https://kubernetes.default.svc'
-  sources:
-    - repoURL: 'https://gitlab.com/amaurydetremerie/HomeLabMirror.git'
-      targetRevision: HEAD
-      path: Kubernetes/K3S/Postgres
-      plugin: {}
-      ref: values
-    - repoURL: https://charts.bitnami.com/bitnami
-      targetRevision: 11.5.10
-      chart: postgresql
-      helm:
-        valueFiles:
-          - $values/Kubernetes/K3S/Postgres/values.yaml
+  source:
+    path: Kubernetes/K3S/Postgres
+    repoURL: 'https://gitlab.com/amaurydetremerie/HomeLabMirror.git'
+    targetRevision: HEAD
   project: default
   syncPolicy:
     syncOptions:

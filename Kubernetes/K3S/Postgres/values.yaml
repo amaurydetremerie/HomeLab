@@ -1,14 +1,29 @@
-global:
-  postgresql:
-    postgresqlPassword: <path:secrets/data/postgres#mainPassword>
-    postgresqlUsername: <path:secrets/data/postgres#mainUsername>
-    postgresqlDatabase: <path:secrets/data/postgres#mainDatabase>
-primary:
-  persistence:
-    enabled: true
-    existingClaim: pvc-nfs-k3s-postgres
-postgresqlDatabase:
-  extraDatabases:
-    - name: <path:secrets/data/postgres#secondDatabase>
-      user: <path:secrets/data/postgres#secondUsername>
-      password: <path:secrets/data/postgres#secondPassword>
+persistentVolume:
+  name: pv-nfs-k3s-postgres
+  storage: 50Gi
+  accessMode: ReadWriteMany
+  path: /mnt/data
+  nfs:
+    server: <path:secrets/data/global#nfs-server>
+    share: <path:secrets/data/global#nfs-share>
+
+persistentVolumeClaim:
+  name: pvc-nfs-k3s-postgres
+  storage: 50Gi
+  accessMode: ReadWriteMany
+
+postgresql:
+  global:
+    postgresql:
+      postgresqlPassword: <path:secrets/data/postgres#mainPassword>
+      postgresqlUsername: <path:secrets/data/postgres#mainUsername>
+      postgresqlDatabase: <path:secrets/data/postgres#mainDatabase>
+  primary:
+    persistence:
+      enabled: true
+      existingClaim: pvc-nfs-k3s-postgres
+  postgresqlDatabase:
+    extraDatabases:
+      - name: <path:secrets/data/postgres#secondDatabase>
+        user: <path:secrets/data/postgres#secondUsername>
+        password: <path:secrets/data/postgres#secondPassword>
