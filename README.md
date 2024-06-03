@@ -42,6 +42,7 @@ All my servers run under Proxmox, and my data is managed in a TrueNas Scale virt
     4) [LibreSpeed](https://github.com/librespeed/speedtest)
     5) [Tautulli](https://tautulli.com/)
     6) [Speedtest Tracker](https://docs.speedtest-tracker.dev/)
+       1) https://github.com/maximemoreillon/kubernetes-manifests/tree/master/speedtest-tracker
     7) [Authelia](https://www.authelia.com/)
 13) Install Proxmox on Dell Optiplex
 14) Move one K3S Instance on each server

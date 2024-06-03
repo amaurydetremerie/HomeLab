@@ -269,11 +269,7 @@ spec:
     path: Kubernetes/K3S/Postgres
     repoURL: 'https://gitlab.com/amaurydetremerie/HomeLabMirror.git'
     targetRevision: HEAD
-    plugin:
-      name: argocd-vault-plugin-helm
-      env:
-        - name: HELM_ARGS
-          value: -f values.yaml
+    plugin: {}
   project: default
   syncPolicy:
     syncOptions:

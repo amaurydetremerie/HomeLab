@@ -5,13 +5,11 @@ persistentVolume:
   path: /mnt/data
   nfs:
     server: <path:secrets/data/global#nfs-server>
-    share: <path:secrets/data/global#nfs-share>
-
+    path: <path:secrets/data/global#nfs-share>
 persistentVolumeClaim:
   name: pvc-nfs-k3s-postgres
   storage: 50Gi
   accessMode: ReadWriteMany
-
 postgresql:
   global:
     postgresql:
