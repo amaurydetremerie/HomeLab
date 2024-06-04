@@ -11,8 +11,6 @@ resources:
 
 patches:
   - path: argocd-cmd-params-cm-patch.yaml
-
-patchesStrategicMerge:
-  - argocd-repo-server.yaml
+  - path: argocd-repo-server.yaml
 
 namespace: argocd
