@@ -6,7 +6,7 @@ images:
     newTag: v2.7.9
 
 resources:
-  - https://gitlab.com/amaurydetremerie/argo-cd-fork/-/raw/v2.7.9/manifests/ha/install.yaml
+  - https://gitlab.com/amaurydetremerie/argo-cd-fork/-/raw/v2.11.0/manifests/ha/install.yaml
   - cmp-plugin.yaml
 
 patches:
