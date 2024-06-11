@@ -21,18 +21,12 @@ data:
             - "."
             - -name
             - kustomization.yaml
-      init:
-        command:
-          - sh
-          - "-c"
-          - |
-            kustomize build . > kustomize.yaml
       generate:
         command:
-          - argocd-vault-plugin
-          - generate
-          - "kustomize.yaml"
-          - --verbose-sensitive-output
+          - bash
+          - "-c"
+          - |
+            kustomize build . | argocd-vault-plugin generate --verbose-sensitive-output -s argocd:argocd-vault-plugin-credentials -
       lockRepo: false
   avp-helm.yaml: |
     ---
@@ -42,30 +36,19 @@ data:
       name: argocd-vault-plugin-helm
     spec:
       allowConcurrency: true
-
-      # Note: this command is run _before_ any Helm templating is done, therefore the logic is to check
-      # if this looks like a Helm chart
       discover:
         find:
           command:
             - sh
             - "-c"
             - "find . -name 'Chart.yaml' && find . -name 'values.yaml'"
-      init:
+      generate:
         command:
-          - sh
+          - bash
           - "-c"
           - |
-            helm template $ARGOCD_APP_NAME -n $ARGOCD_APP_NAMESPACE . > helm.yaml
-      generate:
-        # **IMPORTANT**: passing `${ARGOCD_ENV_HELM_ARGS}` effectively allows users to run arbitrary code in the Argo CD 
-        # repo-server (or, if using a sidecar, in the plugin sidecar). Only use this when the users are completely trusted. If
-        # possible, determine which Helm arguments are needed by your users and explicitly pass only those arguments.
-        command:
-          - argocd-vault-plugin
-          - generate
-          - "helm.yaml"
-          - --verbose-sensitive-output
+            helm template $ARGOCD_APP_NAME -n $ARGOCD_APP_NAMESPACE -f <(echo "$ARGOCD_ENV_HELM_VALUES") . |
+            argocd-vault-plugin generate --verbose-sensitive-output -s argocd:argocd-vault-plugin-credentials -
       lockRepo: false
   avp.yaml: |
     apiVersion: argoproj.io/v1alpha1
