@@ -22,3 +22,9 @@ postgresql:
       size: 50Gi
       accessModes:
         - ReadWriteMany
+  image:
+    debug: true
+  readReplicas:
+    extraEnvVars:
+      - name: BITNAMI_DEBUG
+        value: true
