@@ -2,7 +2,6 @@ persistentVolume:
   name: pv-nfs-k3s-postgres
   storage: 50Gi
   accessMode: ReadWriteMany
-  path: /mnt/data
   nfs:
     server: <path:secrets/data/global#nfs-server>
     path: <path:secrets/data/global#nfs-share>
@@ -18,7 +17,8 @@ postgresql:
         username: <path:secrets/data/postgres#secondUsername>
         password: <path:secrets/data/postgres#secondPassword>
         database: <path:secrets/data/postgres#secondDatabase>
-#  primary:
-#    persistence:
-#      enabled: true
-#      existingClaim: pvc-nfs-k3s-postgres
+  primary:
+    persistence:
+      enabled: true
+      existingClaim: pvc-nfs-k3s-postgres
+      subPath: postgres
