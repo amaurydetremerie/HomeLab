@@ -29,9 +29,3 @@ postgresql:
         - ReadWriteMany
   volumePermissions:
     enabled: true
-  image:
-    debug: true
-  readReplicas:
-    extraEnvVars:
-      - name: BITNAMI_DEBUG
-        value: true
