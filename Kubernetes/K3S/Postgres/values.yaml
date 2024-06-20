@@ -5,6 +5,10 @@ persistentVolume:
   nfs:
     server: <path:secrets/data/global#nfs-server>
     path: <path:secrets/data/global#nfs-share>
+persistentVolumeClaim:
+  name: pvc-nfs-k3s-postgres
+  storage: 50Gi
+  accessMode: ReadWriteMany
 postgresql:
   global:
     postgresql:
@@ -17,11 +21,14 @@ postgresql:
     persistence:
       enabled: true
       volumeName: pvc-nfs-k3s-postgres-volume
+      existingClaim: pvc-nfs-k3s-postgres
       subPath: postgres
       storageClass: nfs
       size: 50Gi
       accessModes:
         - ReadWriteMany
+  volumePermissions:
+    enabled: true
   image:
     debug: true
   readReplicas:
