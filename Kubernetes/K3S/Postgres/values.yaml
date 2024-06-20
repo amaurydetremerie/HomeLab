@@ -20,5 +20,10 @@ postgresql:
   primary:
     persistence:
       enabled: true
+      volumeName: pvc-nfs-k3s-postgres-volume
       existingClaim: pvc-nfs-k3s-postgres
       subPath: postgres
+      storageClass: nfs
+      size: 50Gi
+      accessModes:
+        - ReadWriteMany
