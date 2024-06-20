@@ -18,7 +18,7 @@ postgresql:
         username: <path:secrets/data/postgres#secondUsername>
         password: <path:secrets/data/postgres#secondPassword>
         database: <path:secrets/data/postgres#secondDatabase>
-  primary:
-    persistence:
-      enabled: true
-      existingClaim: pvc-nfs-k3s-postgres
+#  primary:
+#    persistence:
+#      enabled: true
+#      existingClaim: pvc-nfs-k3s-postgres
