@@ -1,0 +1,128 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-k3s-speedtest-tracker
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs
+  nfs:
+    server: <path:secrets/data/global#nfs-server>
+    path: <path:secrets/data/global#nfs-share>
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-nfs-k3s-speedtest-tracker
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: speedtest-tracker
+  name: speedtest-tracker
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: speedtest-tracker
+  template:
+    metadata:
+      labels:
+        app: speedtest-tracker
+    spec:
+      containers:
+        - name: speedtest-tracker
+          image: lscr.io/linuxserver/speedtest-tracker:0.20.6
+          ports:
+            - containerPort: 80
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: APP_KEY
+              value: <path:secrets/data/speedtest-tracker#api-key>
+            - name: APP_URL
+              value: https://speedtest-tracker.k3s.wiserisk.be
+            - name: DISPLAY_TIMEZONE
+              value: UTC
+            - name: DB_CONNECTION
+              value: pgsql
+            - name: DB_HOST
+              value: postgres-db-postgresql.database.svc.cluster.local
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_DATABASE
+              value: <path:secrets/data/postgres#secondDatabase>
+            - name: DB_USERNAME
+              value: <path:secrets/data/postgres#secondUsername>
+            - name: DB_PASSWORD
+              value: <path:secrets/data/postgres#secondPassword>
+            - name: PRUNE_RESULTS_OLDER_THAN
+              value: "30"
+            - name: SPEEDTEST_SCHEDULE
+              value: "*/5 * * * *"
+            - name: SPEEDTEST_SERVERS
+              value: speedtest.combell.com:8080,speedtest.cu.be:8080,speedtest01.mobistar.be:8080,speedtest001.proximus.be:8080,speedtest.voo.be:8080,speedtest.sipr.ucl.ac.be:8080
+
+          volumeMounts:
+            - name: pvc-nfs-k3s-speedtest-tracker-volume
+              mountPath: /config
+              subPath: speedtest-tracker
+      volumes:
+        - name: pvc-nfs-k3s-speedtest-tracker-volume
+          persistentVolumeClaim:
+            claimName: pvc-nfs-k3s-speedtest-tracker
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: speedtest-tracker
+  name: speedtest-tracker-svc
+  namespace: monitoring
+spec:
+  type: ClusterIP
+  selector:
+    app: speedtest-tracker
+  ports:
+    - port: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: speedtest-tracker-http
+  namespace: monitoring
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    gethomepage.dev/href: "https://speedtest-tracker.k3s.wiserisk.be"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/description: Speedtest Tracker
+    gethomepage.dev/group: K3S
+    gethomepage.dev/app: speedtest-tracker
+    gethomepage.dev/name: Speedtest Tracker
+spec:
+  rules:
+    - host: speedtest-tracker.k3s.wiserisk.be
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: speedtest-tracker-svc
+                port:
+                  number: 80
