@@ -57,9 +57,9 @@ spec:
             - name: PRUNE_RESULTS_OLDER_THAN
               value: "30"
             - name: SPEEDTEST_SCHEDULE
-              value: "*/5 * * * *"
+              value: "0 * * * *"
             - name: SPEEDTEST_SERVERS
-              value: 63249,45280,30594,59333,5151,2848,54889
+              value: "63249,45280,30594,59333,5151,2848,54889"
             - name: APP_DEBUG
               value: "True"
 
