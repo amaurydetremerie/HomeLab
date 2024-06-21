@@ -60,6 +60,8 @@ spec:
               value: "*/5 * * * *"
             - name: SPEEDTEST_SERVERS
               value: speedtest.combell.com:8080,speedtest.cu.be:8080,speedtest01.mobistar.be:8080,speedtest001.proximus.be:8080,speedtest.voo.be:8080,speedtest.sipr.ucl.ac.be:8080
+            - name: APP_DEBUG
+              value: "True"
 
           volumeMounts:
             - name: empty-dir-speedtest-tracker-volume
