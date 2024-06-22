@@ -62,14 +62,6 @@ spec:
               value: "63249,45280,30594,59333,5151,2848,54889"
             - name: APP_DEBUG
               value: "True"
-
-          volumeMounts:
-            - name: empty-dir-speedtest-tracker-volume
-              mountPath: /config
-      volumes:
-        - name: empty-dir-speedtest-tracker-volume
-          emptyDir:
-            sizeLimit: 5Gi
 ---
 apiVersion: v1
 kind: Service
