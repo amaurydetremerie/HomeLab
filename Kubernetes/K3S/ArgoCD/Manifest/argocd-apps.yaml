@@ -303,6 +303,9 @@ spec:
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
+    automated:
+      prune: false
+      selfHeal: false
     retry:
       limit: 2
       backoff:

@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
         - name: speedtest-tracker
-          image: lscr.io/linuxserver/speedtest-tracker:0.20.6
+          image: lscr.io/linuxserver/speedtest-tracker:0.20.7
           ports:
             - containerPort: 80
           env:
@@ -59,7 +59,7 @@ spec:
             - name: SPEEDTEST_SCHEDULE
               value: "0 * * * *"
             - name: SPEEDTEST_SERVERS
-              value: "63249"
+              value: "63249,45280,30594,59333,5151,2848,54889"
             - name: APP_DEBUG
               value: "True"
 
