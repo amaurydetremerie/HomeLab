@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: librespeed
+  name: librespeed
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: librespeed
+  template:
+    metadata:
+      labels:
+        app: librespeed
+    spec:
+      containers:
+        - name: librespeed
+          image: ghcr.io/librespeed/speedtest:5.3.3
+          ports:
+            - containerPort: 80
+          env:
+            - name: MODE
+              value: standalone
+            - name: DISABLE_IPINFO
+              value: "True"
+            - name: ENABLE_ID_OBFUSCATION
+              value: "True"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: librespeed
+  name: librespeed-svc
+  namespace: monitoring
+spec:
+  type: ClusterIP
+  selector:
+    app: librespeed
+  ports:
+    - port: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: librespeed-http
+  namespace: monitoring
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    gethomepage.dev/href: "https://librespeed.k3s.wiserisk.be"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/description: Librespeed
+    gethomepage.dev/group: K3S
+    gethomepage.dev/icon: librespeed.svg
+    gethomepage.dev/app: librespeed
+    gethomepage.dev/name: Librespeed
+spec:
+  rules:
+    - host: librespeed.k3s.wiserisk.be
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: librespeed-svc
+                port:
+                  number: 80
