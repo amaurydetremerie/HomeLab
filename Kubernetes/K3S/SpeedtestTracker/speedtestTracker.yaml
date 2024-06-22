@@ -96,8 +96,11 @@ metadata:
     gethomepage.dev/enabled: "true"
     gethomepage.dev/description: Speedtest Tracker
     gethomepage.dev/group: K3S
+    gethomepage.dev/icon: so-speedtest
     gethomepage.dev/app: speedtest-tracker
     gethomepage.dev/name: Speedtest Tracker
+    gethomepage.dev/widget.type: "speedtest"
+    gethomepage.dev/widget.url: "https://speedtest-tracker.k3s.wiserisk.be"
 spec:
   rules:
     - host: speedtest-tracker.k3s.wiserisk.be
