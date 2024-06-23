@@ -59,7 +59,7 @@ spec:
               mountPath: /config
               subPath: tautulli
       volumes:
-        - name: config
+        - name: pvc-nfs-k3s-tautulli-volume
           persistentVolumeClaim:
             claimName: pvc-nfs-k3s-tautulli
 ---
