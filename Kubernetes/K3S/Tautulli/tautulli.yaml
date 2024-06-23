@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-k3s-tautulli
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs
+  nfs:
+    server: <path:secrets/data/global#nfs-server>
+    path: <path:secrets/data/global#nfs-share>
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-nfs-k3s-tautulli
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tautulli
+  name: tautulli
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tautulli
+  template:
+    metadata:
+      labels:
+        app: tautulli
+    spec:
+      containers:
+        - name: tautulli
+          image: lscr.io/linuxserver/tautulli:v2.14.3-ls139
+          ports:
+            - containerPort: 8181
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: UTC
+          volumeMounts:
+            - name: pvc-nfs-k3s-tautulli-volume
+              mountPath: /config
+              subPath: tautulli
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: pvc-nfs-k3s-tautulli
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: tautulli
+  name: tautulli-svc
+  namespace: monitoring
+spec:
+  type: ClusterIP
+  selector:
+    app: tautulli
+  ports:
+    - port: 8181
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tautulli-http
+  namespace: monitoring
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    gethomepage.dev/href: "https://tautulli.k3s.wiserisk.be"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/description: Tautulli
+    gethomepage.dev/group: K3S
+    gethomepage.dev/icon: tautulli.svg
+    gethomepage.dev/app: tautulli
+    gethomepage.dev/name: Tautulli
+    gethomepage.dev/widget.type: "tautulli"
+    gethomepage.dev/widget.url: "https://tautulli.k3s.wiserisk.be"
+    gethomepage.dev/widget.key: <path:secrets/data/tautulli#api-key>
+spec:
+  rules:
+    - host: tautulli.k3s.wiserisk.be
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: tautulli-svc
+                port:
+                  number: 8181
