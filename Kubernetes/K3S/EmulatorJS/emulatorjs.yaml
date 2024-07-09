@@ -109,7 +109,7 @@ spec:
               value: "1000"
             - name: PGID
               value: "1000"
-          image: linuxserver/emulatorjs:arm64v8-latest
+          image: linuxserver/emulatorjs:1.9.0
           imagePullPolicy: Always
           name: emulatorjs
           ports:
