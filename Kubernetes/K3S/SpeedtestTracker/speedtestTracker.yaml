@@ -59,7 +59,7 @@ spec:
             - name: SPEEDTEST_SCHEDULE
               value: "0 * * * *"
             - name: SPEEDTEST_SERVERS
-              value: "2848,4319"
+              value: "63249,45280,30594,59333,5151,2848,54889"
             - name: APP_DEBUG
               value: "True"
 ---
