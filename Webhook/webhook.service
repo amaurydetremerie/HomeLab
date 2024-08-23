@@ -1,0 +1,8 @@
+[Unit]
+Description=Webhooks
+
+[Service]
+ExecStart=webhook -hooks /var/www/webhooks/hooks.json -hotreload
+
+[Install]
+WantedBy=multi-user.target
