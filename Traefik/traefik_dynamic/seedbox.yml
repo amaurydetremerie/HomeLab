@@ -1,35 +1,35 @@
 http:
   services:
-    swizzin:
+    seedbox:
       loadBalancer:
         servers:
           - url: "http://10.100.0.105:80"
   routers:
-    swizzin:
+    seedbox:
       rule: "Host(`seedbox.wiserisk.be`)"
       entryPoints:
         - "web"
       service: "noop@internal"
       priority: 2
-    swizzin-acme:
+    seedbox-acme:
       rule: "Host(`seedbox.wiserisk.be`) && PathPrefix(`/.well-known/acme-challenge/`)"
       entryPoints:
         - "web"
-      service: "swizzin@file"
+      service: "seedbox@file"
       priority: 1001
 
 tcp:
   services:
-    swizzin-secure-tcp:
+    seedbox-secure-tcp:
       loadBalancer:
         servers:
           - address: "10.100.0.105:443"
   routers:
-    swizzin-secure-tcp:
+    seedbox-secure-tcp:
       rule: "HostSNI(`seedbox.wiserisk.be`)"
       entryPoints:
         - "websecure"
-      service: "swizzin-secure-tcp@file"
+      service: "seedbox-secure-tcp@file"
       priority: 2
       tls:
         passthrough: true
