@@ -7,14 +7,14 @@ http:
 
   routers:
     ha:
-      rule: "Host(`home-assistant.wiserisk.be`)"
+      rule: "Host(`ha.wiserisk.be`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
     ha-secure:
-      rule: "Host(`home-assistant.wiserisk.be`)"
+      rule: "Host(`ha.wiserisk.be`)"
       entryPoints:
         - "websecure"
       middlewares:
