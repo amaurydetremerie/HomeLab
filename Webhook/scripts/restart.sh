@@ -3,7 +3,7 @@
 case $1 in
 
   traefik)
-    echo "systemctl restart traefik.service" | ssh webhook@10.100.0.1 /bin/bash
+    echo "systemctl restart traefik.service" | ssh root@10.100.0.1 /bin/bash
     exit 0
     ;;
 
