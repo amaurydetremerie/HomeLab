@@ -4,4 +4,4 @@ http:
       digestauth:
         headerField: "X-WebAuth-User"
         users:
-          - "{{security.basic-auth}}"
+          - "{{env "MY_AUTH"}}"
