@@ -31,7 +31,6 @@
 [certificatesResolvers]
     [certificatesResolvers.letsencrypt-ecdsa]
         [certificatesResolvers.letsencrypt-ecdsa.acme]
-            email = "{{MAIL}}"
             caServer = "https://acme-v02.api.letsencrypt.org/directory"
             storage = "/etc/traefik/acme.json"
             keyType = "EC384"
@@ -40,7 +39,6 @@
             [certificatesResolvers.letsencrypt-ecdsa.acme.tlsChallenge]
     [certificatesResolvers.letsencrypt-rsa2048]
         [certificatesResolvers.letsencrypt-rsa2048.acme]
-            email = "{{MAIL}}"
             caServer = "https://acme-v02.api.letsencrypt.org/directory"
             storage = "/etc/traefik/acme.json"
             keyType = "RSA2048"
