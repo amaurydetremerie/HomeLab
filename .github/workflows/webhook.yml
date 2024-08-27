@@ -3,10 +3,10 @@ name: WebHookTraefik
 on:
   push:
     paths:
-      - Traefik/**
+      - Webhook/**
   delete:
     paths:
-      - Traefik/**
+      - Webhook/**
 
 jobs:
   update_traefik_principal:
@@ -23,12 +23,4 @@ jobs:
           webhook_secret: ${{ secrets.WEBHOOK_SECRET }}
           webhook_auth_type: "basic"
           webhook_auth: ${{ secrets.BASIC_AUTH }}
-          data: '{ "project": "traefik" }'
-      - name: Call restart
-        uses: distributhor/workflow-webhook@v3
-        with:
-          webhook_url: ${{ secrets.WEBHOOK_URL }}/hooks/restart-webhook
-          webhook_secret: ${{ secrets.WEBHOOK_SECRET }}
-          webhook_auth_type: "basic"
-          webhook_auth: ${{ secrets.BASIC_AUTH }}
-          data: '{ "service": "traefik" }'
+          data: '{ "project": "webhook" }'
