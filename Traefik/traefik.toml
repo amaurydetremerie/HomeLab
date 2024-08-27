@@ -15,7 +15,7 @@
 
 [providers]
     [providers.file]
-        directory="/etc/traefik/traefik_dynamic"
+        directory="/etc/Homelab/Traefik/traefik_dynamic"
         watch=true
 
 [entryPoints]
