@@ -6,13 +6,13 @@ http:
           - url: "http://10.100.0.105:80"
   routers:
     swizzin:
-      rule: "Host(`swizzin.wiserisk.be`)"
+      rule: "Host(`seedbox.wiserisk.be`)"
       entryPoints:
         - "web"
       service: "noop@internal"
       priority: 2
     swizzin-acme:
-      rule: "Host(`swizzin.wiserisk.be`) && PathPrefix(`/.well-known/acme-challenge/`)"
+      rule: "Host(`seedbox.wiserisk.be`) && PathPrefix(`/.well-known/acme-challenge/`)"
       entryPoints:
         - "web"
       service: "swizzin@file"
@@ -26,7 +26,7 @@ tcp:
           - address: "10.100.0.105:443"
   routers:
     swizzin-secure-tcp:
-      rule: "HostSNI(`swizzin.wiserisk.be`)"
+      rule: "HostSNI(`seedbox.wiserisk.be`)"
       entryPoints:
         - "websecure"
       service: "swizzin-secure-tcp@file"

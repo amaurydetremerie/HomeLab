@@ -1,20 +1,42 @@
 http:
   services:
-    nas:
+    hermes:
       loadBalancer:
         servers:
           - url: "http://10.100.0.106"
+    nas:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.199"
 
   routers:
+    hermes:
+      rule: "Host(`hermes.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
+    hermes-secure:
+      rule: "Host(`hermes.wiserisk.be`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "hermes@file"
+      tls:
+        certResolver: letsencrypt-ecdsa
+        options: mintls13
     nas:
-      rule: "Host(`truenas.wiserisk.be`)"
+      rule: "Host(`nas.wiserisk.be`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
     nas-secure:
-      rule: "Host(`truenas.wiserisk.be`)"
+      rule: "Host(`nas.wiserisk.be`)"
       entryPoints:
         - "websecure"
       middlewares:
