@@ -1,4 +1,4 @@
-name: WebHookTraefik
+name: WebHookWebHook
 
 on:
   push:
