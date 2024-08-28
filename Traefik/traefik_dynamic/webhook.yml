@@ -1,0 +1,26 @@
+http:
+  services:
+    webhook:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.107:9000 "
+
+  routers:
+    webhook:
+      rule: "Host(`webhook.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
+    webhook-secure:
+      rule: "Host(`webhook.wiserisk.be`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "webhook@file"
+      tls:
+        certResolver: letsencrypt-ecdsa
+        options: mintls13
