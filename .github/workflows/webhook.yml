@@ -9,18 +9,31 @@ on:
       - Webhook/**
 
 jobs:
-  update_traefik_principal:
-    # The type of runner that the job will run on
+  update_webhook:
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Runs a single command using the runners shell
+      - name: Retrieve secrets from Vault
+        id: vault
+        uses: hashicorp/vault-action@v2
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: approle
+          role_id: ${{ secrets.VAULT_ROLE_ID }}
+          secret_id: ${{ secrets.VAULT_SECRET_ID }}
+          secrets: |
+            secrets/data/webhook secret;
+            secrets/data/traefik auth;
+        env:
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+          VAULT_ROLE_ID: ${{ secrets.VAULT_ROLE_ID }}
+          VAULT_SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
+
       - name: Call pull
         uses: distributhor/workflow-webhook@v3
         with:
           webhook_url: ${{ secrets.WEBHOOK_URL }}/hooks/pull-webhook
-          webhook_secret: ${{ secrets.WEBHOOK_SECRET }}
+          webhook_secret: ${{ steps.vault.outputs.secret }}
           webhook_auth_type: "basic"
-          webhook_auth: ${{ secrets.BASIC_AUTH }}
+          webhook_auth: ${{ steps.vault.outputs.auth }}
           data: '{ "project": "webhook" }'
