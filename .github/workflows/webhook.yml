@@ -24,10 +24,6 @@ jobs:
           secrets: |
             secrets/data/webhook secret;
             secrets/data/traefik auth;
-        env:
-          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-          VAULT_ROLE_ID: ${{ secrets.VAULT_ROLE_ID }}
-          VAULT_SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
 
       - name: Call pull
         uses: distributhor/workflow-webhook@v3
