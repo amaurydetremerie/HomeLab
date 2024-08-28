@@ -11,7 +11,8 @@ on:
 jobs:
   update_traefik_principal:
     runs-on: ubuntu-latest
-      steps:
+
+    steps:
       - name: Retrieve secrets from Vault
         id: vault
         uses: hashicorp/vault-action@v2
