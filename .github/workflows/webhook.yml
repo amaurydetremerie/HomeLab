@@ -27,9 +27,8 @@ jobs:
         uses: hashicorp/vault-action@v2
         with:
           url: ${{ secrets.VAULT_ADDR }}
-          method: approle
-          roleId: ${{ secrets.VAULT_ROLE_ID }}
-          secretId: ${{ secrets.VAULT_SECRET_ID }}
+          method: github
+          githubToken: ${{ secrets.VAULT_GITHUB_TOKEN }}
           secrets: |
             secrets/data/webhook secret;
             secrets/data/traefik auth;
