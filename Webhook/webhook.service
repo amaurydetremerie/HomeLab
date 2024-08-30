@@ -2,7 +2,7 @@
 Description=Webhooks
 
 [Service]
-ExecStart=webhook -hooks /root/Homelab/Webhook/hooks.json -template -hotreload
+ExecStart=webhook -hooks /etc/Homelab/Webhook/hooks.json -template -hotreload -verbose
 
 [Install]
 WantedBy=multi-user.target

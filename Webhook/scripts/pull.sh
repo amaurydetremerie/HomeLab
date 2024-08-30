@@ -7,7 +7,7 @@ case $1 in
     exit 0
         ;;
   webhook)
-    git -C /root/Homelab pull origin main
+    git -C /etc/Homelab pull origin main
     exit 0
         ;;
   *)

@@ -1,7 +1,7 @@
 [
   {
     "id": "pull-webhook",
-    "execute-command": "/var/www/webhooks/scripts/pull",
+    "execute-command": "/etc/Homelab/Webhook/scripts/pull.sh",
     "pass-arguments-to-command": [
       {
         "source": "payload",
@@ -13,33 +13,22 @@
         {
           "match":
           {
-            "type": "payload-hash-sha1",
-            "secret": "mysecret",
+            "type": "payload-hmac-sha1",
+            "secret": "{{ getenv "WEBHOOK_SECRET" | js }}",
             "parameter":
             {
               "source": "header",
               "name": "X-Hub-Signature"
             }
           }
-        },
-        {
-          "match":
-          {
-            "type": "value",
-            "value": "tag",
-            "parameter":
-            {
-              "source": "payload",
-              "name": "ref_type"
-            }
-          }
         }
       ]
-    }
+    },
+    "trigger-rule-mismatch-http-response-code": 401
   },
   {
     "id": "restart-webhook",
-    "execute-command": "/var/www/webhooks/scripts/restart",
+    "execute-command": "/etc/Homelab/Webhook/scripts/restart.sh",
     "pass-arguments-to-command": [
       {
         "source": "payload",
@@ -51,7 +40,7 @@
         {
           "match":
           {
-            "type": "payload-hash-sha1",
+            "type": "payload-hmac-sha1",
             "secret": "{{ getenv "WEBHOOK_SECRET" | js }}",
             "parameter":
             {
@@ -59,20 +48,9 @@
               "name": "X-Hub-Signature"
             }
           }
-        },
-        {
-          "match":
-          {
-            "type": "value",
-            "value": "tag",
-            "parameter":
-            {
-              "source": "payload",
-              "name": "ref_type"
-            }
-          }
         }
       ]
-    }
+    },
+    "trigger-rule-mismatch-http-response-code": 401
   }
 ]
