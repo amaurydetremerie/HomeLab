@@ -41,3 +41,11 @@ jobs:
           webhook_auth_type: "basic"
           webhook_auth: ${{ steps.vault.outputs.auth }}
           data: '{ "project": "webhook" }'
+      - name: Call restart
+        uses: distributhor/workflow-webhook@v3
+        with:
+          webhook_url: ${{ secrets.WEBHOOK_URL }}/hooks/restart-webhook
+          webhook_secret: ${{ steps.vault.outputs.secret }}
+          webhook_auth_type: "basic"
+          webhook_auth: ${{ steps.vault.outputs.auth }}
+          data: '{ "service": "webhook" }'
