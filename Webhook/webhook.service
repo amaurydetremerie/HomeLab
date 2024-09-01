@@ -3,7 +3,7 @@ Description=Webhooks
 
 [Service]
 ExecStartPre=/bin/sh -c 'systemctl set-environment WEBHOOK_SECRET=$$(curl --silent -H "X-Vault-Request: true" -H "X-Vault-Token: $VAULT_TOKEN" $VAULT_ADDR | jq -r .data.data.secret)'
-ExecStart=webhook -hooks /etc/Homelab/Webhook/hooks.json -template -hotreload -verbose
+ExecStart=webhook -hooks /etc/Homelab/Webhook/hooks.json -template -verbose
 
 [Install]
 WantedBy=multi-user.target
