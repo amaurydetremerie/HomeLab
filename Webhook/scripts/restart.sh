@@ -3,7 +3,7 @@
 case $1 in
 
   traefik)
-    echo "systemctl daemon-reload; systemctl restart traefik.service" | ssh root@10.100.0.1 /bin/bash
+    echo "systemctl daemon-reload; systemctl restart traefik.service" | ssh -i ../id_rsa root@10.100.0.1 /bin/bash
     exit 0
     ;;
   webhook)
