@@ -33,25 +33,25 @@ All my servers run under Proxmox, and my data is managed in a TrueNas Scale virt
 9) Find a way to replace secrets in files
    1) Using Vault, Based on https://devopscube.com/vault-in-kubernetes/
 10) Configure [Homepage](Kubernetes/K3S/Homepage/homepage.yaml#L8)
+11) Configure [LibreSpeed](Kubernetes/K3S/LibreSpeed/librespeed.yaml)
+12) Configure [Tautulli](Kubernetes/K3S/Tautulli/tautulli.yaml)
+13) Configure [Speedtest Tracker](Kubernetes/K3S/SpeedtestTracker/speedtestTracker.yaml)
+    1) https://github.com/maximemoreillon/kubernetes-manifests/tree/master/speedtest-tracker
+14) Create [webhook](Webhook) to automatically update Traefik configurations with [GitHub Actions](.github/workflows/traefik.yml)
 ### To Do
-11) Check to migrate CT in K3S
-12) Find some new interesting apps
+1) Check to migrate CT in K3S (Still Graphana, Influx, Prometheus)
+2) Find some new interesting apps
     1) [FireflyIII](https://firefly-iii.org/)
     2) [ActualBudget](https://actualbudget.org/)
     3) [Paisa](https://paisa.fyi/)
-    4) [LibreSpeed](https://github.com/librespeed/speedtest)
-    5) [Tautulli](https://tautulli.com/)
-    6) [Speedtest Tracker](https://docs.speedtest-tracker.dev/)
-       1) https://github.com/maximemoreillon/kubernetes-manifests/tree/master/speedtest-tracker
     7) [Authelia](https://www.authelia.com/)
-13) Install Proxmox on Dell Optiplex
-14) Move one K3S Instance on each server
-15) Move Traefik Principal CT in K3S (What about LB ? Is it possible to use Ingress Controller to call external service like TrueNas or Pve ? What happen if home disconnected and service going to offsite ?)
-16) Install off site server with instant sync for nas data, daily backup, k3s worker (or master ?)
-17) Move Home Assistant to Dell Optiplex
-18) VPS instead of Cloudflare ?
-19) Setup personal Docker Registry (Registry ? Pull Through ?)
+3) Install Proxmox on Dell Optiplex
+4) Move one K3S Instance on each server
+5) Install off site server with instant sync for nas data, daily backup, k3s worker (or master ?)
+6) Move Home Assistant to Dell Optiplex
+7) VPS instead of Cloudflare ?
+8) Setup personal Docker Registry (Registry ? Pull Through ?)
        https://www.paulsblog.dev/how-to-install-a-private-docker-container-registry-in-kubernetes/
        https://medium.com/geekculture/deploying-docker-registry-on-kubernetes-3319622b8f32
-20) Upgrade DL380p to run Truenas on it, decommissioning off-site I7, move Dell Precision off-site
+9) Upgrade DL380p to run Truenas on it, decommissioning off-site I7, move Dell Precision off-site
     1) https://www.goharddrive.com/default.asp
