@@ -18,7 +18,7 @@ http:
       entryPoints:
         - "websecure"
       middlewares:
-        - "my-auth@file"
+        - "basic-auth@file"
         - "security@file"
         - "compression@file"
       service: "webhook@file"
