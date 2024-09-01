@@ -3,7 +3,7 @@ http:
     webhook:
       loadBalancer:
         servers:
-          - url: "http://10.100.0.107:9000 "
+          - url: "http://10.100.0.107:9000"
 
   routers:
     webhook:
@@ -18,7 +18,6 @@ http:
       entryPoints:
         - "websecure"
       middlewares:
-        - "my-auth@file"
         - "security@file"
         - "compression@file"
       service: "webhook@file"
