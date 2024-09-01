@@ -31,7 +31,7 @@ jobs:
           githubToken: ${{ secrets.VAULT_GITHUB_TOKEN }}
           secrets: |
             secrets/data/webhook secret;
-            secrets/data/traefik auth;
+            secrets/data/traefik basicauth;
 
       - name: Call pull
         uses: distributhor/workflow-webhook@v3
@@ -39,7 +39,7 @@ jobs:
           webhook_url: ${{ secrets.WEBHOOK_URL }}/hooks/pull-webhook
           webhook_secret: ${{ steps.vault.outputs.secret }}
           webhook_auth_type: "basic"
-          webhook_auth: ${{ steps.vault.outputs.auth }}
+          webhook_auth: ${{ steps.vault.outputs.basicauth }}
           data: '{ "project": "webhook" }'
       - name: Call restart
         uses: distributhor/workflow-webhook@v3
@@ -47,5 +47,5 @@ jobs:
           webhook_url: ${{ secrets.WEBHOOK_URL }}/hooks/restart-webhook
           webhook_secret: ${{ steps.vault.outputs.secret }}
           webhook_auth_type: "basic"
-          webhook_auth: ${{ steps.vault.outputs.auth }}
+          webhook_auth: ${{ steps.vault.outputs.basicauth }}
           data: '{ "service": "webhook" }'
