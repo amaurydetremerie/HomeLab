@@ -25,3 +25,11 @@ http:
       tls:
         certResolver: letsencrypt-ecdsa
         options: mintls13
+    traefik-local:
+      rule: "Host(`traefik.wiserisk.local`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "api@internal"

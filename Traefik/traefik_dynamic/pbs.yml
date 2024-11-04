@@ -1,0 +1,21 @@
+http:
+  services:
+    flash-pbs:
+      loadBalancer:
+        serversTransport: flash-pbs-transport
+        servers:
+          - url: "https://10.100.0.109:8007"
+
+  routers:
+    flash-pbs:
+      rule: "Host(`flash.pbs.wiserisk.local`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "flash-pbs@file"
+
+  serversTransports:
+    flash-pbs-transport:
+      insecureSkipVerify: true

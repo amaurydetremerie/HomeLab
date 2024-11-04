@@ -25,3 +25,11 @@ http:
       tls:
         certResolver: letsencrypt-ecdsa
         options: mintls13
+    webhook-local:
+      rule: "Host(`webhook.wiserisk.local`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "webhook@file"

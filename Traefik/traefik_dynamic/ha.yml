@@ -24,3 +24,11 @@ http:
       tls:
         certResolver: letsencrypt-ecdsa
         options: mintls13
+    ha-local:
+      rule: "Host(`ha.wiserisk.local`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "ha@file"

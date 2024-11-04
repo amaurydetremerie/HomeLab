@@ -33,3 +33,9 @@ tcp:
       priority: 2
       tls:
         passthrough: true
+    nextcloud-local-tcp:
+      rule: "HostSNI(`nextcloud.wiserisk.local`)"
+      entryPoints:
+        - "web"
+      service: "nextcloud-secure-tcp@file"
+      priority: 2

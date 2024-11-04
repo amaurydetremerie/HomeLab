@@ -46,3 +46,19 @@ http:
       tls:
         certResolver: letsencrypt-ecdsa
         options: mintls13
+    hermes-local:
+      rule: "Host(`hermes.wiserisk.local`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "hermes@file"
+    nas-local:
+      rule: "Host(`nas.wiserisk.local`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "nas@file"

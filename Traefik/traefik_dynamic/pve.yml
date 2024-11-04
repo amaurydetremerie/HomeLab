@@ -6,94 +6,47 @@ http:
         servers:
           - url: "https://10.0.0.80:8006"
           - url: "https://10.0.0.81:8006"
-    pve1:
+    thor:
       loadBalancer:
-        serversTransport: pve1-transport
+        serversTransport: thor-transport
         servers:
           - url: "https://10.0.0.80:8006"
-    pve2:
+    flash:
       loadBalancer:
-        serversTransport: pve2-transport
+        serversTransport: flash-transport
         servers:
           - url: "https://10.0.0.81:8006"
-    pve3:
-      loadBalancer:
-        serversTransport: pve3-transport
-        servers:
-          - url: "https://10.0.0.82:8006"
 
   routers:
     pve:
-      rule: "Host(`pve.wiserisk.be`)"
+      rule: "Host(`pve.wiserisk.local`)"
       entryPoints:
         - "web"
-      middlewares:
-        - "redirect-to-https@file"
-      service: "noop@internal"
-    pve-secure:
-      rule: "Host(`pve.wiserisk.be`)"
-      entryPoints:
-        - "websecure"
       middlewares:
         - "security@file"
         - "compression@file"
       service: "pve@file"
-      tls: {}
-    pve1:
-      rule: "Host(`1.pve.wiserisk.be`)"
+    thor:
+      rule: "Host(`thor.pve.wiserisk.local`)"
       entryPoints:
         - "web"
       middlewares:
-        - "redirect-to-https@file"
-      service: "noop@internal"
-    pve1-secure:
-      rule: "Host(`1.pve.wiserisk.be`)"
-      entryPoints:
-        - "websecure"
-      middlewares:
         - "security@file"
         - "compression@file"
-      service: "pve1@file"
-      tls: { }
-    pve2:
-      rule: "Host(`2.pve.wiserisk.be`)"
+      service: "thor@file"
+    flash:
+      rule: "Host(`flash.pve.wiserisk.local`)"
       entryPoints:
         - "web"
       middlewares:
-        - "redirect-to-https@file"
-      service: "noop@internal"
-    pve2-secure:
-      rule: "Host(`2.pve.wiserisk.be`)"
-      entryPoints:
-        - "websecure"
-      middlewares:
         - "security@file"
         - "compression@file"
-      service: "pve2@file"
-      tls: { }
-    pve3:
-      rule: "Host(`3.pve.wiserisk.be`)"
-      entryPoints:
-        - "web"
-      middlewares:
-        - "redirect-to-https@file"
-      service: "noop@internal"
-    pve3-secure:
-      rule: "Host(`3.pve.wiserisk.be`)"
-      entryPoints:
-        - "websecure"
-      middlewares:
-        - "security@file"
-        - "compression@file"
-      service: "pve3@file"
-      tls: { }
+      service: "flash@file"
 
   serversTransports:
     pve-transport:
       insecureSkipVerify: true
-    pve1-transport:
+    thor-transport:
       insecureSkipVerify: true
-    pve2-transport:
-      insecureSkipVerify: true
-    pve3-transport:
+    flash-transport:
       insecureSkipVerify: true

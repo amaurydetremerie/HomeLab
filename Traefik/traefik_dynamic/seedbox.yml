@@ -33,3 +33,11 @@ tcp:
       priority: 2
       tls:
         passthrough: true
+    seedbox-local-tcp:
+      rule: "HostSNI(`seedbox.wiserisk.local`)"
+      entryPoints:
+        - "web"
+      service: "seedbox-secure-tcp@file"
+      priority: 2
+      tls:
+        passthrough: true
