@@ -6,29 +6,17 @@ http:
           - url: "http://localhost:8080"
 
   routers:
-    traefik:
-      rule: "Host(`traefik.wiserisk.be`)"
+    traefik-local:
+      rule: "Host(`traefik.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
-    traefik-secure:
-      rule: "Host(`traefik.wiserisk.be`)"
-      entryPoints:
-        - "websecure"
-      middlewares:
-        - "my-auth@file"
-        - "security@file"
-        - "compression@file"
-      service: "api@internal"
-      tls:
-        certResolver: letsencrypt-ecdsa
-        options: mintls13
-    traefik-local:
+    traefik-secure-local:
       rule: "Host(`traefik.wiserisk.home`)"
       entryPoints:
-        - "web"
+        - "websecure"
       middlewares:
         - "security@file"
         - "compression@file"

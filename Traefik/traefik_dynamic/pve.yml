@@ -1,52 +1,50 @@
 http:
-  services:
-    pve:
-      loadBalancer:
-        serversTransport: pve-transport
-        servers:
-          - url: "https://10.0.0.80:8006"
-          - url: "https://10.0.0.81:8006"
-    thor:
-      loadBalancer:
-        serversTransport: thor-transport
-        servers:
-          - url: "https://10.0.0.80:8006"
-    flash:
-      loadBalancer:
-        serversTransport: flash-transport
-        servers:
-          - url: "https://10.0.0.81:8006"
-
   routers:
-    pve:
-      rule: "Host(`pve.wiserisk.home`)"
+    pve-local:
+      rule: "Host(`pve.wiserisk.home`) || Host(`flash.pve.wiserisk.home`) || Host(`thor.pve.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
-        - "security@file"
-        - "compression@file"
-      service: "pve@file"
-    thor:
-      rule: "Host(`thor.pve.wiserisk.home`)"
-      entryPoints:
-        - "web"
-      middlewares:
-        - "security@file"
-        - "compression@file"
-      service: "thor@file"
-    flash:
-      rule: "Host(`flash.pve.wiserisk.home`)"
-      entryPoints:
-        - "web"
-      middlewares:
-        - "security@file"
-        - "compression@file"
-      service: "flash@file"
+        - "redirect-to-https@file"
+      service: "noop@internal"
 
-  serversTransports:
-    pve-transport:
-      insecureSkipVerify: true
-    thor-transport:
-      insecureSkipVerify: true
-    flash-transport:
-      insecureSkipVerify: true
+tcp:
+  services:
+    pve-secure-tcp:
+      loadBalancer:
+        servers:
+          - address: "10.0.0.80:8006"
+          - address: "10.0.0.81:8006"
+    flash-pve-secure-tcp:
+      loadBalancer:
+        servers:
+          - address: "10.0.0.81:8006"
+    thor-pve-secure-tcp:
+      loadBalancer:
+        servers:
+          - address: "10.0.0.80:8006"
+  routers:
+    pve-secure-local-tcp:
+      rule: "HostSNI(`pve.wiserisk.be`)"
+      entryPoints:
+        - "websecure"
+      service: "pve-secure-tcp@file"
+      priority: 2
+      tls:
+        passthrough: true
+    flash-pve-secure-local-tcp:
+      rule: "HostSNI(`flash.pve.wiserisk.be`)"
+      entryPoints:
+        - "websecure"
+      service: "flash-pve-secure-tcp@file"
+      priority: 2
+      tls:
+        passthrough: true
+    thor-pve-secure-local-tcp:
+      rule: "HostSNI(`thor.pve.wiserisk.be`)"
+      entryPoints:
+        - "websecure"
+      service: "thor-pve-secure-tcp@file"
+      priority: 2
+      tls:
+        passthrough: true

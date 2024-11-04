@@ -11,12 +11,13 @@ http:
 
   routers:
     hermes:
-      rule: "Host(`hermes.wiserisk.be`)"
+      rule: "Host(`hermes.wiserisk.be`) || Host(`hermes.wiserisk.home`) || Host(`nas.wiserisk.be`) || Host(`nas.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
+
     hermes-secure:
       rule: "Host(`hermes.wiserisk.be`)"
       entryPoints:
@@ -28,13 +29,6 @@ http:
       tls:
         certResolver: letsencrypt-ecdsa
         options: mintls13
-    nas:
-      rule: "Host(`nas.wiserisk.be`)"
-      entryPoints:
-        - "web"
-      middlewares:
-        - "redirect-to-https@file"
-      service: "noop@internal"
     nas-secure:
       rule: "Host(`nas.wiserisk.be`)"
       entryPoints:
@@ -46,18 +40,18 @@ http:
       tls:
         certResolver: letsencrypt-ecdsa
         options: mintls13
-    hermes-local:
+    hermes-secure-local:
       rule: "Host(`hermes.wiserisk.home`)"
       entryPoints:
-        - "web"
+        - "websecure"
       middlewares:
         - "security@file"
         - "compression@file"
       service: "hermes@file"
-    nas-local:
+    nas-secure-local:
       rule: "Host(`nas.wiserisk.home`)"
       entryPoints:
-        - "web"
+        - "websecure"
       middlewares:
         - "security@file"
         - "compression@file"

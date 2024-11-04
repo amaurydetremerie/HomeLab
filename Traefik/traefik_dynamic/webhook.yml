@@ -7,7 +7,7 @@ http:
 
   routers:
     webhook:
-      rule: "Host(`webhook.wiserisk.be`)"
+      rule: "Host(`webhook.wiserisk.be`) || Host(`webhook.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
@@ -25,10 +25,10 @@ http:
       tls:
         certResolver: letsencrypt-ecdsa
         options: mintls13
-    webhook-local:
+    webhook-secure-local:
       rule: "Host(`webhook.wiserisk.home`)"
       entryPoints:
-        - "web"
+        - "websecure"
       middlewares:
         - "security@file"
         - "compression@file"

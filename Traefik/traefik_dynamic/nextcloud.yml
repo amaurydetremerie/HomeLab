@@ -5,12 +5,13 @@ http:
         servers:
           - url: "http://10.100.0.103:80"
   routers:
-    nextcloud:
-      rule: "Host(`nextcloud.wiserisk.be`)"
+    nextcloud-local:
+      rule: "Host(`nextcloud.wiserisk.be`) || Host(`nextcloud.wiserisk.home`)"
       entryPoints:
         - "web"
-      service: "nextcloud@file"
-      priority: 2
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
     nextcloud-acme:
       rule: "Host(`nextcloud.wiserisk.be`) && PathPrefix(`/.well-known/acme-challenge/`)"
       entryPoints:
@@ -26,16 +27,10 @@ tcp:
           - address: "10.100.0.103:443"
   routers:
     nextcloud-secure-tcp:
-      rule: "HostSNI(`nextcloud.wiserisk.be`)"
+      rule: "HostSNI(`nextcloud.wiserisk.be`) || HostSNI(`nextcloud.wiserisk.home`)"
       entryPoints:
         - "websecure"
       service: "nextcloud-secure-tcp@file"
       priority: 2
       tls:
         passthrough: true
-    nextcloud-local-tcp:
-      rule: "HostSNI(`nextcloud.wiserisk.home`)"
-      entryPoints:
-        - "web"
-      service: "nextcloud-secure-tcp@file"
-      priority: 2

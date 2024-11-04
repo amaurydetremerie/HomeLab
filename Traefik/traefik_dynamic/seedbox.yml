@@ -6,7 +6,7 @@ http:
           - url: "http://10.100.0.105:80"
   routers:
     seedbox:
-      rule: "Host(`seedbox.wiserisk.be`)"
+      rule: "Host(`seedbox.wiserisk.be`) || Host(`seedbox.wiserisk.home`)"
       entryPoints:
         - "web"
       service: "noop@internal"
@@ -26,17 +26,9 @@ tcp:
           - address: "10.100.0.105:443"
   routers:
     seedbox-secure-tcp:
-      rule: "HostSNI(`seedbox.wiserisk.be`)"
+      rule: "HostSNI(`seedbox.wiserisk.be`) || HostSNI(`seedbox.wiserisk.home`)"
       entryPoints:
         - "websecure"
-      service: "seedbox-secure-tcp@file"
-      priority: 2
-      tls:
-        passthrough: true
-    seedbox-local-tcp:
-      rule: "HostSNI(`seedbox.wiserisk.home`)"
-      entryPoints:
-        - "web"
       service: "seedbox-secure-tcp@file"
       priority: 2
       tls:

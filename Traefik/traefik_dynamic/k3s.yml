@@ -8,7 +8,7 @@ http:
           - url: "http://10.100.0.153"
   routers:
     k3s-wildcard:
-      rule: "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.be`) || Host(`k3s.wiserisk.be`)"
+      rule: "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.be`) || Host(`k3s.wiserisk.be`) || HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.home`) || Host(`k3s.wiserisk.home`)"
       entryPoints:
         - "web"
       service: "k3s-wildcard@file"
@@ -37,19 +37,13 @@ tcp:
 
   routers:
     k3s-secure-wildcard-tcp:
-      rule: "HostSNIRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.be`) || HostSNI(`k3s.wiserisk.be`)"
+      rule: "HostSNIRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.be`) || HostSNI(`k3s.wiserisk.be`) || HostSNIRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.home`) || HostSNI(`k3s.wiserisk.home`)"
       entryPoints:
         - "websecure"
       service: "k3s-secure-wildcard-tcp@file"
       priority: 2
       tls:
         passthrough: true
-    k3s-local-wildcard-tcp:
-      rule: "HostSNIRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.home`) || HostSNI(`k3s.wiserisk.home`)"
-      entryPoints:
-        - "web"
-      service: "k3s-secure-wildcard-tcp@file"
-      priority: 2
     k3s-management-tcp:
       rule: "HostSNI(`*`)"
       entryPoints:
