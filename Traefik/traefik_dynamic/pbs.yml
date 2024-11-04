@@ -5,7 +5,7 @@ http:
         servers:
           - url: "http://10.100.0.109:8007"
   routers:
-    traefik-local:
+    flash-pbs-local:
       rule: "Host(`flash.pbs.wiserisk.home`)"
       entryPoints:
         - "web"
