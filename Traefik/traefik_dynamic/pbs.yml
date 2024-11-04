@@ -1,4 +1,9 @@
 http:
+  services:
+    flash-pbs:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.109:8007"
   routers:
     traefik-local:
       rule: "Host(`flash.pbs.wiserisk.home`)"
