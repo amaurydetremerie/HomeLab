@@ -25,7 +25,7 @@ http:
         certResolver: letsencrypt-ecdsa
         options: mintls13
     plex-local:
-      rule: "Host(`plex.wiserisk.local`)"
+      rule: "Host(`plex.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:

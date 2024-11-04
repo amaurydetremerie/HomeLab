@@ -34,7 +34,7 @@ tcp:
       tls:
         passthrough: true
     seedbox-local-tcp:
-      rule: "HostSNI(`seedbox.wiserisk.local`)"
+      rule: "HostSNI(`seedbox.wiserisk.home`)"
       entryPoints:
         - "web"
       service: "seedbox-secure-tcp@file"

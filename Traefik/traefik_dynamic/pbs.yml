@@ -8,7 +8,7 @@ http:
 
   routers:
     flash-pbs:
-      rule: "Host(`flash.pbs.wiserisk.local`)"
+      rule: "Host(`flash.pbs.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:

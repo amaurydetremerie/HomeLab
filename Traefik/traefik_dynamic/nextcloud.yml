@@ -34,7 +34,7 @@ tcp:
       tls:
         passthrough: true
     nextcloud-local-tcp:
-      rule: "HostSNI(`nextcloud.wiserisk.local`)"
+      rule: "HostSNI(`nextcloud.wiserisk.home`)"
       entryPoints:
         - "web"
       service: "nextcloud-secure-tcp@file"

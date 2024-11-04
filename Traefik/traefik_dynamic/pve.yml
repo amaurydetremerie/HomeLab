@@ -19,7 +19,7 @@ http:
 
   routers:
     pve:
-      rule: "Host(`pve.wiserisk.local`)"
+      rule: "Host(`pve.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
@@ -27,7 +27,7 @@ http:
         - "compression@file"
       service: "pve@file"
     thor:
-      rule: "Host(`thor.pve.wiserisk.local`)"
+      rule: "Host(`thor.pve.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
@@ -35,7 +35,7 @@ http:
         - "compression@file"
       service: "thor@file"
     flash:
-      rule: "Host(`flash.pve.wiserisk.local`)"
+      rule: "Host(`flash.pve.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:

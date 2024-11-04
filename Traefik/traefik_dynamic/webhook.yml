@@ -26,7 +26,7 @@ http:
         certResolver: letsencrypt-ecdsa
         options: mintls13
     webhook-local:
-      rule: "Host(`webhook.wiserisk.local`)"
+      rule: "Host(`webhook.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
