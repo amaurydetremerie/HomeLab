@@ -32,6 +32,7 @@ http:
         - "security@file"
         - "compression@file"
       service: "plex@file"
+      tls: {}
 
 tcp:
   services:

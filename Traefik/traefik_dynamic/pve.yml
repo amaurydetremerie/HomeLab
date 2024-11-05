@@ -25,7 +25,7 @@ tcp:
           - address: "10.0.0.80:8006"
   routers:
     pve-secure-local-tcp:
-      rule: "HostSNI(`pve.wiserisk.be`)"
+      rule: "HostSNI(`pve.wiserisk.home`)"
       entryPoints:
         - "websecure"
       service: "pve-secure-tcp@file"
@@ -33,7 +33,7 @@ tcp:
       tls:
         passthrough: true
     flash-pve-secure-local-tcp:
-      rule: "HostSNI(`flash.pve.wiserisk.be`)"
+      rule: "HostSNI(`flash.pve.wiserisk.home`)"
       entryPoints:
         - "websecure"
       service: "flash-pve-secure-tcp@file"
@@ -41,7 +41,7 @@ tcp:
       tls:
         passthrough: true
     thor-pve-secure-local-tcp:
-      rule: "HostSNI(`thor.pve.wiserisk.be`)"
+      rule: "HostSNI(`thor.pve.wiserisk.home`)"
       entryPoints:
         - "websecure"
       service: "thor-pve-secure-tcp@file"

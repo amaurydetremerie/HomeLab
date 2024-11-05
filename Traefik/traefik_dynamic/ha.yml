@@ -32,3 +32,4 @@ http:
         - "security@file"
         - "compression@file"
       service: "ha@file"
+      tls: {}

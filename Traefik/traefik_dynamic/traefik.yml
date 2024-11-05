@@ -1,10 +1,4 @@
 http:
-  services:
-    traefik:
-      loadBalancer:
-        servers:
-          - url: "http://localhost:8080"
-
   routers:
     traefik-local:
       rule: "Host(`traefik.wiserisk.home`)"
@@ -21,3 +15,4 @@ http:
         - "security@file"
         - "compression@file"
       service: "api@internal"
+      tls: {}

@@ -48,6 +48,7 @@ http:
         - "security@file"
         - "compression@file"
       service: "hermes@file"
+      tls: {}
     nas-secure-local:
       rule: "Host(`nas.wiserisk.home`)"
       entryPoints:
@@ -56,3 +57,4 @@ http:
         - "security@file"
         - "compression@file"
       service: "nas@file"
+      tls: {}

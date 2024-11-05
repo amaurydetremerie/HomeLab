@@ -33,3 +33,4 @@ http:
         - "security@file"
         - "compression@file"
       service: "webhook@file"
+      tls: {}
