@@ -1,0 +1,24 @@
+http:
+  services:
+    adguard:
+      loadBalancer:
+        servers:
+          - url: "http://10.0.0.86:80"
+
+  routers:
+    adguard:
+      rule: "Host(`adguard.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
+    adguard-local-secure:
+      rule: "Host(`adguard.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "adguard@file"
+      tls: {}

@@ -1,0 +1,25 @@
+http:
+  routers:
+    flash-ilo-local:
+      rule: "Host(`flash.ilo.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
+
+tcp:
+  services:
+    flash-ilo-secure-tcp:
+      loadBalancer:
+        servers:
+          - address: "10.0.0.45:443"
+  routers:
+    flash-pbs-secure-local-tcp:
+      rule: "HostSNI(`flash.ilo.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      service: "flash-ilo-secure-tcp@file"
+      priority: 2
+      tls:
+        passthrough: true
