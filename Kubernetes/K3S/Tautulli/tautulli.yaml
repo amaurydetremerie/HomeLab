@@ -45,6 +45,7 @@ spec:
       containers:
         - name: tautulli
           image: lscr.io/linuxserver/tautulli:v2.14.3-ls139
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8181
           env:

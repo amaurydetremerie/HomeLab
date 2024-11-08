@@ -117,7 +117,7 @@ spec:
       containers:
         - name: portainer
           image: "portainer/portainer-ce:2.19.5"
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: pvc-nfs-k3s-portainer-volume
               mountPath: /data

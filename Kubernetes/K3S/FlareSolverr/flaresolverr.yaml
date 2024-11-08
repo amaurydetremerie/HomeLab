@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - image: flaresolverr/flaresolverr:latest
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           name: flaresolverr
           ports:
             - containerPort: 8191

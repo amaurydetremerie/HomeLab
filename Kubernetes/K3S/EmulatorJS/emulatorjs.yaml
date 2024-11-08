@@ -110,7 +110,7 @@ spec:
             - name: PGID
               value: "1000"
           image: linuxserver/emulatorjs:1.9.0
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           name: emulatorjs
           ports:
             - containerPort: 3000

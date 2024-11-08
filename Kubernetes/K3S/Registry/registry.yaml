@@ -49,6 +49,7 @@ spec:
     spec:
       containers:
         - image: registry
+          imagePullPolicy: IfNotPresent
           name: registry
           ports:
             - containerPort: 5000
