@@ -3,11 +3,11 @@ http:
     hermes:
       loadBalancer:
         servers:
-          - url: "http://10.100.0.101"
+          - url: "http://10.100.0.10"
     nas:
       loadBalancer:
         servers:
-          - url: "http://10.100.0.199"
+          - url: "http://10.100.0.11"
 
   routers:
     hermes:
