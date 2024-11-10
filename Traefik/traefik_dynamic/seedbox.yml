@@ -3,7 +3,7 @@ http:
     seedbox:
       loadBalancer:
         servers:
-          - url: "http://10.100.0.105:80"
+          - url: "http://10.100.0.106:80"
   routers:
     seedbox:
       rule: "Host(`seedbox.wiserisk.be`) || Host(`seedbox.wiserisk.home`)"
@@ -23,7 +23,7 @@ tcp:
     seedbox-secure-tcp:
       loadBalancer:
         servers:
-          - address: "10.100.0.105:443"
+          - address: "10.100.0.106:443"
   routers:
     seedbox-secure-tcp:
       rule: "HostSNI(`seedbox.wiserisk.be`) || HostSNI(`seedbox.wiserisk.home`)"

@@ -3,7 +3,7 @@ http:
     plex:
       loadBalancer:
         servers:
-          - url: "http://10.100.0.104:32400"
+          - url: "http://10.100.0.105:32400"
 
   routers:
     plex:
@@ -39,7 +39,7 @@ tcp:
     plex-tcp:
       loadBalancer:
         servers:
-          - address: "10.100.0.104:32400"
+          - address: "10.100.0.105:32400"
 
   routers:
     plex-tcp:
