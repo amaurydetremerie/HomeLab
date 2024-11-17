@@ -1,0 +1,47 @@
+argo-cd:
+  server:
+    extraArgs:
+      - --insecure
+    config:
+      repositories: |
+        - type: git
+          url: https://github.com/amaurydetremerie/HomeLab.git
+      configManagementPlugins: |
+        - name: argocd-vault-plugin
+          generate:
+            command: ["argocd-vault-plugin"]
+            args: ["generate", "./"]
+  repoServer:
+    volumes:
+      - name: custom-tools
+        emptyDir: {}
+    initContainers:
+      - name: download-tools
+        image: alpine:3.17
+        command: [sh, -c]
+        args:
+          - wget -O argocd-vault-plugin https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v1.17.0/argocd-vault-plugin_1.17.0_linux_amd64 &&
+            chmod +x argocd-vault-plugin &&
+            mv argocd-vault-plugin /custom-tools/
+        volumeMounts:
+          - mountPath: /custom-tools
+            name: custom-tools
+    extraContainers:
+      - name: vault-plugin
+        image: alpine:3.17
+        command: [/custom-tools/argocd-vault-plugin]
+        args: ["generate", "./"]
+        volumeMounts:
+          - mountPath: /custom-tools
+            name: custom-tools
+        env:
+          - name: AVP_TYPE
+            value: vault
+          - name: AVP_AUTH_TYPE
+            value: k8s
+          - name: AVP_K8S_ROLE
+            value: argocd
+          - name: VAULT_ADDR
+            value: "http://vault.vault:8200"
+          - name: AVP_VAULT_MOUNT_PATH
+            value: kubernetes

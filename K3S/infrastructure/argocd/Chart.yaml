@@ -1,0 +1,10 @@
+apiVersion: v2
+name: argocd
+description: ArgoCD for K3S with Vault Plugin
+type: application
+version: 5.51.4
+appVersion: v2.8.4
+dependencies:
+  - name: argo-cd
+    version: 5.51.4
+    repository: https://argoproj.github.io/argo-helm
