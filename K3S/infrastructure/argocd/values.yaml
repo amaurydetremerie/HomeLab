@@ -1,16 +1,13 @@
 argo-cd:
-  server:
-    extraArgs:
-      - --insecure
-    config:
-      repositories: |
-        - type: git
-          url: https://github.com/amaurydetremerie/HomeLab.git
-      configManagementPlugins: |
-        - name: argocd-vault-plugin
+  configs:
+    params:
+      server.insecure: true
+    cmp:
+      plugins:
+        argocd-vault-plugin:
           generate:
-            command: ["argocd-vault-plugin"]
-            args: ["generate", "./"]
+            command: [ "argocd-vault-plugin" ]
+            args: [ "generate", "./" ]
   repoServer:
     volumes:
       - name: custom-tools
