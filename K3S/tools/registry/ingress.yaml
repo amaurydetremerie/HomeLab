@@ -1,0 +1,16 @@
+apiVersion: traefik.io/v1
+kind: IngressRoute
+metadata:
+  name: registry
+  namespace: registry-system
+spec:
+  entryPoints:
+    - web
+    - websecure
+  routes:
+    - match: Host(`registry.k3s.wiserisk.be`)
+      kind: Rule
+      services:
+        - name: registry
+          port: 5000
+  tls: {}
