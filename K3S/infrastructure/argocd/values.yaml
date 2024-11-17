@@ -3,6 +3,11 @@ argo-cd:
     extraArgs:
       - --insecure
     config:
+      url: http://argocd-server
+      insecure: true
+      ingress:
+        enabled: true
+        https: false
       repositories: |
         - type: git
           url: https://github.com/amaurydetremerie/HomeLab.git
