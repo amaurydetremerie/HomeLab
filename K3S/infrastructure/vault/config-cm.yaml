@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-config
+  namespace: secure
+data:
+  config.hcl: |
+    ui = true
+    storage "file" {
+      path = "/vault/data"
+    }
+    listener "tcp" {
+      address     = "0.0.0.0:8200"
+      tls_disable = 1
+    }
+    cluster_addr = "http://$(POD_IP):8201"
+    api_addr     = "http://$(POD_IP):8200"
