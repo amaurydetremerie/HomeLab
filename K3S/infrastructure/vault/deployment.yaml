@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault
+  namespace: secure
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vault
+  template:
+    metadata:
+      labels:
+        app: vault
+    spec:
+      containers:
+        - name: vault
+          image: hashicorp/vault:1.15.4
+          ports:
+            - containerPort: 8200
+          env:
+            - name: VAULT_ADDR
+              value: http://127.0.0.1:8200
+            - name: VAULT_API_ADDR
+              value: http://$(POD_IP):8200
+            - name: VAULT_CLUSTER_ADDR
+              value: http://$(POD_IP):8201
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          volumeMounts:
+            - name: pvc-nfs-secure-k3s-vault-volume
+              mountPath: /vault/data
+            - name: vault-config
+              mountPath: /vault/config
+            - name: vault-unseal-script
+              mountPath: /vault/scripts
+            - name: vault-secrets
+              mountPath: /vault/secrets
+          securityContext:
+            capabilities:
+              add:
+                - IPC_LOCK
+      volumes:
+        - name: pvc-nfs-secure-k3s-vault-volume
+          persistentVolumeClaim:
+            claimName: pvc-nfs-secure-k3s-vault
+        - name: vault-config
+          configMap:
+            name: vault-config
+        - name: vault-unseal-script
+          configMap:
+            name: vault-auto-unseal
+            defaultMode: 0755
+        - name: vault-secrets
+          emptyDir: {}

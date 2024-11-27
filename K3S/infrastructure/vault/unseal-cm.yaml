@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-auto-unseal
+  namespace: secure
+data:
+  vault-unseal.sh: |
+    #!/bin/sh
+    # Script d'unseal automatique de Vault
+    VAULT_ADDR=http://localhost:8200
+
+    # Attendre que Vault soit opérationnel
+    while ! vault status > /dev/null 2>&1; do
+      echo "En attente du démarrage de Vault..."
+      sleep 5
+    done
+
+    # Vérifier si Vault est déjà initialisé
+    if vault status | grep -q "Initialized.*true"; then
+      # Utiliser les clés de récupération stockées en secret
+      UNSEAL_KEY1=$(cat /vault/secrets/unseal-key-1)
+      UNSEAL_KEY2=$(cat /vault/secrets/unseal-key-2)
+      UNSEAL_KEY3=$(cat /vault/secrets/unseal-key-3)
+
+      vault operator unseal $UNSEAL_KEY1
+      vault operator unseal $UNSEAL_KEY2
+      vault operator unseal $UNSEAL_KEY3
+    else
+      # Initialisation initiale de Vault
+      vault operator init -key-shares=5 -key-threshold=3 \
+        -format=json > /vault/secrets/vault-init.json
+
+      # Extraire les clés de récupération
+      jq -r '.unseal_keys_b64[0]' /vault/secrets/vault-init.json > /vault/secrets/unseal-key-1
+      jq -r '.unseal_keys_b64[1]' /vault/secrets/vault-init.json > /vault/secrets/unseal-key-2
+      jq -r '.unseal_keys_b64[2]' /vault/secrets/vault-init.json > /vault/secrets/unseal-key-3
+    
+      # Unseal Vault
+      vault operator unseal $(cat /vault/secrets/unseal-key-1)
+      vault operator unseal $(cat /vault/secrets/unseal-key-2)
+      vault operator unseal $(cat /vault/secrets/unseal-key-3)
+    fi
