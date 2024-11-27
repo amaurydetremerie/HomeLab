@@ -11,3 +11,17 @@ spec:
     server: 10.100.0.10
     path: /mnt/Hermes/K3S-Secure
   storageClassName: nfs
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: unseal-pv
+spec:
+  capacity:
+    storage: 1Mi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: 10.100.0.10
+    path: /mnt/Hermes/K3S-Secure
+  storageClassName: nfs

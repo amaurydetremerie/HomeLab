@@ -10,3 +10,16 @@ spec:
     requests:
       storage: 1Gi
   storageClassName: nfs
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: unseal-pvc
+  namespace: secure
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Mi
+  storageClassName: nfs

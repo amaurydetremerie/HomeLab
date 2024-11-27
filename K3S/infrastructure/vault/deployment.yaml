@@ -45,6 +45,7 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
+              ./vault/scripts/vault-unseal.sh &
               cp /tmp/vault/config/config.hcl /vault/config/config.hcl
               vault server -config=/vault/config/config.hcl
           ports:
@@ -61,8 +62,13 @@ spec:
               mountPath: /vault/config
             - name: vault-data
               mountPath: /vault/data
+            - name: unseal-data
+              mountPath: /vault/unseal
+              subPath: unseal
             - name: vault-secrets
               mountPath: /vault/secrets
+            - name: vault-unseal-script
+              mountPath: /vault/scripts
           securityContext:
             capabilities:
               add:
@@ -77,5 +83,12 @@ spec:
         - name: vault-data
           persistentVolumeClaim:
             claimName: vault-pvc
+        - name: unseal-data
+          persistentVolumeClaim:
+            claimName: unseal-pvc
         - name: vault-secrets
           emptyDir: {}
+        - name: vault-unseal-script
+          configMap:
+            name: vault-auto-unseal
+            defaultMode: 0755
