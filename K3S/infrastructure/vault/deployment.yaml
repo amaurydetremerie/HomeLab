@@ -14,16 +14,39 @@ spec:
         app: vault
     spec:
       serviceAccountName: vault-sa
+      initContainers:
+        - name: config-init
+          image: busybox
+          command:
+            - /bin/sh
+            - -c
+            - |
+              # Créer un répertoire de configuration modifiable
+              mkdir -p /tmp/vault/config
+              cp /vault/original-config/config.hcl /tmp/vault/config/config.hcl
+              # Créer les répertoires nécessaires avec les bonnes permissions
+              mkdir -p /vault/data
+              mkdir -p /vault/secrets
+          volumeMounts:
+            - name: vault-config
+              mountPath: /vault/original-config
+            - name: vault-config-working
+              mountPath: /tmp/vault/config
+            - name: vault-data
+              mountPath: /vault/data
+            - name: vault-secrets
+              mountPath: /vault/secrets
+          securityContext:
+            runAsUser: 0
       containers:
         - name: vault
           image: hashicorp/vault:1.15.4
           imagePullPolicy: IfNotPresent
-          securityContext:
-            privileged: true  # Ajouter les privilèges nécessaires
-            capabilities:
-              add:
-                - IPC_LOCK  # Conserver la capacité IPC_LOCK
-            runAsUser: 0  # Exécuter en root si nécessaire
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              cp /tmp/vault/config/config.hcl /vault/config/config.hcl
+              vault server -config=/vault/config/config.hcl
           ports:
             - containerPort: 8200
           env:
@@ -32,14 +55,27 @@ spec:
             - name: VAULT_API_ADDR
               value: https://vault.k3s.wiserisk.be
           volumeMounts:
-            - name: vault-data
-              mountPath: /vault/data
+            - name: vault-config-working
+              mountPath: /tmp/vault/config
             - name: vault-config
               mountPath: /vault/config
+            - name: vault-data
+              mountPath: /vault/data
+            - name: vault-secrets
+              mountPath: /vault/secrets
+          securityContext:
+            capabilities:
+              add:
+                - IPC_LOCK
+            runAsUser: 0
       volumes:
-        - name: vault-data
-          persistentVolumeClaim:
-            claimName: vault-pvc
         - name: vault-config
           configMap:
             name: vault-config
+        - name: vault-config-working
+          emptyDir: {}
+        - name: vault-data
+          persistentVolumeClaim:
+            claimName: vault-pvc
+        - name: vault-secrets
+          emptyDir: {}
