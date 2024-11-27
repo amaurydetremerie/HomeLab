@@ -6,7 +6,7 @@ metadata:
 data:
   vault-unseal.sh: |
     #!/bin/sh
-    while ! vault status > /dev/null 2>&1; do
+    while ! vault status | grep -q "Initialized.*true"; do
       echo "En attente du démarrage de Vault..."
       sleep 5
     done
@@ -18,6 +18,3 @@ data:
     vault operator unseal $UNSEAL_KEY1
     vault operator unseal $UNSEAL_KEY2
     vault operator unseal $UNSEAL_KEY3
-    
-    #umount /vault/unseal
-    #umount /vault/scripts
