@@ -19,5 +19,5 @@ data:
     vault operator unseal $UNSEAL_KEY2
     vault operator unseal $UNSEAL_KEY3
     
-    umount /vault/unseal
-    umount /vault/scripts
+    #umount /vault/unseal
+    #umount /vault/scripts
