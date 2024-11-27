@@ -13,24 +13,17 @@ spec:
       labels:
         app: vault
     spec:
-      serviceAccountName: vault-sa  # Ajout d'un ServiceAccount
+      serviceAccountName: vault-sa
       containers:
         - name: vault
           image: hashicorp/vault:1.15.4
-          imagePullPolicy: IfNotPresent  # Politique de pull à considérer
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              # Créer le répertoire de données si nécessaire
-              mkdir -p /vault/data
-              chown -R vault:vault /vault/data
-              
-              # Copier le script d'unseal et le rendre exécutable
-              cp /vault/scripts/vault-unseal.sh /tmp/vault-unseal.sh
-              chmod +x /tmp/vault-unseal.sh
-              
-              # Démarrer Vault avec la configuration
-              vault server -config=/vault/config/config.hcl
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true  # Ajouter les privilèges nécessaires
+            capabilities:
+              add:
+                - IPC_LOCK  # Conserver la capacité IPC_LOCK
+            runAsUser: 0  # Exécuter en root si nécessaire
           ports:
             - containerPort: 8200
           env:
@@ -38,37 +31,15 @@ spec:
               value: http://127.0.0.1:8200
             - name: VAULT_API_ADDR
               value: https://vault.k3s.wiserisk.be
-            - name: VAULT_CLUSTER_ADDR
-              value: http://$(POD_IP):8201
-            - name: POD_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP
           volumeMounts:
-            - name: pvc-nfs-secure-k3s-vault-volume
+            - name: vault-data
               mountPath: /vault/data
             - name: vault-config
               mountPath: /vault/config
-            - name: vault-unseal-script
-              mountPath: /vault/scripts
-            - name: vault-secrets
-              mountPath: /vault/secrets
-          securityContext:
-            capabilities:
-              add:
-                - IPC_LOCK
-            runAsUser: 100
-            runAsGroup: 1000
       volumes:
-        - name: pvc-nfs-secure-k3s-vault-volume
+        - name: vault-data
           persistentVolumeClaim:
-            claimName: pvc-nfs-secure-k3s-vault
+            claimName: vault-pvc
         - name: vault-config
           configMap:
             name: vault-config
-        - name: vault-unseal-script
-          configMap:
-            name: vault-auto-unseal
-            defaultMode: 0755
-        - name: vault-secrets
-          emptyDir: {}

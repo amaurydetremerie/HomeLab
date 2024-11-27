@@ -8,5 +8,8 @@ resources:
   - unseal-cm.yaml
   - config-cm.yaml
   - service-account.yaml
+  - cluster-role.yaml
+  - cluster-role-binding.yaml
+  - service.yaml
   - deployment.yaml
   - ingress.yaml
