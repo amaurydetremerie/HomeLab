@@ -13,16 +13,31 @@ spec:
       labels:
         app: vault
     spec:
+      serviceAccountName: vault-sa  # Ajout d'un ServiceAccount
       containers:
         - name: vault
           image: hashicorp/vault:1.15.4
+          imagePullPolicy: IfNotPresent  # Politique de pull à considérer
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              # Créer le répertoire de données si nécessaire
+              mkdir -p /vault/data
+              chown -R vault:vault /vault/data
+              
+              # Copier le script d'unseal et le rendre exécutable
+              cp /vault/scripts/vault-unseal.sh /tmp/vault-unseal.sh
+              chmod +x /tmp/vault-unseal.sh
+              
+              # Démarrer Vault avec la configuration
+              vault server -config=/vault/config/config.hcl
           ports:
             - containerPort: 8200
           env:
             - name: VAULT_ADDR
               value: http://127.0.0.1:8200
             - name: VAULT_API_ADDR
-              value: http://$(POD_IP):8200
+              value: https://vault.k3s.wiserisk.be
             - name: VAULT_CLUSTER_ADDR
               value: http://$(POD_IP):8201
             - name: POD_IP
@@ -42,6 +57,8 @@ spec:
             capabilities:
               add:
                 - IPC_LOCK
+            runAsUser: 100
+            runAsGroup: 1000
       volumes:
         - name: pvc-nfs-secure-k3s-vault-volume
           persistentVolumeClaim:
