@@ -1,16 +1,19 @@
-apiVersion: traefik.io/v1
-kind: IngressRoute
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: registry
+  name: registry-http
   namespace: registry-system
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
-  entryPoints:
-    - web
-    - websecure
-  routes:
-    - match: Host(`registry.k3s.wiserisk.be`)
-      kind: Rule
-      services:
-        - name: registry
-          port: 5000
-  tls: {}
+  rules:
+    - host: registry.k3s.wiserisk.be
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: registry-svc
+                port:
+                  number: 5000

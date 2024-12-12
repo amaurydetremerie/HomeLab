@@ -4,6 +4,7 @@ namespace: registry-system
 resources:
   - namespace.yaml
   - registry-config.yaml
+  - pv.yaml
   - pvc.yaml
   - deployment.yaml
   - service.yaml

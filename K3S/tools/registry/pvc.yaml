@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: registry-cache
+  name: registry-pvc
   namespace: registry-system
 spec:
   accessModes:
-    - ReadWriteOnce
-  storageClassName: longhorn
+    - ReadWriteMany
   resources:
     requests:
       storage: 20Gi
+  storageClassName: nfs

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: registry
+  name: registry-svc
   namespace: registry-system
 spec:
   type: ClusterIP
@@ -9,6 +9,4 @@ spec:
     - port: 5000
       targetPort: 5000
       protocol: TCP
-      name: registry
-  selector:
-    app: registry
+      name: docker-registry
