@@ -22,5 +22,5 @@ data:
         Access-Control-Allow-Credentials: ['true']
     proxy:
       remoteurl: https://registry-1.docker.io
-      username: username
-      password: password
+      username: <path:secrets/k3s/docker#username>
+      password: <path:secrets/k3s/docker#token>

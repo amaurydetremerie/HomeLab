@@ -43,26 +43,3 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: argocd-app-of-apps
-  namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "4"
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/amaurydetremerie/HomeLab.git
-    targetRevision: HEAD
-    path: k3s/infrastructure/argocd/Apps
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: argocd
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
