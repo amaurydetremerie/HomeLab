@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: flaresolverr
+  name: flaresolverr
+  namespace: flaresolverr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flaresolverr
+  template:
+    metadata:
+      labels:
+        app: flaresolverr
+    spec:
+      containers:
+        - image: flaresolverr/flaresolverr:latest
+          imagePullPolicy: IfNotPresent
+          name: flaresolverr
+          ports:
+            - containerPort: 8191
