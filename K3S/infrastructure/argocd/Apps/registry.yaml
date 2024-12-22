@@ -11,6 +11,7 @@ spec:
     repoURL: https://github.com/amaurydetremerie/HomeLab.git
     targetRevision: HEAD
     path: K3S/tools/registry
+    plugin: {}
   destination:
     server: https://kubernetes.default.svc
     namespace: registry-system
