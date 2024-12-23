@@ -45,7 +45,7 @@ configs:
             command:
               - sh
               - -c
-              - "find . -name '*.yaml' | xargs grep -l '<path\\|avp\\.kubernetes\\.io' {} | sed 's|^\\./||'"
+              - "find . -name '*.yaml' -type f | xargs -I {} grep -l '<path\\|avp\\.kubernetes\\.io' {} || true"
         generate:
           command:
             - argocd-vault-plugin
