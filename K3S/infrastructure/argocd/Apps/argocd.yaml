@@ -34,6 +34,9 @@ spec:
     repoURL: https://github.com/amaurydetremerie/HomeLab.git
     targetRevision: HEAD
     path: K3S/infrastructure/argocd/Helm
+    helm:
+      valueFiles:
+        - values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
