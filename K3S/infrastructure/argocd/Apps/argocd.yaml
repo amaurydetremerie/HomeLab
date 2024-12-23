@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: argocd-manifest
+  name: ArgoCD-Manifest
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "0"
@@ -24,7 +24,7 @@ spec:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: argocd-helm
+  name: ArgoCD-Helm
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "1"

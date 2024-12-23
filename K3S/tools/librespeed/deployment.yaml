@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: librespeed
+  name: librespeed
+  namespace: librespeed
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: librespeed
+  template:
+    metadata:
+      labels:
+        app: librespeed
+    spec:
+      containers:
+        - name: librespeed
+          image: ghcr.io/librespeed/speedtest:5.3.3
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          env:
+            - name: MODE
+              value: standalone
+            - name: DISABLE_IPINFO
+              value: "True"
+            - name: ENABLE_ID_OBFUSCATION
+              value: "True"

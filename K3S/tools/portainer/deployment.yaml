@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: portainer
-  namespace: management
+  namespace: portainer
   labels:
     io.portainer.kubernetes.application.stack: portainer
     app.kubernetes.io/name: portainer
@@ -26,15 +26,15 @@ spec:
         {}
       serviceAccountName: portainer-sa-clusteradmin
       volumes:
-        - name: pvc-nfs-k3s-portainer-volume
+        - name: portainer-volume
           persistentVolumeClaim:
-            claimName: pvc-nfs-k3s-portainer
+            claimName: portainer-pvc
       containers:
         - name: portainer
           image: "portainer/portainer-ce:2.19.5"
           imagePullPolicy: IfNotPresent
           volumeMounts:
-            - name: pvc-nfs-k3s-portainer-volume
+            - name: portainer-volume
               mountPath: /data
           ports:
             - name: http

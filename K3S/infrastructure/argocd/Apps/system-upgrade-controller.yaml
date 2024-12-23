@@ -1,19 +1,19 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: AppOfApps
+  name: System-Upgrade-Controller
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "4"
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   project: default
   source:
-    repoURL: https://github.com/amaurydetremerie/HomeLab
+    repoURL: https://github.com/amaurydetremerie/HomeLab.git
     targetRevision: HEAD
-    path: K3S/infrastructure/argocd/Apps
+    path: K3S/infrastructure/system-upgrade-controller
   destination:
     server: https://kubernetes.default.svc
-    namespace: argocd
+    namespace: system-upgrade
   syncPolicy:
     automated:
       prune: true

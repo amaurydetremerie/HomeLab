@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tautulli
+  name: tautulli
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tautulli
+  template:
+    metadata:
+      labels:
+        app: tautulli
+    spec:
+      containers:
+        - name: tautulli
+          image: lscr.io/linuxserver/tautulli:v2.14.3-ls139
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8181
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: UTC
+          volumeMounts:
+            - name: tautulli-volume
+              mountPath: /config
+              subPath: tautulli
+      volumes:
+        - name: tautulli-volume
+          persistentVolumeClaim:
+            claimName: tautulli-pvc

@@ -12,5 +12,5 @@ roleRef:
   name: cluster-admin
 subjects:
   - kind: ServiceAccount
-    namespace: management
+    namespace: portainer
     name: portainer-sa-clusteradmin
