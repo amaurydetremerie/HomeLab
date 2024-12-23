@@ -42,7 +42,10 @@ configs:
         allowConcurrency: true
         discover:
           find:
-            command: [sh, -c, "find. -name '*.yaml' | xargs -I {} grep '<path\\|avp\\.kubernetes\\.io' {} | sed 's|^\./||'"]
+            command:
+              - sh
+              - -c
+              - "find . -name '*.yaml' | xargs grep -l '<path\\|avp\\.kubernetes\\.io' {} | sed 's|^\./||'"
         generate:
           command:
             - argocd-vault-plugin
