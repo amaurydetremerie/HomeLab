@@ -1,0 +1,191 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: registry-system-bis
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: registry-pv
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: 10.100.0.10
+    path: /mnt/Hermes/K3S-Secure
+  storageClassName: nfs
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: registry-pvc
+  namespace: registry-system-bis
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: nfs
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: registry-config
+  namespace: registry-system-bis
+data:
+  config.yml: |
+    version: 0.1
+    log:
+      level: info
+    storage:
+      cache:
+        blobdescriptor: inmemory
+      filesystem:
+        rootdirectory: /var/lib/registry
+    http:
+      addr: :5000
+      headers:
+        X-Content-Type-Options: [nosniff]
+        Access-Control-Allow-Origin: ['https://registry-ui-bis.k3s.wiserisk.be']
+        Access-Control-Allow-Methods: ['HEAD', 'GET', 'OPTIONS']
+        Access-Control-Allow-Credentials: ['true']
+    proxy:
+      remoteurl: https://registry-1.docker.io
+      username: <path:k3s/data/docker#username>
+      password: <path:k3s/data/docker#token>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry-svc
+  namespace: registry-system-bis
+spec:
+  type: ClusterIP
+  selector:
+    app: docker-registry
+  ports:
+    - port: 5000
+      targetPort: 5000
+      protocol: TCP
+      name: docker-registry
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry-ui-svc
+  namespace: registry-system-bis
+spec:
+  type: ClusterIP
+  selector:
+    app: docker-registry-ui
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: docker-registry-ui
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docker-registry
+  namespace: registry-system-bis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: docker-registry
+  template:
+    metadata:
+      labels:
+        app: docker-registry
+    spec:
+      containers:
+        - name: docker-registry
+          image: registry:2.8.3
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+            - name: registry-data
+              mountPath: /var/lib/registry
+              subPath: registry/data
+            - name: registry-config
+              mountPath: /etc/docker/registry/config.yml
+              subPath: config.yml
+      volumes:
+        - name: registry-data
+          persistentVolumeClaim:
+            claimName: registry-pvc
+        - name: registry-config
+          configMap:
+            name: registry-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docker-registry-ui
+  namespace: registry-system-bis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: docker-registry-ui
+  template:
+    metadata:
+      labels:
+        app: docker-registry-ui
+    spec:
+      containers:
+        - name: docker-registry-ui
+          image: joxit/docker-registry-ui:2.5.7
+          ports:
+            - containerPort: 80
+          env:
+            - name: SINGLE_REGISTRY
+              value: "true"
+            - name: REGISTRY_TITLE
+              value: "Pull Through"
+            - name: REGISTRY_URL
+              value: "https://registry-bis.k3s.wiserisk.be"
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: registry-http
+  namespace: registry-system-bis
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  rules:
+    - host: registry-bis.k3s.wiserisk.be
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: registry-svc
+                port:
+                  number: 5000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: registry-ui-http
+  namespace: registry-system-bis
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  rules:
+    - host: registry-ui-bis.k3s.wiserisk.be
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: registry-ui-svc
+                port:
+                  number: 80
