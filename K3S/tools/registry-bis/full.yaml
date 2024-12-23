@@ -6,10 +6,10 @@ metadata:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: registry-pv
+  name: registry-pv-bis
 spec:
   capacity:
-    storage: 20Gi
+    storage: 17Gi
   accessModes:
     - ReadWriteMany
   nfs:
@@ -27,7 +27,7 @@ spec:
     - ReadWriteMany
   resources:
     requests:
-      storage: 20Gi
+      storage: 17Gi
   storageClassName: nfs
 ---
 apiVersion: v1
