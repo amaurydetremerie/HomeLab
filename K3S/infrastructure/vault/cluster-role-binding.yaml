@@ -10,3 +10,16 @@ subjects:
   - kind: ServiceAccount
     name: vault-sa
     namespace: secure
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: vault-auth-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: vault-auth
+    namespace: vault
