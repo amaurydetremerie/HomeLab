@@ -40,12 +40,6 @@ configs:
         lockRepo: false
       argocd-vault-plugin:
         allowConcurrency: true
-        discover:
-          find:
-            command:
-              - sh
-              - "-c"
-              - "find . -name '*.yaml' | xargs -I {} grep '<path\\|avp\\.kubernetes\\.io' {} | grep ."
         generate:
           command:
             - argocd-vault-plugin
