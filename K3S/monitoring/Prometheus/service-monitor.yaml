@@ -1,0 +1,48 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: websites
+  namespace: monitoring
+  labels:
+    team: monitoring
+spec:
+  endpoints:
+    - interval: 30s
+      port: http
+      path: /probe
+      params:
+        module: [http_2xx]
+      metricRelabelings:
+        - sourceLabels: [__address__]
+          targetLabel: __param_target
+        - sourceLabels: [__param_target]
+          targetLabel: instance
+        - targetLabel: __address__
+          replacement: blackbox-exporter.monitoring.svc.cluster.local:9115
+    - interval: 30s
+      port: http
+      path: /probe
+      params:
+        module: [http_2xx_insecure]
+      metricRelabelings:
+        - sourceLabels: [__address__]
+          targetLabel: __param_target
+        - sourceLabels: [__param_target]
+          targetLabel: instance
+        - targetLabel: __address__
+          replacement: blackbox-exporter.monitoring.svc.cluster.local:9115
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kube-state-metrics
+  namespace: monitoring
+  labels:
+    team: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: kube-state-metrics
+  endpoints:
+    - port: metrics
+      interval: 30s

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: monitoring-targets
+  namespace: monitoring
+data:
+  targets.json: |
+    {
+      "external_websites": [
+        "https://example.com",
+        "https://google.com"
+      ],
+      "local_websites": [
+        "http://ha.home",
+        "http://nas.home"
+      ],
+      "hosts": [
+        "192.168.1.1",
+        "192.168.1.2"
+      ]
+    }

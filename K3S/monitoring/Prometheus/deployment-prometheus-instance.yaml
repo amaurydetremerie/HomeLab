@@ -1,0 +1,27 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: monitoring
+  namespace: monitoring
+spec:
+  replicas: 1
+  serviceAccountName: prometheus
+  serviceMonitorSelector:
+    matchLabels:
+      team: monitoring
+  alerting:
+    alertmanagers:
+      - name: alertmanager-main
+        namespace: monitoring
+        port: web
+  storage:
+    volumeClaimTemplate:
+      metadata:
+        name: prometheus-pvc
+      spec:
+        storageClassName: nfs
+        accessModes:
+          - ReadWriteMany
+        resources:
+          requests:
+            storage: 30Gi
