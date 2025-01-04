@@ -21,6 +21,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteMany
+        storageClassName: nfs
         resources:
           requests:
             storage: 30Gi
