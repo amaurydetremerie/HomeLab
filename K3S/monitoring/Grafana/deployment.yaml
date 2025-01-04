@@ -30,10 +30,7 @@ spec:
               mountPath: /var/lib/grafana/dashboards
           env:
             - name: GF_SECURITY_ADMIN_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: grafana-secret
-                  key: admin-password
+              value: <path:k3s/data/grafana#admin_password>
             - name: GF_INSTALL_PLUGINS
               value: "grafana-clock-panel,grafana-simple-json-datasource"
       volumes:
