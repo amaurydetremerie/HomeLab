@@ -17,6 +17,3 @@ spec:
       containers:
         - name: prometheus-operator
           image: quay.io/prometheus-operator/prometheus-operator:v0.70.0
-          args:
-            - --config-reloader-image=jimmidyson/configmap-reload:v0.5.0
-            - --prometheus-config-reloader=quay.io/prometheus-operator/prometheus-config-reloader:v0.70.0
