@@ -16,4 +16,4 @@ spec:
       serviceAccountName: prometheus-operator
       containers:
         - name: prometheus-operator
-          image: quay.io/prometheus-operator/prometheus-operator:v0.70.0
+          image: quay.io/prometheus-operator/prometheus-operator:v0.79.2
