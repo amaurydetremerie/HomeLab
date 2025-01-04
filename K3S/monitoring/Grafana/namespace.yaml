@@ -3,4 +3,6 @@ kind: Namespace
 metadata:
   name: monitoring
   annotations:
-    argocd.argoproj.io/sync-options: Prune=false
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+  labels:
+    argocd.argoproj.io/instance: blank
