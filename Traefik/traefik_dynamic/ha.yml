@@ -30,7 +30,5 @@ http:
         - "websecure"
       middlewares:
         - "security@file"
-        - "compression@file"
-        - "ha-headers@file"
       service: "ha@file"
       tls: {}

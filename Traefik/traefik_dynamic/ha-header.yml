@@ -1,6 +1,0 @@
-http:
-  middlewares:
-    ha-headers:
-      headers:
-        customRequestHeaders:
-          X-Forwarded-Proto: "https"
