@@ -1,12 +1,12 @@
 http:
   services:
-    flash-pbs:
+    pbs:
       loadBalancer:
         servers:
-          - url: "http://10.100.0.109:8007"
+          - url: "http://10.0.0.80:8007"
   routers:
-    flash-pbs-local:
-      rule: "Host(`flash.pbs.wiserisk.home`)"
+    pbs-local:
+      rule: "Host(`pbs.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
@@ -15,16 +15,16 @@ http:
 
 tcp:
   services:
-    flash-pbs-secure-tcp:
+    pbs-secure-tcp:
       loadBalancer:
         servers:
-          - address: "10.100.0.109:8007"
+          - address: "10.0.0.80:8007"
   routers:
-    flash-pbs-secure-local-tcp:
-      rule: "HostSNI(`flash.pbs.wiserisk.home`)"
+    pbs-secure-local-tcp:
+      rule: "HostSNI(`pbs.wiserisk.home`)"
       entryPoints:
         - "websecure"
-      service: "flash-pbs-secure-tcp@file"
+      service: "pbs-secure-tcp@file"
       priority: 2
       tls:
         passthrough: true

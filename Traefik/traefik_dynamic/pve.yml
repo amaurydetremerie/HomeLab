@@ -1,7 +1,7 @@
 http:
   routers:
     pve-local:
-      rule: "Host(`pve.wiserisk.home`) || Host(`flash.pve.wiserisk.home`) || Host(`thor.pve.wiserisk.home`)"
+      rule: "Host(`pve.wiserisk.home`) || Host(`flash.pve.wiserisk.home`) || Host(`wasp.pve.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
@@ -13,16 +13,16 @@ tcp:
     pve-secure-tcp:
       loadBalancer:
         servers:
-          - address: "10.0.0.80:8006"
+          - address: "10.0.0.82:8006"
           - address: "10.0.0.81:8006"
     flash-pve-secure-tcp:
       loadBalancer:
         servers:
           - address: "10.0.0.81:8006"
-    thor-pve-secure-tcp:
+    wasp-pve-secure-tcp:
       loadBalancer:
         servers:
-          - address: "10.0.0.80:8006"
+          - address: "10.0.0.82:8006"
   routers:
     pve-secure-local-tcp:
       rule: "HostSNI(`pve.wiserisk.home`)"
@@ -40,11 +40,11 @@ tcp:
       priority: 2
       tls:
         passthrough: true
-    thor-pve-secure-local-tcp:
-      rule: "HostSNI(`thor.pve.wiserisk.home`)"
+    wasp-pve-secure-local-tcp:
+      rule: "HostSNI(`wasp.pve.wiserisk.home`)"
       entryPoints:
         - "websecure"
-      service: "thor-pve-secure-tcp@file"
+      service: "wasp-pve-secure-tcp@file"
       priority: 2
       tls:
         passthrough: true
