@@ -22,6 +22,7 @@ spec:
           volumeMounts:
             - name: grafana-storage
               mountPath: /var/lib/grafana
+              subPath: grafana
             - name: grafana-datasources
               mountPath: /etc/grafana/provisioning/datasources
             - name: grafana-dashboards-provision
@@ -31,6 +32,8 @@ spec:
           env:
             - name: GF_SECURITY_ADMIN_PASSWORD
               value: <path:k3s/data/grafana#admin_password>
+            - name: GF_SECURITY_ADMIN_USER
+              value: <path:k3s/data/grafana#admin_user>
             - name: GF_INSTALL_PLUGINS
               value: "grafana-clock-panel,grafana-simple-json-datasource"
       volumes:
