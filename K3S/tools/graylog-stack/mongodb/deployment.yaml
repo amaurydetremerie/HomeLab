@@ -14,44 +14,12 @@ spec:
     spec:
       containers:
         - name: mongodb
-          image: bitnami/mongodb:8.0.4
-          env:
-            - name: MONGODB_SYSTEM_LOG_VERBOSITY
-              value: "0"
-            - name: MONGODB_DISABLE_SYSTEM_LOG
-              value: "no"
-            - name: MONGODB_ENABLE_IPV6
-              value: "no"
-            - name: MONGODB_ENABLE_DIRECTORY_PER_DB
-              value: "no"
-          livenessProbe:
-            exec:
-              command:
-                - mongosh
-                - --eval
-                - "db.adminCommand('ping')"
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 5
-            successThreshold: 1
-            failureThreshold: 6
-          readinessProbe:
-            exec:
-              command:
-                - mongosh
-                - --eval
-                - "db.adminCommand('ping')"
-            initialDelaySeconds: 30s
-            periodSeconds: 10
-            timeoutSeconds: 5
-            successThreshold: 1
-            failureThreshold: 6
+          image: mongo:6.0.20
           ports:
             - containerPort: 27017
           volumeMounts:
             - name: mongodb-volume
-              mountPath: /bitnami/mongodb
-              subPath: mongodb
+              mountPath: /data
       volumes:
         - name: mongodb-volume
           persistentVolumeClaim:

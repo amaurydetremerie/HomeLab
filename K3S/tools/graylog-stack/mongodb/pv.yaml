@@ -10,4 +10,4 @@ spec:
   storageClassName: nfs
   nfs:
     server: 10.100.0.10
-    path: /mnt/Hermes/K3S
+    path: /mnt/Hermes/K3S/mongodb
