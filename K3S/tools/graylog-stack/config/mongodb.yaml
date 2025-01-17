@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mongodb-graylog-stack
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "21"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/amaurydetremerie/HomeLab.git
+    targetRevision: HEAD
+    path: K3S/tools/graylog-stack/mongodb
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: graylog-stack
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
