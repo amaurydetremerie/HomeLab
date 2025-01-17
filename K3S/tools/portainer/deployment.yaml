@@ -36,6 +36,7 @@ spec:
           volumeMounts:
             - name: portainer-volume
               mountPath: /data
+              subPath: portainer
           ports:
             - name: http
               containerPort: 9000
