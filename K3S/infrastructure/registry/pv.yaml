@@ -9,5 +9,5 @@ spec:
     - ReadWriteMany
   nfs:
     server: 10.100.0.10
-    path: /mnt/Hermes/K3S-Secure
+    path: /mnt/Hermes/K3S
   storageClassName: nfs
