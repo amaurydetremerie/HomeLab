@@ -9,10 +9,10 @@ spec:
   cordon: true
   nodeSelector:
     matchExpressions:
-      - key: node-role.kubernetes.io/control-plane
+      - key: kubernetes.io/hostname
         operator: In
         values:
-          - "true"
+        - k3s-master
   serviceAccountName: system-upgrade
   upgrade:
     image: rancher/k3s-upgrade
@@ -29,8 +29,10 @@ spec:
   cordon: true
   nodeSelector:
     matchExpressions:
-      - key: node-role.kubernetes.io/control-plane
-        operator: DoesNotExist
+      - key: kubernetes.io/hostname
+        operator: NotIn
+        values:
+          - k3s-master
   prepare:
     args:
       - prepare

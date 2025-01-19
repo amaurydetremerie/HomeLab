@@ -17,8 +17,10 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  - key: node-role.kubernetes.io/control-plane
-                    operator: Exists
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - k3s-master
       containers:
         - env:
             - name: SYSTEM_UPGRADE_CONTROLLER_NAME
