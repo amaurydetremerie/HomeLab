@@ -5,7 +5,7 @@ metadata:
   namespace: graylog-stack
 spec:
   entryPoints:
-    - udp
+    - graylog
   routes:
     - services:
         - name: graylog-svc
