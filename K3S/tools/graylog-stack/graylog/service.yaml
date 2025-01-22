@@ -20,6 +20,7 @@ metadata:
   name: graylog-udp-svc
   namespace: graylog-stack
 spec:
+  type: LoadBalancer
   selector:
     app: graylog
   ports:
@@ -27,3 +28,4 @@ spec:
       port: 12201
       protocol: UDP
       targetPort: 12201
+  externalTrafficPolicy: Local
