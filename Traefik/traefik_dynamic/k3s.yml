@@ -49,9 +49,7 @@ udp:
     graylog-udp:
       entrypoints:
         - graylog
-      rule: HostSNI(`*`)
       service: graylog-udp
-      tls: {}
   #---UDP-services---
   services:
     graylog-udp:
