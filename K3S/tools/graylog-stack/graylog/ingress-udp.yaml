@@ -8,5 +8,5 @@ spec:
     - graylog
   routes:
     - services:
-        - name: graylog-svc
+        - name: graylog-udp-svc
           port: 12201
