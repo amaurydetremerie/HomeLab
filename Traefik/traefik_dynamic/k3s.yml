@@ -43,3 +43,18 @@ tcp:
       entryPoints:
         - "k3s"
       service: "k3s-management-tcp@file"
+
+udp:
+  routers:
+    graylog-udp:
+    entrypoints:
+      - graylog
+    rule: HostSNI(`*`)
+    service: graylog-udp
+    tls: {}
+  #---UDP-services---
+  services:
+    graylog-udp:
+      loadbalancer:
+        servers:
+          - address: 10.100.0.151:12201

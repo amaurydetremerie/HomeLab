@@ -28,6 +28,8 @@
         address=":32400"
     [entryPoints.k3s]
         address=":6443"
+    [entryPoints.graylog]
+        address=":12201/udp"
 [certificatesResolvers]
     [certificatesResolvers.letsencrypt-ecdsa]
         [certificatesResolvers.letsencrypt-ecdsa.acme]
