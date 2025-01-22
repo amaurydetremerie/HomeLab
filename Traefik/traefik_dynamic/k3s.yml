@@ -47,11 +47,11 @@ tcp:
 udp:
   routers:
     graylog-udp:
-    entrypoints:
-      - graylog
-    rule: HostSNI(`*`)
-    service: graylog-udp
-    tls: {}
+      entrypoints:
+        - graylog
+      rule: HostSNI(`*`)
+      service: graylog-udp
+      tls: {}
   #---UDP-services---
   services:
     graylog-udp:
