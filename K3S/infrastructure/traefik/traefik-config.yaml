@@ -1,0 +1,62 @@
+# Need to be located at /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    dashboard:
+      enabled: true
+    additionalArguments:
+      - "--api.insecure=true"
+      - "--entryPoints.acme"
+      - "--certificatesResolvers.letsencrypt-ecdsa.acme.email=killamaury@gmail.com"
+      - "--certificatesResolvers.letsencrypt-ecdsa.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
+      - "--certificatesResolvers.letsencrypt-ecdsa.acme.storage=/data/acme.json"
+      - "--certificatesResolvers.letsencrypt-ecdsa.acme.keyType=EC384"
+      - "--certificatesResolvers.letsencrypt-ecdsa.acme.httpChallenge.entryPoint=acme"
+      - "--certificatesResolvers.letsencrypt-ecdsa.acme.tlsChallenge=true"
+      - "--certificatesResolvers.letsencrypt-rsa2048.acme.email=killamaury@gmail.com"
+      - "--certificatesResolvers.letsencrypt-rsa2048.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
+      - "--certificatesResolvers.letsencrypt-rsa2048.acme.storage=/data/acme.json"
+      - "--certificatesResolvers.letsencrypt-rsa2048.acme.keyType=RSA2048"
+      - "--certificatesResolvers.letsencrypt-rsa2048.acme.httpChallenge.entryPoint=acme"
+      - "--certificatesResolvers.letsencrypt-rsa2048.acme.tlsChallenge=true"
+      - "--entryPoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entryPoints.web.http.redirections.entryPoint.scheme=https"
+      - "--entryPoints.web.http.redirections.entryPoint.permanent=true"
+      - "--entrypoints.web.http.redirections.entryPoint.to=:443"
+      - "--entryPoints.websecure.http.tls.certResolver=letsencrypt-ecdsa"
+    logs:
+      general:
+        level: DEBUG
+      access:
+        enabled: true
+        format: json
+        filters:
+          statusCodes:
+            - "200-499"
+          retryAttempts: true
+          minDuration: "10ms"
+        fields:
+          general:
+            defaultMode: keep
+          headers:
+            defaultMode: keep
+    ports:
+      traefik:
+        enabled: true
+    providers:
+      kubernetesCRD:
+        allowCrossNamespace: true
+    persistence:
+      enabled: true
+      name: data
+      existingClaim: traefik-pvc
+      accessMode: ReadWriteMany
+      size: 200Mi
+      storageClass: nfs
+      volumeName: traefik-volume
+      path: /data
+      subPath: traefik

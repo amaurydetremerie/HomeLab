@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://github.com/amaurydetremerie/HomeLab.git
     targetRevision: HEAD
-    path: K3S/infrastructure/traefik
+    path: K3S/infrastructure/traefik/Manifest
   destination:
     server: https://kubernetes.default.svc
   syncPolicy:
