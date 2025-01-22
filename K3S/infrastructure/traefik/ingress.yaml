@@ -4,7 +4,7 @@ metadata:
   name: traefik-http
   namespace: kube-system
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: traefik
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
   rules:
     - host: traefik-dash.k3s.wiserisk.be
@@ -14,6 +14,4 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: traefik
-                port:
-                  number: 9000
+                name: api@internal
