@@ -1,17 +1,14 @@
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
 metadata:
-  name: traefik-http
+  name: dashboard-ingressroute
   namespace: kube-system
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
-  rules:
-    - host: traefik-dash.k3s.wiserisk.be
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: api@internal
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`traefik.k3s.wiserisk.be`)
+      kind: Rule
+      services:
+        - name: api@internal
+          kind: TraefikService
