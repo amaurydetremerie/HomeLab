@@ -1,0 +1,12 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: graylog-udp
+  namespace: graylog-stack
+spec:
+  entryPoints:
+    - udp
+  routes:
+    - services:
+        - name: graylog-svc
+          port: 12201
