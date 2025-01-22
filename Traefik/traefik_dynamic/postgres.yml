@@ -32,7 +32,7 @@ tcp:
 
   routers:
     postgres-tcp:
-      rule: "HostSNI(`*`)"
+      rule: "HostSNI(`postgres.wiserisk.be`)"
       entryPoints:
         - "postgres"
       service: "postgres-tcp@file"
