@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: nextcloud-cron
+spec:
+  schedule: "*/5 * * * *"  # Toutes les 5 minutes
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: nextcloud-cron
+              securityContext:
+                runAsUser: 33
+                runAsGroup: 33
+              image: nextcloud:latest
+              command:
+                - /bin/sh
+                - -c
+                - php -f /var/www/html/cron.php
+              volumeMounts:
+                - name: nextcloud-volume
+                  mountPath: /var/www/html
+                  subPath: nextcloud
+          volumes:
+            - name: nextcloud-volume
+              persistentVolumeClaim:
+                claimName: nextcloud-pvc
+          restartPolicy: OnFailure

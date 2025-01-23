@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nextcloud-config
+data:
+  .htaccess: |
+    # line below if for Apache 2.4
+    <ifModule mod_authz_core.c>
+      Require all denied
+    </ifModule>
+    # line below if for Apache 2.2
+    <ifModule !mod_authz_core.c>
+      deny from all
+    </ifModule>
+    # section for Apache 2.2 and 2.4
+    <ifModule mod_autoindex.c>
+      IndexIgnore *
+    </ifModule>
+  default.config.php: |-
+    <?php
+      $CONFIG = array (
+        'datadirectory' => '/var/www/html/data',
+        'version' => '30.0.5',
+        'overwrite.cli.url' => 'https://nextcloud.k3s.wiserisk.be',
+        'default_language' => 'fr',
+        'default_locale' => 'fr_FR',
+        'reduce_to_languages' => ['fr', 'en'],
+        'default_timezone' => 'Europe/Brussels',
+        'knowledgebaseenabled' => false,
+        'default_phone_region' => 'BE',
+        'maintenance_window_start' => 1,
+      );
+  proxies.config.php: |-
+    <?php
+      $CONFIG = array (
+        'trusted_proxies' => ['10.100.0.0/24', '10.42.0.0/24'],
+      );
+  domains.config.php: |-
+    <?php
+      $CONFIG = array (
+        'trusted_domains' => ['localhost', 'nextcloud.k3s.wiserisk.be', 'nextcloud.k3s.wiserisk.home'],
+      );
+  logging.config.php: |-
+    <?php
+      $CONFIG = array (
+        'log_type' => 'errorlog',
+        'loglevel' => 3,
+        'logdateformat' => 'F d, Y H:i:s',
+        );
+  apcu.config.php: |-
+    <?php
+      $CONFIG = array (
+        'memcache.local' => '\OC\Memcache\APCu',
+      );
+  memory.config.php: |-
+    <?php
+      $CONFIG = array (
+        'memory_limit' => '512M',
+      );
+  apps.config.php: |-
+    <?php
+      $CONFIG = array (
+        'defaultapp' => 'files',
+      );
+  db.config.php: |-
+    <?php
+      $CONFIG = array (
+        'dbtype' => 'mysql',
+        'dbhost' => 'nextcloud-db-svc:3306',
+        'dbname' => '<path:k3s/data/nextcloud#db-name>',
+        'dbuser' => '<path:k3s/data/nextcloud#db-user>',
+        'dbpassword' => '<path:k3s/data/nextcloud#db-password>',
+      );

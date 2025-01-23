@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud-db
+  namespace: nextcloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextcloud-db
+  template:
+    metadata:
+      labels:
+        app: nextcloud-db
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: <path:k3s/data/nextcloud#db-root-password>
+            - name: MYSQL_USER
+              value: <path:k3s/data/nextcloud#db-user>
+            - name: MYSQL_PASSWORD
+              value: <path:k3s/data/nextcloud#db-password>
+            - name: MYSQL_DATABASE
+              value: <path:k3s/data/nextcloud#db-name>
+          ports:
+            - containerPort: 3306
+              name: mysql
+          volumeMounts:
+            - name: nextcloud-db-volume
+              mountPath: /var/lib/mysql
+              subPath: nextcloud-db
+      volumes:
+        - name: nextcloud-db-volume
+          persistentVolumeClaim:
+            claimName: nextcloud-db-pvc
