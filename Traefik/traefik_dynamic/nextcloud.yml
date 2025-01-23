@@ -4,6 +4,10 @@ http:
       loadBalancer:
         servers:
           - url: "http://10.100.0.104:80"
+    nextcloud2:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.107:80"
   routers:
     nextcloud-local:
       rule: "Host(`nextcloud.wiserisk.be`) || Host(`nextcloud.wiserisk.home`)"
@@ -18,6 +22,19 @@ http:
         - "web"
       service: "nextcloud@file"
       priority: 1001
+    nextcloud2-local:
+      rule: "Host(`nextcloud2.wiserisk.be`) || Host(`nextcloud2.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
+    nextcloud2-acme:
+      rule: "Host(`nextcloud2.wiserisk.be`) && PathPrefix(`/.well-known/acme-challenge/`)"
+      entryPoints:
+        - "web"
+      service: "nextcloud2@file"
+      priority: 1001
 
 tcp:
   services:
@@ -25,12 +42,24 @@ tcp:
       loadBalancer:
         servers:
           - address: "10.100.0.104:443"
+    nextcloud2-secure-tcp:
+      loadBalancer:
+        servers:
+          - address: "10.100.0.107:443"
   routers:
     nextcloud-secure-tcp:
       rule: "HostSNI(`nextcloud.wiserisk.be`) || HostSNI(`nextcloud.wiserisk.home`)"
       entryPoints:
         - "websecure"
       service: "nextcloud-secure-tcp@file"
+      priority: 2
+      tls:
+        passthrough: true
+    nextcloud2-secure-tcp:
+      rule: "HostSNI(`nextcloud2.wiserisk.be`) || HostSNI(`nextcloud2.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      service: "nextcloud2-secure-tcp@file"
       priority: 2
       tls:
         passthrough: true
