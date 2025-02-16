@@ -15,24 +15,6 @@ spec:
       labels:
         app: nextcloud
     spec:
-      initContainers:
-        - name: init-nextcloud
-          image: nextcloud:30.0.5-apache
-          command: ["/bin/bash", "-c"]
-          args:
-            - |
-              mkdir -p /var/www/html/config
-              touch /var/www/html/config/config.php
-              chown -R www-data:www-data /var/www/html/config/config.php
-              chmod 660 /var/www/html/config/config.php
-              chown www-data:www-data /var/www/html/config
-              chmod 770 /var/www/html/config
-          securityContext:
-            runAsUser: 0
-          volumeMounts:
-            - name: nextcloud-volume
-              mountPath: /var/www/html
-              subPath: nextcloud
       containers:
         - name: nextcloud
           image: nextcloud:30.0.5-apache
@@ -42,33 +24,6 @@ spec:
             - name: nextcloud-volume
               mountPath: /var/www/html
               subPath: nextcloud
-            - mountPath: /var/www/html/config/default.config.php
-              name: nextcloud-config
-              subPath: default.config.php
-            - mountPath: /var/www/html/config/logging.config.php
-              name: nextcloud-config
-              subPath: logging.config.php
-            - mountPath: /var/www/html/config/proxies.config.php
-              name: nextcloud-config
-              subPath: proxies.config.php
-            - mountPath: /var/www/html/config/domains.config.php
-              name: nextcloud-config
-              subPath: domains.config.php
-            - mountPath: /var/www/html/config/.htaccess
-              name: nextcloud-config
-              subPath: .htaccess
-            - mountPath: /var/www/html/config/apcu.config.php
-              name: nextcloud-config
-              subPath: apcu.config.php
-            - mountPath: /var/www/html/config/memory.config.php
-              name: nextcloud-config
-              subPath: memory.config.php
-            - mountPath: /var/www/html/config/apps.config.php
-              name: nextcloud-config
-              subPath: apps.config.php
-            - mountPath: /var/www/html/config/db.config.php
-              name: nextcloud-config
-              subPath: db.config.php
             - mountPath: /share/media
               name: media
             - mountPath: /share/nas
