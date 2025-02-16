@@ -36,9 +36,6 @@ spec:
       containers:
         - name: nextcloud
           image: nextcloud:30.0.5-apache
-          securityContext:
-            runAsUser: 33
-            runAsGroup: 33
           ports:
             - containerPort: 80
           volumeMounts:
@@ -85,8 +82,6 @@ spec:
               value: nextcloud.k3s.wiserisk.be
             - name: NEXTCLOUD_DATA_DIR
               value: /var/www/html/data
-            - name: SQLITE_DATABASE
-              value: nextcloud
       volumes:
         - name: nextcloud-volume
           persistentVolumeClaim:

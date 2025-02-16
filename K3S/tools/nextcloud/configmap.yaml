@@ -29,6 +29,7 @@ data:
         'knowledgebaseenabled' => false,
         'default_phone_region' => 'BE',
         'maintenance_window_start' => 1,
+        'config_is_read_only' => true,
       );
   proxies.config.php: |-
     <?php
