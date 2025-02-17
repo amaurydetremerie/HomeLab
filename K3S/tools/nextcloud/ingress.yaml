@@ -5,6 +5,8 @@ metadata:
   namespace: nextcloud
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.middlewares: nextcloud-security-headers@kubernetescrd
 spec:
   rules:
     - host: nextcloud.k3s.wiserisk.be

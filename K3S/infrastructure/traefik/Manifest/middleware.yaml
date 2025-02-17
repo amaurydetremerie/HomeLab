@@ -1,0 +1,14 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: security-headers
+  namespace: nextcloud
+spec:
+  headers:
+    sslRedirect: true
+    forceSTSHeader: true
+    stsIncludeSubdomains: true
+    stsPreload: true
+    stsSeconds: 15552000
+    customResponseHeaders:
+      Strict-Transport-Security: "max-age=15552000; includeSubDomains; preload"
