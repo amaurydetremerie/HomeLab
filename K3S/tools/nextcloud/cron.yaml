@@ -10,9 +10,6 @@ spec:
         spec:
           containers:
             - name: nextcloud-cron
-              securityContext:
-                runAsUser: 33
-                runAsGroup: 33
               image: nextcloud:latest
               command:
                 - /bin/sh
