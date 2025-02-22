@@ -6,3 +6,10 @@ metadata:
 spec:
   replicas: 1
   configSecret: alertmanager-config
+  volumeMounts:
+    - name: templates
+      mountPath: /etc/alertmanager/templates
+  volumes:
+    - name: templates
+      configMap:
+        name: alertmanager-templates

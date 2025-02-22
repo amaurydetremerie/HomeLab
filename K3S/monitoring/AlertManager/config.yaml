@@ -17,8 +17,17 @@ data:
             severity: critical
           receiver: 'discord'
           group_wait: 10s
+        - match:
+            severity: warning
+          receiver: 'discord'
+          group_wait: 30s
+          repeat_interval: 4h
     receivers:
       - name: 'discord'
         webhook_configs:
           - url: <path:k3s/data/monitoring#discord>
             send_resolved: true
+            # Ajout d'un template personnalisé pour Discord
+            message: '{{ template "discord.default.message" . }}'
+    templates:
+      - '/etc/alertmanager/templates/*.tmpl'
