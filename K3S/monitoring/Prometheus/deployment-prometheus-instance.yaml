@@ -9,6 +9,9 @@ spec:
   serviceMonitorSelector:
     matchLabels:
       team: monitoring
+  ruleSelector:
+    matchLabels:
+      team: monitoring
   alerting:
     alertmanagers:
       - name: alertmanager-main
