@@ -13,6 +13,10 @@ spec:
       labels:
         app: blackbox-exporter
     spec:
+      dnsPolicy: "None"
+      dnsConfig:
+        nameservers:
+          - 10.0.0.86
       containers:
         - name: blackbox-exporter
           image: prom/blackbox-exporter:v0.24.0

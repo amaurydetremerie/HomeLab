@@ -9,18 +9,18 @@ spec:
   groups:
     - name: node
       rules:
-        - alert: HostDown
-          expr: up == 0
-          for: 5m
+        - alert: NodePingFailed
+          expr: probe_success{job="blackbox-ping"} == 0
+          for: 2m
           labels:
             severity: critical
           annotations:
-            summary: "Host {{ $labels.instance }} is down"
-            description: "{{ $labels.instance }} has been down for more than 5 minutes."
+            summary: "Node {{ $labels.instance }} is not responding to ping"
+            description: "Node {{ $labels.instance }} has failed to respond to ICMP ping for more than 5 minutes"
     - name: certificates
       rules:
         - alert: SSLCertExpiringSoon
-          expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 30
+          expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 30 and on(instance) (probe_http_ssl{job!="blackbox-local"} == 1)
           for: 10m
           labels:
             severity: warning
@@ -30,7 +30,7 @@ spec:
     - name: website
       rules:
         - alert: WebsiteDown
-          expr: probe_success == 0
+          expr: probe_success{job!="blackbox-ping"} == 0
           for: 5m
           labels:
             severity: critical
@@ -41,7 +41,7 @@ spec:
       rules:
         - alert: PodCrashLooping
           expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
-          for: 15m
+          for: 3m
           labels:
             severity: warning
           annotations:
@@ -49,7 +49,7 @@ spec:
             description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is crash looping"
         - alert: PodNotReady
           expr: sum by (namespace, pod) (kube_pod_status_phase{phase=~"Pending|Unknown"}) > 0
-          for: 15m
+          for: 10m
           labels:
             severity: warning
           annotations:
@@ -57,7 +57,7 @@ spec:
             description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been in a non-ready state for more than 15 minutes"
         - alert: ContainerHighMemory
           expr: sum by(namespace, pod) (container_memory_usage_bytes) > 1.5 * 1024 * 1024 * 1024
-          for: 15m
+          for: 10m
           labels:
             severity: warning
           annotations:
@@ -65,9 +65,24 @@ spec:
             description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using more than 1.5GB of memory"
         - alert: ContainerHighCPU
           expr: sum by(namespace, pod) (rate(container_cpu_usage_seconds_total[5m])) > 0.8
-          for: 15m
+          for: 10m
           labels:
             severity: warning
           annotations:
             summary: "High CPU usage for pod {{ $labels.pod }}"
             description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is using more than 80% CPU"
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: blackbox-targets
+  namespace: monitoring
+  labels:
+    team: monitoring
+spec:
+  groups:
+    - name: blackbox
+      interval: 30s
+      rules:
+        - record: probe_success
+          expr: probe_success{job="blackbox"}

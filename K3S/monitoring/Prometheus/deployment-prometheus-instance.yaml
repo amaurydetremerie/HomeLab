@@ -1,7 +1,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: Prometheus
 metadata:
-  name: monitoring
+  name: prometheus-monitoring
   namespace: monitoring
 spec:
   replicas: 1
@@ -14,9 +14,13 @@ spec:
       team: monitoring
   alerting:
     alertmanagers:
-      - name: alertmanager-main
-        namespace: monitoring
-        port: web
+      - namespace: monitoring
+        name: alertmanager-operated
+        port: 9093
+        scheme: http
+  additionalScrapeConfigs:
+    name: additional-scrape-configs
+    key: prometheus-additional.yaml
   storage:
     volumeClaimTemplate:
       metadata:
