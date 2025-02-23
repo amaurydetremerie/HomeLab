@@ -30,9 +30,9 @@ jobs:
           method: github
           githubToken: ${{ secrets.VAULT_GITHUB_TOKEN }}
           secrets: |
-            secrets/data/webhook secret;
-            secrets/data/traefik username;
-            secrets/data/traefik password;
+            k3s/data/webhook secret;
+            k3s/data/global basic_username;
+            k3s/data/global basic_password;
 
       - name: Call pull
         uses: distributhor/workflow-webhook@v3
