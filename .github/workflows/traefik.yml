@@ -40,7 +40,7 @@ jobs:
           webhook_url: ${{ secrets.WEBHOOK_URL }}/hooks/pull-webhook
           webhook_secret: ${{ steps.vault.outputs.secret }}
           webhook_auth_type: "basic"
-          webhook_auth: ${{ format('{0}:{1}', steps.vault.outputs.username, steps.vault.outputs.password) }}
+          webhook_auth: ${{ format('{0}:{1}', steps.vault.outputs.basic_username, steps.vault.outputs.basic_password) }}
           data: '{ "project": "traefik" }'
       - name: Call restart
         uses: distributhor/workflow-webhook@v3
@@ -48,5 +48,5 @@ jobs:
           webhook_url: ${{ secrets.WEBHOOK_URL }}/hooks/restart-webhook
           webhook_secret: ${{ steps.vault.outputs.secret }}
           webhook_auth_type: "basic"
-          webhook_auth: ${{ format('{0}:{1}', steps.vault.outputs.username, steps.vault.outputs.password) }}
+          webhook_auth: ${{ format('{0}:{1}', steps.vault.outputs.basic_username, steps.vault.outputs.basic_password) }}
           data: '{ "service": "traefik" }'
