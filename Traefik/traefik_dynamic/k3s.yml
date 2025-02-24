@@ -4,6 +4,8 @@ http:
       loadBalancer:
         servers:
           - url: "http://10.100.0.151"
+          - url: "http://10.100.0.152"
+          - url: "http://10.100.0.153"
   routers:
     k3s-wildcard:
       rule: "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.be`) || Host(`k3s.wiserisk.be`) || HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.home`) || Host(`k3s.wiserisk.home`)"
