@@ -50,7 +50,10 @@ spec:
               protocol: UDP
           volumeMounts:
             - name: graylog-volume
-              mountPath: /usr/share/graylog
-              subPath: graylog
+              mountPath: /usr/share/graylog/data
+              subPath: graylog-data
+            - name: graylog-volume
+              mountPath: /usr/share/graylog/journal
+              subPath: graylog-journal
             - name: graylog-config-volume
               mountPath: /usr/share/graylog/data/config

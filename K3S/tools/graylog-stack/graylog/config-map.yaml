@@ -14,5 +14,6 @@ data:
     http_external_uri = ${GRAYLOG_HTTP_EXTERNAL_URI}
     data_dir = /usr/share/graylog/data
     plugin_dir = /usr/share/graylog/plugin
+    plugins_default_dir = /usr/share/graylog/plugins-default
     node_id_file = /usr/share/graylog/data/node-id
     message_journal_dir = /usr/share/graylog/data/journal
