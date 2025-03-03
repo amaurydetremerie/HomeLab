@@ -17,3 +17,18 @@ data:
     plugins_default_dir = /usr/share/graylog/plugins-default
     node_id_file = /usr/share/graylog/data/node-id
     message_journal_dir = /usr/share/graylog/data/journal
+  log4j2.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Configuration status="WARN">
+        <Appenders>
+            <Console name="STDOUT" target="SYSTEM_OUT">
+                <PatternLayout pattern="%d %-5p [%c{1}] %m%n"/>
+            </Console>
+        </Appenders>
+        <Loggers>
+            <Root level="info">
+                <AppenderRef ref="STDOUT"/>
+            </Root>
+            <Logger name="org.graylog2" level="info"/>
+        </Loggers>
+    </Configuration>
