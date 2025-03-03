@@ -5,10 +5,14 @@ metadata:
   namespace: graylog-stack
 data:
   graylog.conf: |
-    # Ajoutez ici les configurations nécessaires pour Graylog
+    # Configurations pour Graylog
     password_secret = ${GRAYLOG_PASSWORD_SECRET}
     root_password_sha2 = ${GRAYLOG_ROOT_PASSWORD_SHA2}
     http_bind_address = 0.0.0.0:9000
     elasticsearch_hosts = ${GRAYLOG_ELASTICSEARCH_HOSTS}
     mongodb_uri = ${GRAYLOG_MONGODB_URI}
     http_external_uri = ${GRAYLOG_HTTP_EXTERNAL_URI}
+    data_dir = /usr/share/graylog/data
+    plugin_dir = /usr/share/graylog/plugin
+    node_id_file = /usr/share/graylog/data/node-id
+    message_journal_dir = /usr/share/graylog/data/journal
