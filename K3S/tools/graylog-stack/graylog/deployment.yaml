@@ -45,6 +45,8 @@ spec:
             - name: graylog-volume
               mountPath: /usr/share/graylog/data
               subPath: graylog
+            - name: graylog-config-volume
+              mountPath: /usr/share/graylog/data/config
       volumes:
         - name: graylog-volume
           persistentVolumeClaim:

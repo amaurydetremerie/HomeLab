@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: graylog-config
+  namespace: graylog-stack
+data:
+  graylog.conf: |
+    # Ajoutez ici les configurations nécessaires pour Graylog
+    password_secret = ${GRAYLOG_PASSWORD_SECRET}
+    root_password_sha2 = ${GRAYLOG_ROOT_PASSWORD_SHA2}
+    http_bind_address = 0.0.0.0:9000
+    elasticsearch_hosts = ${GRAYLOG_ELASTICSEARCH_HOSTS}
+    mongodb_uri = ${GRAYLOG_MONGODB_URI}
+    http_external_uri = ${GRAYLOG_HTTP_EXTERNAL_URI}
