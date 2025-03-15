@@ -51,7 +51,6 @@ stringData:
           - https://plex.wiserisk.home/identity
           - https://pve.wiserisk.home
           - https://flash.pve.wiserisk.home
-          - https://wasp.pve.wiserisk.home
           - https://adminer.wiserisk.home/adminer
           - https://qbittorrent.wiserisk.home
           - https://seedbox.wiserisk.home
@@ -74,7 +73,6 @@ stringData:
           - 10.0.0.1
           - 10.0.0.80
           - 10.0.0.81
-          - 10.0.0.82
           - 10.0.0.85
           - 10.0.0.86
           - 10.0.0.95
