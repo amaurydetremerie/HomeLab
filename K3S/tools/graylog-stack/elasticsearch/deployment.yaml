@@ -12,16 +12,6 @@ spec:
       labels:
         app: elasticsearch
     spec:
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              preference:
-                matchExpressions:
-                  - key: kubernetes.io/hostname
-                    operator: NotIn
-                    values:
-                      - k3s-worker-02
       containers:
         - name: elasticsearch
           image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
