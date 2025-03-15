@@ -10,6 +10,13 @@ rules:
       - nodes
       - persistentvolumeclaims
       - persistentvolumes
+      - endpoints
+      - secrets
+      - configmaps
+      - limitranges
+      - namespaces
+      - replicationcontrollers
+      - resourcequotas
     verbs: ["list", "watch"]
   - apiGroups: ["apps"]
     resources:
@@ -18,3 +25,39 @@ rules:
       - statefulsets
       - replicasets
     verbs: ["list", "watch"]
+  - apiGroups: [ "storage.k8s.io" ]
+    resources:
+      - volumeattachments
+      - storageclasses
+    verbs: [ "list", "watch" ]
+  - apiGroups: [ "admissionregistration.k8s.io" ]
+    resources:
+      - mutatingwebhookconfigurations
+      - validatingwebhookconfigurations
+    verbs: [ "list", "watch" ]
+  - apiGroups: [ "coordination.k8s.io" ]
+    resources:
+      - leases
+    verbs: [ "list", "watch" ]
+  - apiGroups: [ "networking.k8s.io" ]
+    resources:
+      - ingresses
+      - networkpolicies
+    verbs: [ "list", "watch" ]
+  - apiGroups: [ "autoscaling" ]
+    resources:
+      - horizontalpodautoscalers
+    verbs: [ "list", "watch" ]
+  - apiGroups: [ "batch" ]
+    resources:
+      - cronjobs
+      - jobs
+    verbs: [ "list", "watch" ]
+  - apiGroups: [ "policy" ]
+    resources:
+      - poddisruptionbudgets
+    verbs: [ "list", "watch" ]
+  - apiGroups: [ "certificates.k8s.io" ]
+    resources:
+      - certificatesigningrequests
+    verbs: [ "list", "watch" ]
