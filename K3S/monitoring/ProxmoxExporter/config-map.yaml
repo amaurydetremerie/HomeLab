@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: proxmox-exporter-config
+  namespace: monitoring
+data:
+  pve.yml: |
+    default:
+      user: <path:k3s/data/monitoring#pve_user>
+      token_name: <path:k3s/data/monitoring#pve_token_name>
+      token_value: <path:k3s/data/monitoring#pve_token_value>
+      verify_ssl: false

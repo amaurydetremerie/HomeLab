@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: proxmox-exporter
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "12"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/amaurydetremerie/HomeLab.git
+    targetRevision: HEAD
+    path: K3S/monitoring/ProxmoxExporter
+    plugin:
+      name: argocd-vault-plugin
+      env:
+        - name: AVP_TYPE
+          value: vault
+        - name: AVP_AUTH_TYPE
+          value: k8s
+        - name: AVP_K8S_ROLE
+          value: argocd
+        - name: VAULT_ADDR
+          value: http://vault-svc.secure.svc.cluster.local:8200
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
