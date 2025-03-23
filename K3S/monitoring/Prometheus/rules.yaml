@@ -37,6 +37,92 @@ spec:
           annotations:
             summary: "Website {{ $labels.instance }} is down"
             description: "Website {{ $labels.instance }} has been down for more than 5 minutes"
+    - name: proxmox-cpu
+      rules:
+        - alert: NodeHighCPU
+          expr: avg by(id) (pve_cpu_usage_ratio{id=~"node/.*"} * 100) * on(id) group_left(name, instance) pve_node_info > 80
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU usage for node {{ $labels.name }}"
+            description: "Node {{ $labels.name }} with IP {{ $labels.instance }} is using more than 80% CPU"
+        - alert: LxcHighCPU
+          expr: avg by(id) (pve_cpu_usage_ratio{id=~"lxc/.*"} * 100) * on(id) group_left(name, node) pve_guest_info{type="lxc"} > 80
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU usage for LXC {{ $labels.name }}"
+            description: "LXC {{ $labels.name }} on node {{ $labels.node }} is using more than 80% CPU"
+        - alert: VmHighCPU
+          expr: avg by(id) (pve_cpu_usage_ratio{id=~"qemu/.*"} * 100) * on(id) group_left(name, node) pve_guest_info{type="qemu"} > 80
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU usage for VM {{ $labels.name }}"
+            description: "VM {{ $labels.name }} on node {{ $labels.node }} is using more than 80% CPU"
+    - name: proxmox-memory
+      rules:
+        - alert: NodeHighMemory
+          expr: (avg by (id) (pve_memory_usage_bytes{id=~"node/.*"} /1024/1024/1024) > avg by (id) (pve_memory_size_bytes{id=~"node/.*"} / 1024 / 1024 / 1024 / 100 * 80)) * on(id) group_left(name, instance) pve_node_info
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High Memory usage for node {{ $labels.name }}"
+            description: "Node {{ $labels.name }} with IP {{ $labels.instance }} is using more than 80% Memory"
+        - alert: LxcHighMemory
+          expr: (avg by (id) (pve_memory_usage_bytes{id=~"lxc/.*"} /1024/1024/1024) > avg by (id) (pve_memory_size_bytes{id=~"lxc/.*"} / 1024 / 1024 / 1024 / 100 * 80)) * on(id) group_left(name, node) pve_guest_info{type="lxc"}
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High Memory usage for LXC {{ $labels.name }}"
+            description: "LXC {{ $labels.name }} on node {{ $labels.node }} is using more than 80% Memory"
+        - alert: VmHighMemory
+          expr: (avg by (id) (pve_memory_usage_bytes{id=~"qemu/.*"} /1024/1024/1024) > avg by (id) (pve_memory_size_bytes{id=~"qemu/.*"} / 1024 / 1024 / 1024 / 100 * 80)) * on(id) group_left(name, node) pve_guest_info{type="qemu"}
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High Memory usage for VM {{ $labels.name }}"
+            description: "VM {{ $labels.name }} on node {{ $labels.node }} is using more than 80% Memory"
+    - name: proxmox-offline
+      rules:
+        - alert: NodeOffline
+          expr: pve_up{id=~"node/.*"} * on(id) group_left(name, instance) pve_node_info == 0
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node {{ $labels.name }} offline"
+            description: "Node {{ $labels.name }} with IP {{ $labels.instance }} is offline"
+        - alert: LxcOffline
+          expr: pve_up{id=~"lxc/.*"} * on(id) group_left(name, node) pve_guest_info{type="lxc"} == 0
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "LXC {{ $labels.name }} offline"
+            description: "LXC {{ $labels.name }} on node {{ $labels.node }} is offline"
+        - alert: VmOffline
+          expr: pve_up{id=~"qemu/.*"} * on(id) group_left(name, node) pve_guest_info{type="qemu"} == 0
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "VM {{ $labels.name }} offline"
+            description: "VM {{ $labels.name }} on node {{ $labels.node }} is offline"
+        - alert: StorageOffline
+          expr: pve_up{id=~"storage/.*"} * on(id) group_left(storage, node) pve_storage_info == 0
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Storage {{ $labels.name }} offline"
+            description: "Storage {{ $labels.name }} on node {{ $labels.node }} is offline"
     - name: kubernetes-pods
       rules:
         - alert: PodCrashLooping
