@@ -17,6 +17,16 @@ stringData:
           - https://qbittorrent.wiserisk.be
           - https://seedbox.wiserisk.be
           - https://hermes.wiserisk.be
+          - https://argocd.k3s.wiserisk.be
+          - https://registry.k3s.wiserisk.be
+          - https://vault.k3s.wiserisk.be
+          - https://grafana.k3s.wiserisk.be
+          - https://tautulli.k3s.wiserisk.be
+          - https://flaresolverr.k3s.wiserisk.be
+          - https://graylog.k3s.wiserisk.be
+          - https://librespeed.k3s.wiserisk.be
+          - https://nextcloud.k3s.wiserisk.be
+          - https://portainer.k3s.wiserisk.be
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
@@ -57,6 +67,12 @@ stringData:
           - https://traefik.wiserisk.home
           - https://hermes.wiserisk.home
           - https://webhook.wiserisk.home
+          - https://registry-ui.k3s.wiserisk.home
+          - https://traefik.k3s.wiserisk.home
+          - https://alertmanager.k3s.wiserisk.home
+          - https://blackbox.k3s.wiserisk.home
+          - https://ksm.k3s.wiserisk.home
+          - https://prometheus.k3s.wiserisk.home
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target

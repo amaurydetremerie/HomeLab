@@ -7,7 +7,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
   rules:
-    - host: blackbox.k3s.wiserisk.be
+    - host: blackbox.k3s.wiserisk.home
       http:
         paths:
           - path: /

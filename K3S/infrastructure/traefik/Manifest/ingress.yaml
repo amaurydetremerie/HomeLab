@@ -7,7 +7,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`traefik.k3s.wiserisk.be`)
+    - match: Host(`traefik.k3s.wiserisk.home`)
       kind: Rule
       services:
         - name: api@internal
