@@ -17,9 +17,6 @@ spec:
           image: mongo:6.0.20
           ports:
             - containerPort: 27017
-          securityContext:
-            runAsUser: 0
-            runAsGroup: 0
           volumeMounts:
             - name: mongodb-volume
               mountPath: /data
