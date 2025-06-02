@@ -81,14 +81,6 @@ spec:
           annotations:
             summary: "High Memory usage for LXC {{ $labels.name }}"
             description: "LXC {{ $labels.name }} on node {{ $labels.node }} is using more than 80% Memory"
-        - alert: VmHighMemory
-          expr: (avg by (id) (pve_memory_usage_bytes{id=~"qemu/.*"} /1024/1024/1024) > avg by (id) (pve_memory_size_bytes{id=~"qemu/.*"} / 1024 / 1024 / 1024 / 100 * 80)) * on(id) group_left(name, node) pve_guest_info{type="qemu"}
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "High Memory usage for VM {{ $labels.name }}"
-            description: "VM {{ $labels.name }} on node {{ $labels.node }} is using more than 80% Memory"
     - name: proxmox-offline
       rules:
         - alert: NodeOffline
