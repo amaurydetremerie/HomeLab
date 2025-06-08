@@ -1,66 +1,66 @@
 http:
   services:
-    hermes:
+    hermes-syncthing:
       loadBalancer:
         servers:
-          - url: "http://10.100.0.10"
-    hades:
+          - url: "http://10.100.0.10:20910"
+    hades-syncthing:
       loadBalancer:
         servers:
-          - url: "http://10.100.0.220:8080"
+          - url: "http://10.100.0.220:8081"
 
   routers:
-    hermes:
-      rule: "Host(`hermes.wiserisk.be`) || Host(`hermes.wiserisk.home`)"
+    hermes-syncthing:
+      rule: "Host(`syncthing.hermes.wiserisk.be`) || Host(`syncthing.hermes.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
-    hermes-secure:
-      rule: "Host(`hermes.wiserisk.be`)"
+    hermes-syncthing-secure:
+      rule: "Host(`syncthing.hermes.wiserisk.be`)"
       entryPoints:
         - "websecure"
       middlewares:
         - "security@file"
         - "compression@file"
-      service: "hermes@file"
+      service: "hermes-syncthing@file"
       tls:
         certResolver: letsencrypt-ecdsa
         options: mintls13
-    hermes-secure-local:
-      rule: "Host(`hermes.wiserisk.home`)"
+    hermes-syncthing-secure-local:
+      rule: "Host(`syncthing.hermes.wiserisk.home`)"
       entryPoints:
         - "websecure"
       middlewares:
         - "security@file"
         - "compression@file"
-      service: "hermes@file"
+      service: "hermes-syncthing@file"
       tls: {}
-    hades:
-      rule: "Host(`hades.wiserisk.be`) || Host(`hades.wiserisk.home`)"
+    hades-syncthing:
+      rule: "Host(`syncthing.hades.wiserisk.be`) || Host(`syncthing.hades.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
-    hades-secure:
-      rule: "Host(`hades.wiserisk.be`)"
+    hade-syncthings-secure:
+      rule: "Host(`syncthing.hades.wiserisk.be`)"
       entryPoints:
         - "websecure"
       middlewares:
         - "security@file"
         - "compression@file"
-      service: "hades@file"
+      service: "hades-syncthing@file"
       tls:
         certResolver: letsencrypt-ecdsa
         options: mintls13
-    hades-secure-local:
-      rule: "Host(`hades.wiserisk.home`)"
+    hades-syncthing-secure-local:
+      rule: "Host(`syncthing.hades.wiserisk.home`)"
       entryPoints:
         - "websecure"
       middlewares:
         - "security@file"
         - "compression@file"
-      service: "hades@file"
+      service: "hades-syncthing@file"
       tls: { }

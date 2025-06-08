@@ -7,6 +7,13 @@ http:
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
+    hades-ilo-local:
+      rule: "Host(`hades.ilo.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
 
 tcp:
   services:
@@ -14,12 +21,24 @@ tcp:
       loadBalancer:
         servers:
           - address: "10.0.0.45:443"
+    hades-ilo-secure-tcp:
+      loadBalancer:
+        servers:
+          - address: "10.100.0.220:8082"
   routers:
-    flash-pbs-secure-local-tcp:
+    flash-ilo-secure-local-tcp:
       rule: "HostSNI(`flash.ilo.wiserisk.home`)"
       entryPoints:
         - "websecure"
       service: "flash-ilo-secure-tcp@file"
+      priority: 2
+      tls:
+        passthrough: true
+    hades-ilo-secure-local-tcp:
+      rule: "HostSNI(`hades.ilo.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      service: "hades-ilo-secure-tcp@file"
       priority: 2
       tls:
         passthrough: true
