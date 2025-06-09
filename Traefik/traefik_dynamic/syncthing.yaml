@@ -11,14 +11,14 @@ http:
 
   routers:
     hermes-syncthing:
-      rule: "Host(`syncthing.hermes.wiserisk.be`) || Host(`syncthing.hermes.wiserisk.home`)"
+      rule: "Host(`hermes.syncthing.wiserisk.be`) || Host(`hermes.syncthing.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
     hermes-syncthing-secure:
-      rule: "Host(`syncthing.hermes.wiserisk.be`)"
+      rule: "Host(`hermes.syncthing.wiserisk.be`)"
       entryPoints:
         - "websecure"
       middlewares:
@@ -29,7 +29,7 @@ http:
         certResolver: letsencrypt-ecdsa
         options: mintls13
     hermes-syncthing-secure-local:
-      rule: "Host(`syncthing.hermes.wiserisk.home`)"
+      rule: "Host(`hermes.syncthing.wiserisk.home`)"
       entryPoints:
         - "websecure"
       middlewares:
@@ -38,14 +38,14 @@ http:
       service: "hermes-syncthing@file"
       tls: {}
     hades-syncthing:
-      rule: "Host(`syncthing.hades.wiserisk.be`) || Host(`syncthing.hades.wiserisk.home`)"
+      rule: "Host(`hades.syncthing.wiserisk.be`) || Host(`hades.syncthing.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
     hade-syncthings-secure:
-      rule: "Host(`syncthing.hades.wiserisk.be`)"
+      rule: "Host(`hades.syncthing.wiserisk.be`)"
       entryPoints:
         - "websecure"
       middlewares:
@@ -56,7 +56,7 @@ http:
         certResolver: letsencrypt-ecdsa
         options: mintls13
     hades-syncthing-secure-local:
-      rule: "Host(`syncthing.hades.wiserisk.home`)"
+      rule: "Host(`hades.syncthing.wiserisk.home`)"
       entryPoints:
         - "websecure"
       middlewares:
