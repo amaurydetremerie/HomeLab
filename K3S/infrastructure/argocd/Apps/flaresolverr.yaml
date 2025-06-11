@@ -5,6 +5,9 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "20"
+    argocd-image-updater.argoproj.io/image-list: flaresolverr=flaresolverr/flaresolverr
+    argocd-image-updater.argoproj.io/flaresolverr.update-strategy: latest
+    argocd-image-updater.argoproj.io/flaresolverr.allow-tags: latest
 spec:
   project: default
   source:
