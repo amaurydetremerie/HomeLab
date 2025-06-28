@@ -1,0 +1,25 @@
+http:
+  routers:
+    wazuh-local:
+      rule: "Host(`wazuh.wiserisk.home`) || Host(`wazuh.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
+
+tcp:
+  services:
+    wazuh-secure-tcp:
+      loadBalancer:
+        servers:
+          - address: "10.100.0.2:443"
+  routers:
+    wazuh-secure-local-tcp:
+      rule: "HostSNI(`wazuh.wiserisk.home`) || HostSNI(`wazuh.wiserisk.be`)"
+      entryPoints:
+        - "websecure"
+      service: "wazuh-secure-tcp@file"
+      priority: 2
+      tls:
+        passthrough: true
