@@ -23,6 +23,9 @@ tcp:
       entryPoints:
         - "wazuh"
       service: "wazuh-tcp@file"
+      priority: 2
+      tls:
+        passthrough: true
     wazuh-secure-local-tcp:
       rule: "HostSNI(`wazuh.wiserisk.home`) || HostSNI(`wazuh.wiserisk.be`)"
       entryPoints:
