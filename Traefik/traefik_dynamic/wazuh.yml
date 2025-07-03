@@ -26,6 +26,7 @@ tcp:
       priority: 2
       tls:
         passthrough: true
+      insecureSkipVerify: true
     wazuh-secure-local-tcp:
       rule: "HostSNI(`wazuh.wiserisk.home`) || HostSNI(`wazuh.wiserisk.be`)"
       entryPoints:
