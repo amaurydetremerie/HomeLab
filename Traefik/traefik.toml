@@ -32,6 +32,8 @@
         address=":5432"
     [entryPoints.graylog]
         address=":12201/udp"
+    [entryPoints.wazuh]
+        address=":1515"
 [certificatesResolvers]
     [certificatesResolvers.letsencrypt-ecdsa]
         [certificatesResolvers.letsencrypt-ecdsa.acme]
