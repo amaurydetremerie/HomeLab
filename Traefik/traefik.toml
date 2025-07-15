@@ -8,7 +8,7 @@
 
 [log]
     filePath = "/var/log/traefik/traefik.log"
-    level = "DEBUG"
+    level = "ERROR"
 
 [accessLog]
     filePath = "/var/log/traefik/access.log"
@@ -32,8 +32,10 @@
         address=":5432"
     [entryPoints.graylog]
         address=":12201/udp"
-    [entryPoints.wazuh]
+    [entryPoints.wazuh-1515]
         address=":1515"
+    [entryPoints.wazuh-1514]
+        address=":1514"
 [certificatesResolvers]
     [certificatesResolvers.letsencrypt-ecdsa]
         [certificatesResolvers.letsencrypt-ecdsa.acme]
