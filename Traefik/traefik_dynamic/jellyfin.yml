@@ -1,0 +1,35 @@
+http:
+  services:
+    jellyfin:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.202:8096"
+
+  routers:
+    jellyfin:
+      rule: "Host(`jellyfin.wiserisk.be`) || Host(`jellyfin.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
+    jellyfin-secure:
+      rule: "Host(`jellyfin.wiserisk.be`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "jellyfin@file"
+      tls:
+        certResolver: letsencrypt-ecdsa
+        options: mintls13
+    jellyfin-local-secure:
+      rule: "Host(`jellyfin.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "jellyfin@file"
+      tls: {}
