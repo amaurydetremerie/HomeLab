@@ -13,7 +13,7 @@ stringData:
       static_configs:
         - targets:
           - https://ha.wiserisk.be
-          - https://plex.wiserisk.be/identity
+          - https://jellyfin.wiserisk.be/health
           - https://qbittorrent.wiserisk.be
           - https://seedbox.wiserisk.be
           - https://hermes.wiserisk.be
@@ -58,7 +58,7 @@ stringData:
           - https://ha.wiserisk.home
           - https://adguard.wiserisk.home
           - https://pbs.wiserisk.home
-          - https://plex.wiserisk.home/identity
+          - https://jellyfin.wiserisk.home/health
           - https://pve.wiserisk.home
           - https://flash.pve.wiserisk.home
           - https://adminer.wiserisk.home/adminer
