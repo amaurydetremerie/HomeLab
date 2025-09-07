@@ -6,12 +6,14 @@ metadata:
 type: Opaque
 stringData:
   prometheus-additional.yaml: |
-    - job_name: 'jellyfin-metrics'
+    - job_name: 'jellyfin'
+      metrics_path: /metrics
+      scheme: https
       static_configs:
         - targets:
-          - https://jellyfin.wiserisk.home/metrics
+          - jellyfin.wiserisk.home
       tls_config:
-        insecure_skip_verify: true      
+        insecure_skip_verify: true    
     - job_name: 'blackbox-https'
       metrics_path: /probe
       params:
