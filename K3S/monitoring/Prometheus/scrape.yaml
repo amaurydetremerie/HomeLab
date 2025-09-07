@@ -11,9 +11,7 @@ stringData:
       scheme: https
       static_configs:
         - targets:
-          - jellyfin.wiserisk.home
-      tls_config:
-        insecure_skip_verify: true    
+          - jellyfin.wiserisk.be
     - job_name: 'blackbox-https'
       metrics_path: /probe
       params:
