@@ -92,7 +92,7 @@ spec:
             summary: "Node {{ $labels.name }} offline"
             description: "Node {{ $labels.name }} with IP {{ $labels.instance }} is offline"
         - alert: LxcOffline
-          expr: pve_up{id=~"lxc/.*"} * on(id) group_left(name, node) pve_guest_info{type="lxc"} == 0
+          expr: pve_up{id=~"lxc/.*"} * on(id) group_left(name, node) pve_guest_info{type="lxc", template!="1"} == 0
           for: 1m
           labels:
             severity: warning
