@@ -66,7 +66,7 @@ spec:
     - name: proxmox-memory
       rules:
         - alert: NodeHighMemory
-          expr: (avg by (id) (pve_memory_usage_bytes{id=~"node/.*"} /1024/1024/1024) > avg by (id) (pve_memory_size_bytes{id=~"node/.*"} / 1024 / 1024 / 1024 / 100 * 80)) * on(id) group_left(name, instance) pve_node_info
+          expr: (avg by (id) (pve_memory_usage_bytes{id=~"node/.*"} /1024/1024/1024) > avg by (id) (pve_memory_size_bytes{id=~"node/.*"} / 1024 / 1024 / 1024 / 100 * 90)) * on(id) group_left(name, instance) pve_node_info
           for: 5m
           labels:
             severity: warning
