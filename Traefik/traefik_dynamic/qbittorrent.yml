@@ -7,23 +7,12 @@ http:
 
   routers:
     qbittorrent:
-      rule: "Host(`qbittorrent.wiserisk.be`) || Host(`qbittorrent.wiserisk.home`)"
+      rule: "Host(`qbittorrent.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
-    qbittorrent-secure:
-      rule: "Host(`qbittorrent.wiserisk.be`)"
-      entryPoints:
-        - "websecure"
-      middlewares:
-        - "security@file"
-        - "compression@file"
-      service: "qbittorrent@file"
-      tls:
-        certResolver: letsencrypt-ecdsa
-        options: mintls13
     qbittorrent-secure-local:
       rule: "Host(`qbittorrent.wiserisk.home`)"
       entryPoints:
