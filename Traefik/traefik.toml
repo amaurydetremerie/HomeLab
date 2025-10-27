@@ -24,12 +24,8 @@
     [entryPoints.websecure]
         address=":443"
     [entryPoints.acme]
-    [entryPoints.plex]
-        address=":32400"
     [entryPoints.k3s]
         address=":6443"
-    [entryPoints.postgres]
-        address=":5432"
     [entryPoints.graylog]
         address=":12201/udp"
     [entryPoints.wazuh-1515]

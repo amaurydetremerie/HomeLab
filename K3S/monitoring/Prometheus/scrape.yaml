@@ -20,7 +20,6 @@ stringData:
         - targets:
           - https://ha.wiserisk.be
           - https://jellyfin.wiserisk.be/health
-          - https://qbittorrent.wiserisk.be
           - https://seedbox.wiserisk.be
           - https://hermes.wiserisk.be
           - https://argocd.k3s.wiserisk.be
@@ -67,7 +66,6 @@ stringData:
           - https://jellyfin.wiserisk.home/health
           - https://pve.wiserisk.home
           - https://flash.pve.wiserisk.home
-          - https://adminer.wiserisk.home/adminer
           - https://qbittorrent.wiserisk.home
           - https://seedbox.wiserisk.home
           - https://traefik.wiserisk.home
@@ -102,7 +100,6 @@ stringData:
           - 10.100.0.10
           - 10.100.0.103
           - 10.100.0.105
-          - 10.100.0.106
           - 10.100.0.151
           - 10.100.0.152
           - 10.100.0.201
