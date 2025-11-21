@@ -129,5 +129,5 @@ stringData:
         - targets:
           - speedtest-exporter-svc.monitoring.svc.cluster.local:9798
       metrics_path: /metrics
-      scrape_interval: 10m
+      scrape_interval: 1h
       scrape_timeout: 3m

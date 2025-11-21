@@ -149,6 +149,64 @@ spec:
           annotations:
             summary: "High CPU usage for pod {{ $labels.exported_container }}"
             description: "Pod {{ $labels.exported_pod }} in namespace {{ $labels.exported_namespace }} is using more than 80% CPU"
+    - name: speedtest
+      rules:
+        - alert: SpeedtestDownloadLow
+          expr: speedtest_download_bits_per_second < 7e8
+          for: 3m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Download is low"
+            description: "Download speed is {{ $value | humanize }} bit/s"
+        - alert: SpeedtestDownloadUltraLow
+          expr: speedtest_download_bits_per_second < 2e8
+          for: 3m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Download is dangerously low"
+            description: "Download speed is under {{ $value | humanize }} bit/s"
+        - alert: SpeedtestUploadLow
+          expr: speedtest_upload_bits_per_second  < 7e8
+          for: 3m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Upload is low"
+            description: "Upload speed is under {{ $value | humanize }} bit/s"
+        - alert: SpeedtestUploadUltraLow
+          expr: speedtest_upload_bits_per_second  < 2e8
+          for: 3m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Upload is dangerously low"
+            description: "Upload speed is under {{ $value | humanize }} bit/s"
+        - alert: SpeedtestHighLatency
+          expr: speedtest_ping_latency_milliseconds > 40
+          for: 3m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Ping high"
+            description: "Ping is {{ $value }} ms"
+        - alert: SpeedtestHighJitter
+          expr: speedtest_jitter_latency_milliseconds > 5
+          for: 3m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Jitter high"
+            description: "Jitter is {{ $value }} ms"
+        - alert: SpeedtestExporterDown
+          expr: speedtest_up == 0
+          for: 3m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Speedtest exporter KO"
+            description: "Speedtest-exporter is down"
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
