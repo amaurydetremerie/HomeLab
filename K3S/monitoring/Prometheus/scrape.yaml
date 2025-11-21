@@ -26,7 +26,6 @@ stringData:
           - https://registry.k3s.wiserisk.be
           - https://vault.k3s.wiserisk.be
           - https://grafana.k3s.wiserisk.be
-          - https://tautulli.k3s.wiserisk.be
           - https://flaresolverr.k3s.wiserisk.be
           - https://graylog.k3s.wiserisk.be
           - https://librespeed.k3s.wiserisk.be
