@@ -8,3 +8,4 @@ setAdminPassword:
   currentPassword: admin
 postgresql:
   enabled: false
+monitoringPasscode: <path:k3s/data/sonarqube#monitoring-passcode>
