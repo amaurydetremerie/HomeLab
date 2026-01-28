@@ -6,6 +6,4 @@ persistence:
 setAdminPassword:
   newPassword: <path:k3s/data/sonarqube#admin-password>
   currentPassword: admin
-postgresql:
-  enabled: false
 monitoringPasscode: <path:k3s/data/sonarqube#monitoring-passcode>
