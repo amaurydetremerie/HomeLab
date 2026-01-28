@@ -36,7 +36,7 @@ configs:
             - "-c"
             - |
               helm template $ARGOCD_APP_NAME -n $ARGOCD_APP_NAMESPACE -f <(echo "$ARGOCD_ENV_HELM_VALUES") . |
-              argocd-vault-plugin generate . --verbose-sensitive-output
+              argocd-vault-plugin generate - --verbose-sensitive-output
         lockRepo: false
       argocd-vault-plugin:
         allowConcurrency: true
@@ -142,3 +142,25 @@ repoServer:
         - name: custom-tools
           subPath: argocd-vault-plugin
           mountPath: /usr/local/bin/argocd-vault-plugin
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ConfigManagementPlugin
+metadata:
+  name: argocd-vault-plugin-helm
+spec:
+  allowConcurrency: true
+  discover:
+    find:
+      command:
+        - sh
+        - "-c"
+        - "find . -name 'Chart.yaml' && find . -name 'values.yaml'"
+  generate:
+    command:
+      - bash
+      - "-c"
+      - |
+        helm template $ARGOCD_APP_NAME -n $ARGOCD_APP_NAMESPACE -f <(echo "$ARGOCD_ENV_HELM_VALUES") . |
+        argocd-vault-plugin generate - --verbose-sensitive-output
+  lockRepo: false
