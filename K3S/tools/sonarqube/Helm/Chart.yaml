@@ -2,9 +2,9 @@ apiVersion: v2
 name: sonarqube
 description: SonarQube for K3S with Vault Plugin
 type: application
-version: 10.7.0
+version: 2025.6.1
 appVersion: v2.13.0
 dependencies:
   - name: sonarqube
-    version: 10.7.0
+    version: 2025.6.1
     repository: https://SonarSource.github.io/helm-chart-sonarqube
