@@ -1,8 +1,0 @@
-community:
-  enabled: true
-persistence:
-  enabled: true
-  existingClaim: sonarqube-pvc
-setAdminPassword:
-  newPassword: <path:k3s/data/sonarqube#admin-password>
-  currentPassword: admin
