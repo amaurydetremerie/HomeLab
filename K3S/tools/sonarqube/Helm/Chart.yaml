@@ -3,7 +3,7 @@ name: sonarqube
 description: SonarQube for K3S with Vault Plugin
 type: application
 version: 2025.6.1
-appVersion: v2.13.0
+appVersion: v2.13.1
 dependencies:
   - name: sonarqube
     version: 2025.6.1
