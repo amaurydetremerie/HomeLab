@@ -9,8 +9,8 @@ spec:
   project: default
   source:
     repoURL: https://github.com/amaurydetremerie/HomeLab.git
-    chart: sonarqube
-    targetRevision: 10.7.0
+    targetRevision: HEAD
+    path: K3S/tools/sonarqube/Helm
     plugin:
       name: argocd-vault-plugin-helm
       env:
