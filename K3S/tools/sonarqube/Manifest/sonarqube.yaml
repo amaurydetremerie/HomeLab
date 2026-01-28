@@ -3,20 +3,14 @@ kind: Application
 metadata:
   name: sonarqube
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
   annotations:
     argocd.argoproj.io/sync-wave: "21"
 spec:
   project: default
   source:
-    repoURL: https://SonarSource.github.io/helm-chart-sonarqube
+    repoURL: https://github.com/amaurydetremerie/HomeLab.git
     chart: sonarqube
     targetRevision: 10.7.0
-    helm:
-      releaseName: sonarqube
-      valueFiles:
-        - https://raw.githubusercontent.com/amaurydetremerie/HomeLab/refs/heads/main/K3S/helm/values/sonarqube.yaml
     plugin:
       name: argocd-vault-plugin-helm
       env:

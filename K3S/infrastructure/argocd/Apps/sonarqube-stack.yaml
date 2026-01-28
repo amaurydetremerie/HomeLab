@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://github.com/amaurydetremerie/HomeLab.git
     targetRevision: HEAD
-    path: K3S/tools/sonarqube
+    path: K3S/tools/sonarqube/Manifest
   destination:
     server: https://kubernetes.default.svc
     namespace: portainer
