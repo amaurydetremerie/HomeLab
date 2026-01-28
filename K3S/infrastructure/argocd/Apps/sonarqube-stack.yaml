@@ -22,8 +22,6 @@ spec:
           value: argocd
         - name: VAULT_ADDR
           value: http://vault-svc.secure.svc.cluster.local:8200
-    directory:
-      recurse: false
   destination:
     server: https://kubernetes.default.svc
     namespace: portainer
