@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: hlabmonitor-config
 data:
-  .application.yaml: |
+  application.yaml: |
     spring:
       liquibase:
         enabled: true
