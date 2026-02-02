@@ -16,4 +16,4 @@ spec:
               service:
                 name: hlabmonitor-svc
                 port:
-                  number: 80
+                  number: 8080
