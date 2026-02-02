@@ -14,8 +14,8 @@ data:
     springdoc:
       swagger-ui:
         enabled: true
-    api-docs:
-      enabled: true
+      api-docs:
+        enabled: true
     database:
       type: sqlite
     debug:
