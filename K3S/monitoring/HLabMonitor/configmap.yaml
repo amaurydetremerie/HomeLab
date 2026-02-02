@@ -1,0 +1,145 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hlabmonitor-config
+data:
+  .application.yaml: |
+    spring:
+      liquibase:
+        enabled: true
+    logging:
+      level:
+        org.springframework: DEBUG
+        be.wiserisk.hlabmonitor: INFO
+    database:
+      type: sqlite
+    debug:
+      controller:
+        enabled: true
+    monitoring:
+      ping:
+        router:
+          target: 10.0.0.1
+        pbs:
+          target: 10.0.0.80
+        flash-pve:
+          target: 10.0.0.81
+        ha:
+          target: 10.0.0.95
+        traefik:
+          target: 10.100.0.1
+        hermes:
+          target: 10.100.0.10
+        webhook:
+          target: 10.100.0.103
+        qbittorrent:
+          target: 10.100.0.105
+        k3s-master:
+          target: 10.100.0.151
+        k3s-worker-01:
+          target: 10.100.0.152
+        seedbox:
+          target: 10.100.0.201
+        jellyfin:
+          target: 10.100.0.202
+        tailscale:
+          target: 10.100.0.220
+      http:
+        ha:
+          target: https://ha.wiserisk.be
+        jellyfin:
+          target: https://jellyfin.wiserisk.be/health
+        seedbox:
+          target: https://seedbox.wiserisk.be
+        hermes:
+          target: https://hermes.wiserisk.be
+        argocd:
+          target: https://argocd.k3s.wiserisk.be
+        registry:
+          target: https://registry.k3s.wiserisk.be
+        vault:
+          target: https://vault.k3s.wiserisk.be
+        grafana:
+          target: https://grafana.k3s.wiserisk.be
+        flaresolverr:
+          target: https://flaresolverr.k3s.wiserisk.be
+        graylog:
+          target: https://graylog.k3s.wiserisk.be
+        librespeed:
+          target: https://librespeed.k3s.wiserisk.be
+        nextcloud:
+          target: https://nextcloud.k3s.wiserisk.be
+        portainer:
+          target: https://portainer.k3s.wiserisk.be
+        flash-ilo-local:
+          target: https://flash.ilo.wiserisk.home
+          certificate:
+            verify: false
+        ha-local:
+          target: https://ha.wiserisk.home
+          certificate:
+            verify: false
+        adguard-local:
+          target: https://adguard.wiserisk.home
+          certificate:
+            verify: false
+        pbs-local:
+          target: https://pbs.wiserisk.home
+          certificate:
+            verify: false
+        jellyfin-local:
+          target: https://jellyfin.wiserisk.home/health
+          certificate:
+            verify: false
+        pve-local:
+          target: https://pve.wiserisk.home
+          certificate:
+            verify: false
+        flash-pve-local:
+          target: https://flash.pve.wiserisk.home
+          certificate:
+            verify: false
+        qbittorrent-local:
+          target: https://qbittorrent.wiserisk.home
+          certificate:
+            verify: false
+        seedbox-local:
+          target: https://seedbox.wiserisk.home
+          certificate:
+            verify: false
+        traefik-local:
+          target: https://traefik.wiserisk.home
+          certificate:
+            verify: false
+        hermes-local:
+          target: https://hermes.wiserisk.home
+          certificate:
+            verify: false
+        webhook-local:
+          target: https://webhook.wiserisk.home
+          certificate:
+            verify: false
+        registry-ui-local:
+          target: https://registry-ui.k3s.wiserisk.home
+          certificate:
+            verify: false
+        traefik-k3s-local:
+          target: https://traefik.k3s.wiserisk.home
+          certificate:
+            verify: false
+        alertmanager-local:
+          target: https://alertmanager.k3s.wiserisk.home
+          certificate:
+            verify: false
+        blackbox-local:
+          target: https://blackbox.k3s.wiserisk.home
+          certificate:
+            verify: false
+        ksm-local:
+          target: https://ksm.k3s.wiserisk.home
+          certificate:
+            verify: false
+        prometheus-local:
+          target: https://prometheus.k3s.wiserisk.home
+          certificate:
+            verify: false

@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hlabmonitor
+  namespace: hlabmonitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hlabmonitor
+  template:
+    metadata:
+      labels:
+        app: hlabmonitor
+    spec:
+      containers:
+        - name: hlabmonitor
+          image: wiserisk/hlabmonitor:0.0.7
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: config
+              mountPath: /etc/hlabmonitor
+              readOnly: true
+            - name: sqlite-volume
+              mountPath: /var/lib/hlabmonitor/
+              subPath: hlabmonitor
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+      volumes:
+        - name: config
+          configMap:
+            name: hlabmonitor-config
+        - name: sqlite-volume
+          persistentVolumeClaim:
+            claimName: hlabmonitor-pvc
