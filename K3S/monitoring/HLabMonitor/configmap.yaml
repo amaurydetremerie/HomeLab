@@ -9,7 +9,7 @@ data:
         enabled: true
     logging:
       level:
-        org.springframework: DEBUG
+        org.springframework: WARNING
         be.wiserisk.hlabmonitor: INFO
     springdoc:
       swagger-ui:
