@@ -11,6 +11,11 @@ data:
       level:
         org.springframework: DEBUG
         be.wiserisk.hlabmonitor: INFO
+    springdoc:
+      swagger-ui:
+        enabled: true
+    api-docs:
+      enabled: true
     database:
       type: sqlite
     debug:
