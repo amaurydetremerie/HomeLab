@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: hlabmonitor
-          image: wiserisk/hlabmonitor:0.0.8
+          image: wiserisk/hlabmonitor:0.0.9
           ports:
             - containerPort: 8080
           volumeMounts:
