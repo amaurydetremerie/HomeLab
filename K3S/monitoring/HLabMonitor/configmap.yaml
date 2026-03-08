@@ -32,6 +32,8 @@ data:
         ha:
           target: 10.0.0.95
         traefik:
+          target: 10.0.0.85
+        traefik-100:
           target: 10.100.0.1
         hermes:
           target: 10.100.0.10
@@ -57,13 +59,13 @@ data:
         seedbox:
           target: https://seedbox.wiserisk.be/login
         hermes:
-          target: https://hermes.wiserisk.be/ui
+          target: https://hermes.wiserisk.be/ui/
         argocd:
           target: https://argocd.k3s.wiserisk.be
         registry:
           target: https://registry.k3s.wiserisk.be
         vault:
-          target: https://vault.k3s.wiserisk.be/ui
+          target: https://vault.k3s.wiserisk.be/ui/
         grafana:
           target: https://grafana.k3s.wiserisk.be/login
         flaresolverr:
@@ -81,70 +83,87 @@ data:
           certificate:
             verify: false
         ha-local:
+          internal: true
           target: https://ha.wiserisk.home
           certificate:
             verify: false
         adguard-local:
+          internal: true
           target: https://adguard.wiserisk.home
           certificate:
             verify: false
         pbs-local:
+          internal: true
           target: https://pbs.wiserisk.home
           certificate:
             verify: false
         jellyfin-local:
+          internal: true
           target: https://jellyfin.wiserisk.home/health
           certificate:
             verify: false
         pve-local:
+          internal: true
           target: https://pve.wiserisk.home
           certificate:
             verify: false
         flash-pve-local:
+          internal: true
           target: https://flash.pve.wiserisk.home
           certificate:
             verify: false
         qbittorrent-local:
+          internal: true
           target: https://qbittorrent.wiserisk.home
           certificate:
             verify: false
         seedbox-local:
+          internal: true
           target: https://seedbox.wiserisk.home
           certificate:
             verify: false
         traefik-local:
+          internal: true
           target: https://traefik.wiserisk.home
           certificate:
             verify: false
         hermes-local:
+          internal: true
           target: https://hermes.wiserisk.home
           certificate:
             verify: false
         webhook-local:
+          internal: true
           target: https://webhook.wiserisk.home
           certificate:
             verify: false
         registry-ui-local:
+          internal: true
           target: https://registry-ui.k3s.wiserisk.home
           certificate:
             verify: false
         traefik-k3s-local:
+          internal: true
           target: https://traefik.k3s.wiserisk.home
           certificate:
             verify: false
         alertmanager-local:
+          internal: true
           target: https://alertmanager.k3s.wiserisk.home
           certificate:
             verify: false
         blackbox-local:
+          internal: true
           target: https://blackbox.k3s.wiserisk.home
           certificate:
             verify: false
         ksm-local:
+          internal: true
           target: https://ksm.k3s.wiserisk.home
           certificate:
             verify: false
         prometheus-local:
+          internal: true
           target: https://prometheus.k3s.wiserisk.home
           certificate:
             verify: false
