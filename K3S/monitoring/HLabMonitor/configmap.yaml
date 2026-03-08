@@ -55,17 +55,17 @@ data:
         jellyfin:
           target: https://jellyfin.wiserisk.be/health
         seedbox:
-          target: https://seedbox.wiserisk.be
+          target: https://seedbox.wiserisk.be/login
         hermes:
-          target: https://hermes.wiserisk.be
+          target: https://hermes.wiserisk.be/ui
         argocd:
           target: https://argocd.k3s.wiserisk.be
         registry:
           target: https://registry.k3s.wiserisk.be
         vault:
-          target: https://vault.k3s.wiserisk.be
+          target: https://vault.k3s.wiserisk.be/ui
         grafana:
-          target: https://grafana.k3s.wiserisk.be
+          target: https://grafana.k3s.wiserisk.be/login
         flaresolverr:
           target: https://flaresolverr.k3s.wiserisk.be
         graylog:
@@ -73,7 +73,7 @@ data:
         librespeed:
           target: https://librespeed.k3s.wiserisk.be
         nextcloud:
-          target: https://nextcloud.k3s.wiserisk.be
+          target: https://nextcloud.k3s.wiserisk.be/login
         portainer:
           target: https://portainer.k3s.wiserisk.be
         flash-ilo-local:
