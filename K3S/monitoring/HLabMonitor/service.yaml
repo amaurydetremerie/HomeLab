@@ -20,8 +20,9 @@ metadata:
   name: hlabmonitor-debug-svc
   namespace: hlabmonitor
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: hlabmonitor
   ports:
     - port: 5005
+      nodePort: 30505
