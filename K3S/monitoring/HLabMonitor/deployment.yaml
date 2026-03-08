@@ -15,9 +15,13 @@ spec:
     spec:
       containers:
         - name: hlabmonitor
-          image: wiserisk/hlabmonitor:0.0.17
+          image: wiserisk/hlabmonitor:0.0.18
+          env:
+            - name: DEBUG_MODE
+              value: "true"
           ports:
             - containerPort: 8080
+            - containerPort: 5005
           volumeMounts:
             - name: config
               mountPath: /etc/hlabmonitor
@@ -30,13 +34,15 @@ spec:
               path: /actuator/health/liveness
               port: 8080
             initialDelaySeconds: 60
-            periodSeconds: 30
+            periodSeconds: 3600
+            failureThreshold: 1
+            timeoutSeconds: 30
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
               port: 8080
             initialDelaySeconds: 30
-            periodSeconds: 10
+            periodSeconds: 3600
           resources:
             requests:
               memory: "512Mi"
