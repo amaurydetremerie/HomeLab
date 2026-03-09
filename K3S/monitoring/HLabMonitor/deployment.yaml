@@ -19,7 +19,7 @@ spec:
           - 10.0.0.86
       containers:
         - name: hlabmonitor
-          image: wiserisk/hlabmonitor:0.0.20
+          image: wiserisk/hlabmonitor:0.0.21
           env:
             - name: DEBUG_MODE
               value: "true"

@@ -4,17 +4,8 @@ metadata:
   name: hlabmonitor-config
 data:
   application.yaml: |
-    spring:
-      liquibase:
-        enabled: true
-    logging:
-      level:
-        org.springframework: WARN
-        be.wiserisk.hlabmonitor: INFO
     springdoc:
       swagger-ui:
-        enabled: true
-      api-docs:
         enabled: true
     database:
       type: sqlite
@@ -22,6 +13,41 @@ data:
       controller:
         enabled: true
     monitoring:
+      notification:
+        enabled: true
+        email:
+          enabled: true
+          from: <path:k3s/data/monitoring#email>
+          to: <path:k3s/data/monitoring#email>
+          smtp:
+            host: smtp.gmail.com
+            port: 587
+            username: <path:k3s/data/monitoring#email>
+            password: <path:k3s/data/monitoring#email_password>
+            auth: true
+            tls: true
+          firing: true
+          resolved: false
+          failed: false
+        discord:
+          enabled: false
+          webhookUrl: <path:k3s/data/monitoring#discord>
+          firing: true
+          resolved: true
+          failed: true
+        telegram:
+          enabled: false
+          token: <path:k3s/data/monitoring#telegram_token>
+          chatId: <path:k3s/data/monitoring#telegram_chatid>
+          firing: true
+          resolved: true
+          failed: true
+        log:
+          enabled: true
+          level: ERROR
+          firing: true
+          resolved: true
+          failed: true
       ping:
         router:
           target: 10.0.0.1
@@ -57,6 +83,7 @@ data:
         jellyfin:
           target: https://jellyfin.wiserisk.be/health
         seedbox:
+          status-code: 429
           target: https://seedbox.wiserisk.be/login
         hermes:
           target: https://hermes.wiserisk.be/ui/
@@ -79,6 +106,7 @@ data:
         portainer:
           target: https://portainer.k3s.wiserisk.be
         flash-ilo-local:
+          internal: true
           target: https://flash.ilo.wiserisk.home
           certificate:
             verify: false
@@ -119,7 +147,8 @@ data:
             verify: false
         seedbox-local:
           internal: true
-          target: https://seedbox.wiserisk.home
+          status-code: 429
+          target: https://seedbox.wiserisk.home/login
           certificate:
             verify: false
         traefik-local:
