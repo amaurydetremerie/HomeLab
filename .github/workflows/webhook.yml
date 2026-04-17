@@ -9,7 +9,7 @@ on:
       - Webhook/**
 
 jobs:
-  update_webhook:
+  update_CF:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,6 +23,11 @@ jobs:
           cf_zone_id: ${{ secrets.CF_ZONE_ID }}
           cf_api_token: ${{ secrets.CF_API_KEY }}
 
+  get_secret:
+    runs-on: ubuntu-latest
+    needs: update_CF
+
+    steps:
       - name: Retrieve secrets from Vault
         id: vault
         uses: hashicorp/vault-action@v2
@@ -35,6 +40,11 @@ jobs:
             k3s/data/global basic_username;
             k3s/data/global basic_password;
 
+  update_webhook:
+    runs-on: ubuntu-latest
+    needs: get_secret
+
+    steps:
       - name: Call pull
         uses: distributhor/workflow-webhook@v3
         with:
