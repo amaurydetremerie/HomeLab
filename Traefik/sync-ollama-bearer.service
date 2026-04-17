@@ -1,0 +1,13 @@
+[Unit]
+Description=Create the ollama bearer middleware
+Before=traefik.service
+BindsTo=traefik.service
+
+[Service]
+User=traefik
+Group=traefik
+Type=oneshot
+ExecStart=/etc/Homelab/Traefik/scripts/sync-ollama-bearer.sh
+
+[Install]
+WantedBy=multi-user.target

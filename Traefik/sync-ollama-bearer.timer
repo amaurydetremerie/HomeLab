@@ -1,0 +1,14 @@
+[Unit]
+Description=Timer for: sync-ollama-bearer.service
+BindsTo=traefik.service
+After=traefik.service
+Requires=traefik.service
+Requires=sync-ollama-bearer.service
+
+[Timer]
+Unit=sync-ollama-bearer.service
+OnBootSec=1min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target
