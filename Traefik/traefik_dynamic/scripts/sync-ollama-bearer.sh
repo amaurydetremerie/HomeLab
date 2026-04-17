@@ -9,7 +9,6 @@ TOKENS=$(curl --silent \
   -H "X-Vault-Token: $VAULT_TOKEN" \
   "$VAULT_ADDR/ollama/tokens" | jq -r '.data.data | to_entries | .[] | .value')
 
-# Générer le fichier
 cat > "$OUTPUT_FILE" << 'YAML'
 http:
   middlewares:
