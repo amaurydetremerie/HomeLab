@@ -4,7 +4,6 @@ VAULT_ADDR="${VAULT_ADDR}"
 VAULT_TOKEN="${VAULT_TOKEN}"
 OUTPUT_FILE="/etc/Homelab/Traefik/traefik_dynamic/ollama-bearer.yaml"
 
-# Récupérer les tokens
 TOKENS=$(curl --silent \
   -H "X-Vault-Request: true" \
   -H "X-Vault-Token: $VAULT_TOKEN" \
