@@ -17,10 +17,11 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Bypass Cloudflare for GitHub Action
-        uses: xiaotianxt/bypass-cloudflare-for-github-action@v1.0.0
+        uses: xiaotianxt/bypass-cloudflare-for-github-action@v2.1.0
         with:
+          cf_account_id: ${{ secrets.CF_ACCOUNT_ID }}
           cf_zone_id: ${{ secrets.CF_ZONE_ID }}
-          cf_api_key: ${{ secrets.CF_API_KEY }}
+          cf_api_token: ${{ secrets.CF_API_TOKEN }}
 
       - name: Retrieve secrets from Vault
         id: vault
