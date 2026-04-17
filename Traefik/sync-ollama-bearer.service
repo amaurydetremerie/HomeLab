@@ -4,8 +4,8 @@ Before=traefik.service
 BindsTo=traefik.service
 
 [Service]
-User=traefik
-Group=traefik
+User=root
+Group=root
 Type=oneshot
 ExecStart=/etc/Homelab/Traefik/scripts/sync-ollama-bearer.sh
 
