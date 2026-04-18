@@ -1,6 +1,6 @@
 [Unit]
 Description=Create the ollama bearer middleware
-Before=traefik.service
+After=traefik.service
 BindsTo=traefik.service
 
 [Service]
