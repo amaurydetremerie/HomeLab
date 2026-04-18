@@ -7,7 +7,7 @@ OUTPUT_FILE="/etc/Homelab/Traefik/traefik_dynamic/ollama-bearer.yaml"
 TOKENS=$(curl --silent \
   -H "X-Vault-Request: true" \
   -H "X-Vault-Token: $VAULT_TOKEN" \
-  "$VAULT_ADDR/ollama/tokens" | jq -r '.data.data | to_entries | .[] | .value')
+  "$VAULT_ADDR/ollama" | jq -r '.data.data | to_entries | .[] | .value')
 
 cat > "$OUTPUT_FILE" << 'YAML'
 http:
