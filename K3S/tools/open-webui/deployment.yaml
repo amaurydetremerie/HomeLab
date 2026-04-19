@@ -33,7 +33,7 @@ spec:
             - name: OLLAMA_BASE_URL
               value: https://ollama.wiserisk.home
             - name: AIOHTTP_CLIENT_SESSION_SSL
-              value: false
+              value: 'false'
       volumes:
         - name: open-webui-volume
           persistentVolumeClaim:
