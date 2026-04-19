@@ -11,3 +11,17 @@ spec:
     app: open-webui
   ports:
     - port: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: open-terminal
+  name: open-terminal-svc
+  namespace: open-webui
+spec:
+  type: ClusterIP
+  selector:
+    app: open-terminal
+  ports:
+    - port: 8000

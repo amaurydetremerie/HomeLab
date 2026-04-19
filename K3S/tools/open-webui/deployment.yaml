@@ -38,3 +38,44 @@ spec:
         - name: open-webui-volume
           persistentVolumeClaim:
             claimName: open-webui-pvc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: open-terminal
+  name: open-terminal
+  namespace: open-webui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: open-terminal
+  template:
+    metadata:
+      labels:
+        app: open-terminal
+    spec:
+      containers:
+        - name: open-terminal
+          image: ghcr.io/open-webui/open-terminal:0.11.34
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - name: open-terminal-volume
+              mountPath: /home/user
+              subPath: open-terminal
+          env:
+            - name: OPEN_TERMINAL_API_KEY
+              value: onlyLocal
+            - name: OPEN_TERMINAL_PACKAGES
+              value: "openjdk-21-jdk"
+            - name: OPEN_TERMINAL_PIP_PACKAGES
+              value: ""
+            - name: OPEN_TERMINAL_NPM_PACKAGES
+              value: "typescript tsx"
+      volumes:
+        - name: open-terminal-volume
+          persistentVolumeClaim:
+            claimName: open-terminal-pvc
