@@ -10,4 +10,4 @@ spec:
   selector:
     app: open-webui
   ports:
-    - port: 3000
+    - port: 8080

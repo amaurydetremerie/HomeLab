@@ -16,4 +16,4 @@ spec:
               service:
                 name: open-webui-svc
                 port:
-                  number: 3000
+                  number: 8080

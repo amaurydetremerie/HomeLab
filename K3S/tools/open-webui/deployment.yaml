@@ -20,7 +20,7 @@ spec:
           image: ghcr.io/open-webui/open-webui:0.8.12
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 3000
+            - containerPort: 8080
           volumeMounts:
             - name: open-webui-volume
               mountPath: /app/backend/data
