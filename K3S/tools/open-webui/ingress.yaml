@@ -17,23 +17,3 @@ spec:
                 name: open-webui-svc
                 port:
                   number: 8080
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: open-terminal-http
-  namespace: open-webui
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-spec:
-  rules:
-    - host: open-terminal.k3s.wiserisk.home
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: open-terminal-svc
-                port:
-                  number: 8000
