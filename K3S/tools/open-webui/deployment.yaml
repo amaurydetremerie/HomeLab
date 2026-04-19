@@ -15,6 +15,10 @@ spec:
       labels:
         app: open-webui
     spec:
+      dnsPolicy: "None"
+      dnsConfig:
+        nameservers:
+          - 10.0.0.86
       containers:
         - name: open-webui
           image: ghcr.io/open-webui/open-webui:0.8.12
