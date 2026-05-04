@@ -25,7 +25,6 @@ stringData:
           - https://hades.wiserisk.be
           - https://hermes.syncthing.wiserisk.be
           - https://hades.syncthing.wiserisk.be
-          - https://ollama.wiserisk.be
           - https://argocd.k3s.wiserisk.be
           - https://registry.k3s.wiserisk.be
           - https://vault.k3s.wiserisk.be
@@ -35,7 +34,7 @@ stringData:
           - https://librespeed.k3s.wiserisk.be
           - https://nextcloud.k3s.wiserisk.be
           - https://portainer.k3s.wiserisk.be
-          - https://hlabmonitor.k3s.wiserisk.be
+          - https://hlabmonitor.k3s.wiserisk.be/actuator/health
           - https://ai.k3s.wiserisk.be
           - https://sonarqube.k3s.wiserisk.be
       relabel_configs:
@@ -52,6 +51,20 @@ stringData:
       static_configs:
         - targets:
           - https://webhook.wiserisk.be
+      relabel_configs:
+        - source_labels: [__address__]
+          target_label: __param_target
+        - source_labels: [__param_target]
+          target_label: instance
+        - target_label: __address__
+          replacement: blackbox-exporter.monitoring.svc.cluster.local:9115
+    - job_name: 'blackbox-basic-auth'
+      metrics_path: /probe
+      params:
+        module: [http_2xx_bearer]
+      static_configs:
+        - targets:
+          - https://ollama.wiserisk.be
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
@@ -125,6 +138,8 @@ stringData:
           - 10.100.0.201
           - 10.100.0.202
           - 10.100.0.220
+          - 192.168.1.117
+          - 192.168.1.119
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
