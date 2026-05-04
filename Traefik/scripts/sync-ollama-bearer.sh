@@ -14,7 +14,10 @@ http:
   middlewares:
     ollama-bearer:
       plugin:
-        bearer-auth:
+        traefik-api-token-middleware:
+          authenticationHeader: false
+          bearerHeader: true
+          bearerHeaderName: Authorization
           tokens:
 YAML
 

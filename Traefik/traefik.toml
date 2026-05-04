@@ -49,3 +49,8 @@
             [certificatesResolvers.letsencrypt-rsa2048.acme.httpChallenge]
                 entryPoint = "acme"
             [certificatesResolvers.letsencrypt-rsa2048.acme.tlsChallenge]
+[experimental]
+    [experimental.plugins]
+        [experimental.plugins.traefik-api-token-middleware]
+            moduleName = "github.com/Aetherinox/traefik-api-token-middleware"
+            version = "v0.1.4"
