@@ -27,8 +27,6 @@ spec:
           annotations:
             summary: "SSL certificate expiring soon for {{ $labels.instance }}"
             description: "SSL certificate for {{ $labels.instance }} expires in less than 30 days"
-    - name: certificates
-      rules:
         - alert: SSLCertExpiringSoon
           expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 7 and on(instance) (probe_http_ssl{job!="blackbox-local"} == 1)
           for: 10m
