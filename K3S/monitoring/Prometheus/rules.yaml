@@ -27,6 +27,16 @@ spec:
           annotations:
             summary: "SSL certificate expiring soon for {{ $labels.instance }}"
             description: "SSL certificate for {{ $labels.instance }} expires in less than 30 days"
+    - name: certificates
+      rules:
+        - alert: SSLCertExpiringSoon
+          expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 7 and on(instance) (probe_http_ssl{job!="blackbox-local"} == 1)
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "SSL certificate expiring really soon for {{ $labels.instance }}"
+            description: "SSL certificate for {{ $labels.instance }} expires in less than 7 days"
     - name: website
       rules:
         - alert: WebsiteDown
@@ -81,6 +91,28 @@ spec:
           annotations:
             summary: "High Memory usage for LXC {{ $labels.name }}"
             description: "LXC {{ $labels.name }} on node {{ $labels.node }} is using more than 80% Memory"
+    - name: proxmox-storage
+      rules:
+        - alert: StorageHighUsage
+          expr: >
+            pve_disk_usage_bytes{id=~"storage/.*"}
+            / pve_disk_size_bytes{id=~"storage/.*"} * 100 > 85
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Storage {{ $labels.id }} high on {{ $labels.instance }}"
+            description: "{{ $labels.id }} is {{ $value | humanize }}% full"
+        - alert: StorageCritical
+          expr: >
+            pve_disk_usage_bytes{id=~"storage/.*"}
+            / pve_disk_size_bytes{id=~"storage/.*"} * 100 > 95
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Storage {{ $labels.id }} critically full on {{ $labels.instance }}"
+            description: "{{ $labels.id }} is {{ $value | humanize }}% full"
     - name: proxmox-offline
       rules:
         - alert: NodeOffline
@@ -118,7 +150,7 @@ spec:
     - name: kubernetes-pods
       rules:
         - alert: PodCrashLooping
-          expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+          expr: rate(kube_pod_container_status_restarts_total[15m]) * 60 * 15 > 3
           for: 3m
           labels:
             severity: warning
@@ -152,7 +184,7 @@ spec:
     - name: speedtest
       rules:
         - alert: SpeedtestDownloadLow
-          expr: speedtest_download_bits_per_second < 7e8
+          expr: speedtest_download_bits_per_second < 2e9
           for: 15m
           labels:
             severity: warning
@@ -160,7 +192,7 @@ spec:
             summary: "Download is low"
             description: "Download speed is {{ $value | humanize }} bit/s"
         - alert: SpeedtestDownloadUltraLow
-          expr: speedtest_download_bits_per_second < 2e8
+          expr: speedtest_download_bits_per_second < 1e9
           for: 15m
           labels:
             severity: critical
@@ -176,7 +208,7 @@ spec:
             summary: "Upload is low"
             description: "Upload speed is under {{ $value | humanize }} bit/s"
         - alert: SpeedtestUploadUltraLow
-          expr: speedtest_upload_bits_per_second  < 2e8
+          expr: speedtest_upload_bits_per_second  < 4e8
           for: 15m
           labels:
             severity: critical
@@ -199,6 +231,14 @@ spec:
           annotations:
             summary: "Jitter high"
             description: "Jitter is {{ $value }} ms"
+        - alert: SpeedtestStale
+          expr: absent_over_time(speedtest_up[30m])
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Speedtest données obsolètes"
+            description: "Aucune donnée speedtest depuis plus de 30min"
         - alert: SpeedtestExporterDown
           expr: speedtest_up == 0
           for: 5m
@@ -207,18 +247,3 @@ spec:
           annotations:
             summary: "Speedtest exporter KO"
             description: "Speedtest-exporter is down"
----
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: blackbox-targets
-  namespace: monitoring
-  labels:
-    team: monitoring
-spec:
-  groups:
-    - name: blackbox
-      interval: 30s
-      rules:
-        - record: probe_success
-          expr: probe_success{job="blackbox"}

@@ -5,8 +5,13 @@ metadata:
   namespace: monitoring
 data:
   pve.yml: |
-    default:
+    flash:
       user: <path:k3s/data/monitoring#pve_user>
       token_name: <path:k3s/data/monitoring#pve_token_name>
-      token_value: <path:k3s/data/monitoring#pve_token_value>
+      token_value: <path:k3s/data/monitoring#pve_flash_token_value>
+      verify_ssl: false
+    wasp:
+      user: <path:k3s/data/monitoring#pve_user>
+      token_name: <path:k3s/data/monitoring#pve_token_name>
+      token_value: <path:k3s/data/monitoring#pve_wasp_token_value>
       verify_ssl: false

@@ -22,6 +22,10 @@ stringData:
           - https://jellyfin.wiserisk.be/health
           - https://seedbox.wiserisk.be
           - https://hermes.wiserisk.be
+          - https://hades.wiserisk.be
+          - https://hermes.syncthing.wiserisk.be
+          - https://hades.syncthing.wiserisk.be
+          - https://ollama.wiserisk.be
           - https://argocd.k3s.wiserisk.be
           - https://registry.k3s.wiserisk.be
           - https://vault.k3s.wiserisk.be
@@ -31,6 +35,9 @@ stringData:
           - https://librespeed.k3s.wiserisk.be
           - https://nextcloud.k3s.wiserisk.be
           - https://portainer.k3s.wiserisk.be
+          - https://hlabmonitor.k3s.wiserisk.be
+          - https://ai.k3s.wiserisk.be
+          - https://sonarqube.k3s.wiserisk.be
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
@@ -59,17 +66,23 @@ stringData:
       static_configs:
         - targets:
           - https://flash.ilo.wiserisk.home
+          - https://hades.ilo.wiserisk.home
           - https://ha.wiserisk.home
           - https://adguard.wiserisk.home
           - https://pbs.wiserisk.home
           - https://jellyfin.wiserisk.home/health
           - https://pve.wiserisk.home
           - https://flash.pve.wiserisk.home
+          - https://wasp.pve.wiserisk.home
           - https://qbittorrent.wiserisk.home
           - https://seedbox.wiserisk.home
           - https://traefik.wiserisk.home
           - https://hermes.wiserisk.home
+          - https://hades.wiserisk.home
+          - https://hermes.syncthing.wiserisk.home
+          - https://hades.syncthing.wiserisk.home
           - https://webhook.wiserisk.home
+          - https://ollama.wiserisk.home
           - https://registry-ui.k3s.wiserisk.home
           - https://traefik.k3s.wiserisk.home
           - https://alertmanager.k3s.wiserisk.home
@@ -90,19 +103,28 @@ stringData:
       static_configs:
         - targets:
           - 10.0.0.1
+          - 10.0.0.45
+          - 10.0.0.49
+          - 10.0.0.75
           - 10.0.0.80
           - 10.0.0.81
+          - 10.0.0.82
           - 10.0.0.85
           - 10.0.0.86
           - 10.0.0.95
+          - 10.0.0.142
+          - 10.0.0.185
+          - 10.0.0.249
           - 10.100.0.1
           - 10.100.0.10
           - 10.100.0.103
+          - 10.100.0.104
           - 10.100.0.105
           - 10.100.0.151
           - 10.100.0.152
           - 10.100.0.201
           - 10.100.0.202
+          - 10.100.0.220
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
@@ -110,13 +132,27 @@ stringData:
           target_label: instance
         - target_label: __address__
           replacement: blackbox-exporter.monitoring.svc.cluster.local:9115
-    - job_name: 'pve'
+    - job_name: 'pve_flash'
       static_configs:
         - targets:
           - 10.0.0.81
       metrics_path: /pve
       params:
-        module: [default]
+        module: [flash]
+      relabel_configs:
+        - source_labels: [__address__]
+          target_label: __param_target
+        - source_labels: [__param_target]
+          target_label: instance
+        - target_label: __address__
+          replacement: proxmox-exporter.monitoring.svc.cluster.local:9221
+    - job_name: 'pve_wasp'
+      static_configs:
+        - targets:
+          - 10.0.0.82
+      metrics_path: /pve
+      params:
+        module: [wasp]
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
