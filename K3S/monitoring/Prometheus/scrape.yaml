@@ -58,7 +58,7 @@ stringData:
           target_label: instance
         - target_label: __address__
           replacement: blackbox-exporter.monitoring.svc.cluster.local:9115
-    - job_name: 'blackbox-basic-auth'
+    - job_name: 'blackbox-bearer'
       metrics_path: /probe
       params:
         module: [http_2xx_bearer]
