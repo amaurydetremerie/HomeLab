@@ -13,7 +13,7 @@ spec:
     path: K3S/tools/sonarqube/Manifest
   destination:
     server: https://kubernetes.default.svc
-    namespace: portainer
+    namespace: sonarqube
   syncPolicy:
     automated:
       prune: true

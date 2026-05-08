@@ -1,16 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: graylog-graylog-stack
+  name: renovate
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "22"
+    argocd.argoproj.io/sync-wave: "6"
 spec:
   project: default
   source:
     repoURL: https://github.com/amaurydetremerie/HomeLab.git
     targetRevision: HEAD
-    path: K3S/tools/graylog-stack/graylog
+    path: K3S/infrastructure/renovate
     plugin:
       name: argocd-vault-plugin
       env:
@@ -24,7 +24,7 @@ spec:
           value: http://vault-svc.secure.svc.cluster.local:8200
   destination:
     server: https://kubernetes.default.svc
-    namespace: graylog-stack
+    namespace: renovate
   syncPolicy:
     automated:
       prune: true

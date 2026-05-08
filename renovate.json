@@ -1,0 +1,19 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:base"],
+  "kubernetes": {
+    "fileMatch": ["K3S/.+\\.yaml$"]
+  },
+  "packageRules": [
+    {
+      "matchPackageNames": ["flaresolverr/flaresolverr"],
+      "automerge": true,
+      "automergeType": "branch",
+      "pinDigest": true
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    }
+  ]
+}

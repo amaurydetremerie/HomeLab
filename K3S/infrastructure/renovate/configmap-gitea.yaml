@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: renovate-config-gitea
+  namespace: renovate
+data:
+  config.js: |
+    module.exports = {
+      platform: 'gitea',
+      endpoint: 'https://git.wiserisk.be/api/v1',
+      token: '<path:k3s/data/renovate#gitea>',
+      onboarding: false,
+      requireConfig: 'required',
+      repositories: [],
+      registryAliases: {
+        'docker.io': 'registry.k3s.wiserisk.be',
+      },
+    };

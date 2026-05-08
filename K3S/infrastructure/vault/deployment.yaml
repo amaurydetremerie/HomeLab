@@ -55,6 +55,20 @@ spec:
               value: http://127.0.0.1:8200
             - name: VAULT_API_ADDR
               value: https://vault.k3s.wiserisk.be
+          readinessProbe:
+            exec:
+              command: ["vault", "status"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /v1/sys/health?standbyok=true&sealedok=true&uninitok=true
+              port: 8200
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            failureThreshold: 3
           volumeMounts:
             - name: vault-config-working
               mountPath: /tmp/vault/config

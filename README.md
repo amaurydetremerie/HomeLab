@@ -17,12 +17,12 @@ All my servers run under Proxmox, and my data is managed in a TrueNas Scale virt
    1) Done with https://docs.k3s.io/datastore/ha-embedded
 3) Save all K3S applications data on Truenas
    1) Based on https://www.youtube.com/watch?v=pumX2Ds5L0c&list=PLj-2elZxVPZ8U5_gxuF_GFWelIo9kFlAj&index=3&ab_channel=ChristianLempa
-   2) [Persistent volume creation with NFS](Kubernetes/Example/whoami.yml#L1)
-   3) [Persistent volume claim creation](Kubernetes/Example/whoami.yml#L15)
-   4) [Persistent volume definition](Kubernetes/Example/whoami.yml#L53)
-   5) [Persistent volume mount](Kubernetes/Example/whoami.yml#L49)
+   2) [Persistent volume creation with NFS](DEPRECATED/Kubernetes/Example/whoami.yml#L1)
+   3) [Persistent volume claim creation](DEPRECATED/Kubernetes/Example/whoami.yml#L15)
+   4) [Persistent volume definition](DEPRECATED/Kubernetes/Example/whoami.yml#L53)
+   5) [Persistent volume mount](DEPRECATED/Kubernetes/Example/whoami.yml#L49)
 4) Use Traefik as Ingress Controller
-   1) Done with K3S Traefik Ingress Controller. Usage of [HelmChartConfig](Kubernetes/K3S/Traefik/traefik-config.yaml)
+   1) Done with K3S Traefik Ingress Controller. Usage of [HelmChartConfig](DEPRECATED/Kubernetes/K3S/Traefik/traefik-config.yaml)
 5) Setup Portainer in K3S
    1) Based on https://www.youtube.com/watch?v=gHHIAprNVmk&list=PLj-2elZxVPZ8U5_gxuF_GFWelIo9kFlAj&index=8&ab_channel=ChristianLempa
 6) Setup ArgoCD
@@ -32,10 +32,10 @@ All my servers run under Proxmox, and my data is managed in a TrueNas Scale virt
 8) Migrate all apps from Portainer CT to K3S
 9) Find a way to replace secrets in files
    1) Using Vault, Based on https://devopscube.com/vault-in-kubernetes/
-10) Configure [Homepage](Kubernetes/K3S/Homepage/homepage.yaml#L8)
-11) Configure [LibreSpeed](Kubernetes/K3S/LibreSpeed/librespeed.yaml)
-12) Configure [Tautulli](Kubernetes/K3S/Tautulli/tautulli.yaml)
-13) Configure [Speedtest Tracker](Kubernetes/K3S/SpeedtestTracker/speedtestTracker.yaml)
+10) Configure [Homepage](DEPRECATED/Kubernetes/K3S/Homepage/homepage.yaml#L8)
+11) Configure [LibreSpeed](DEPRECATED/Kubernetes/K3S/LibreSpeed/librespeed.yaml)
+12) Configure [Tautulli](DEPRECATED/Kubernetes/K3S/Tautulli/tautulli.yaml)
+13) Configure [Speedtest Tracker](DEPRECATED/Kubernetes/K3S/SpeedtestTracker/speedtestTracker.yaml)
     1) https://github.com/maximemoreillon/kubernetes-manifests/tree/master/speedtest-tracker
 14) Create [webhook](Webhook) to automatically update Traefik configurations with [GitHub Actions](.github/workflows/traefik.yml)
 ### To Do
