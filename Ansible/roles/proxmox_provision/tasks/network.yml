@@ -1,0 +1,13 @@
+---
+# Configure les bridges Proxmox (vmbr0, vmbr1) via /etc/network/interfaces
+# Requiert proxmox_phys_iface, proxmox_vmbr0_addr, proxmox_vmbr0_gw dans host_vars
+# proxmox_vmbr1_addr est optionnel (bridge interne sans IP si non défini)
+- name: Deploy network interfaces config
+  ansible.builtin.template:
+    src: interfaces.j2
+    dest: /etc/network/interfaces
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  notify: Reload network interfaces

@@ -1,0 +1,5 @@
+---
+ansible_user: root
+
+# Clé SSH publique de l'opérateur — injectée dans les LXC (proxmox.yml play 4)
+ansible_operator_ssh_public_key: ""

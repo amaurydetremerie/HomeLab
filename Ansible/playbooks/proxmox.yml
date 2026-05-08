@@ -1,0 +1,105 @@
+---
+# ansible-playbook proxmox.yml                          # les deux nœuds
+# ansible-playbook proxmox.yml -e target=proxmox_flash  # Flash uniquement
+# ansible-playbook proxmox.yml -e target=proxmox_wasp   # Wasp uniquement
+
+# 1. Configuration réseau (SSH — avant la provision API)
+- name: Configure Proxmox hypervisors network
+  hosts: "{{ target | default('proxmox_hypervisors') }}"
+  gather_facts: false
+  become: true
+  tasks:
+    - ansible.builtin.include_role:
+        name: proxmox_provision
+        tasks_from: network.yml
+
+# 2. Provision storage / template / ISO / LXC / VM (API REST)
+- name: Provision Proxmox infrastructure
+  hosts: "{{ target | default('proxmox_hypervisors') }}"
+  gather_facts: false
+  connection: local
+  pre_tasks:
+    - name: Recharger le vault (token potentiellement ajouté depuis la pause bootstrap)
+      ansible.builtin.include_vars:
+        file: "{{ inventory_dir }}/group_vars/all/vault.yml"
+      failed_when: false
+  roles:
+    - proxmox_provision
+
+# 3. Directives LXC brutes (SSH — après création des containers)
+- name: Configure raw LXC directives on Proxmox hypervisors
+  hosts: "{{ target | default('proxmox_hypervisors') }}"
+  gather_facts: false
+  become: true
+  tasks:
+    - ansible.builtin.include_role:
+        name: proxmox_provision
+        tasks_from: lxc_raw.yml
+
+# 4. Injection clé SSH dans les LXC (SSH sur Proxmox → pct exec)
+# Utilise ansible_operator_ssh_public_key si défini,
+# sinon détecte automatiquement ~/.ssh/id_ed25519.pub ou id_rsa.pub
+- name: Inject SSH key into LXC containers
+  hosts: "{{ target | default('proxmox_hypervisors') }}"
+  gather_facts: false
+  become: true
+  vars:
+    _pubkey: >-
+      {{ ansible_operator_ssh_public_key
+         | default(lookup('file', lookup('env', 'HOME') ~ '/.ssh/id_ed25519.pub', errors='ignore')
+                   or lookup('file', lookup('env', 'HOME') ~ '/.ssh/id_rsa.pub', errors='ignore')) }}
+  tasks:
+
+    - name: Démarrer les LXC containers
+      ansible.builtin.command: "pct start {{ item.vmid }}"
+      loop: "{{ proxmox_lxc | default([]) }}"
+      loop_control:
+        label: "{{ item.hostname }} (vmid={{ item.vmid }})"
+      register: start_result
+      changed_when: start_result.rc == 0
+      failed_when: start_result.rc != 0 and 'already running' not in start_result.stderr | default('')
+
+    - name: Attendre que les LXC soient running
+      ansible.builtin.command: "pct status {{ item.vmid }}"
+      loop: "{{ proxmox_lxc | default([]) }}"
+      loop_control:
+        label: "{{ item.hostname }} (vmid={{ item.vmid }})"
+      register: lxc_status
+      retries: 10
+      delay: 3
+      until: "'running' in lxc_status.stdout"
+      changed_when: false
+
+    - name: Copier la clé publique dans un fichier temporaire
+      ansible.builtin.copy:
+        content: "{{ _pubkey }}\n"
+        dest: /tmp/ansible_operator_pubkey
+        mode: "0600"
+      when: _pubkey | length > 0
+
+    - name: Créer /root/.ssh dans les LXC
+      ansible.builtin.command: "pct exec {{ item.vmid }} -- mkdir -p /root/.ssh"
+      loop: "{{ proxmox_lxc | default([]) }}"
+      loop_control:
+        label: "{{ item.hostname }}"
+      changed_when: false
+      when: _pubkey | length > 0
+
+    - name: Injecter la clé SSH (idempotent)
+      ansible.builtin.shell: |
+        pct push {{ item.vmid }} /tmp/ansible_operator_pubkey /tmp/ansible_operator_pubkey
+        pct exec {{ item.vmid }} -- bash -c \
+          "grep -qxF \"$(cat /tmp/ansible_operator_pubkey)\" /root/.ssh/authorized_keys 2>/dev/null \
+          || (cat /tmp/ansible_operator_pubkey >> /root/.ssh/authorized_keys \
+             && chmod 600 /root/.ssh/authorized_keys && chmod 700 /root/.ssh)"
+      loop: "{{ proxmox_lxc | default([]) }}"
+      loop_control:
+        label: "{{ item.hostname }}"
+      changed_when: false
+      when: _pubkey | length > 0
+
+    - name: Supprimer le fichier temporaire
+      ansible.builtin.file:
+        path: /tmp/ansible_operator_pubkey
+        state: absent
+      when: _pubkey | length > 0

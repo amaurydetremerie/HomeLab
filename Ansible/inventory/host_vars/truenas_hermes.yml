@@ -1,0 +1,66 @@
+---
+ansible_host: 10.100.0.10
+tailscale_ip: 100.83.230.10
+truenas_api_key: "{{ vault_truenas_hermes_api_key }}"
+
+# --- Pool ---
+truenas_pool_name: Hermes
+
+# --- Datasets ---
+truenas_datasets:
+  - name: Hermes/Data
+  - name: Hermes/Data/Media
+  - name: Hermes/Data/Media/Videos
+  - name: Hermes/Git
+  - name: Hermes/K3S
+  - name: Hermes/K3S/mongodb-data
+  - name: Hermes/K3S/prometheus
+  - name: Hermes/K3S-Secure
+  - name: Hermes/Nas
+  - name: Hermes/ISCI
+
+# --- Zvols ---
+truenas_zvols:
+  - name: Hermes/ISCI/pbs
+    size: 500G
+
+# --- NFS ---
+truenas_nfs_shares:
+  - path: /mnt/Hermes/Data/Media
+    networks: ["10.100.0.0/24"]
+    comment: "Media — réseau services"
+  - path: /mnt/Hermes/Data/Media/Videos
+    networks: ["10.100.0.0/24"]
+    comment: "Videos — réseau services"
+  - path: /mnt/Hermes/Git
+    networks: [ "10.100.0.0/24" ]
+    comment: "Git — réseau services"
+  - path: /mnt/Hermes/K3S
+    hosts: ["10.100.0.151", "10.100.0.152"]
+    comment: "K3S storage — K3S nodes uniquement"
+  - path: /mnt/Hermes/K3S-Secure
+    hosts: ["10.100.0.151", "10.100.0.152"]
+    comment: "K3S storage sécurisé — K3S nodes uniquement"
+
+# --- SMB ---
+truenas_smb_users:
+  - username: nasuser
+    password: "{{ vault_truenas_hermes_smb_password }}"
+    full_name: "NAS User"
+
+truenas_smb_shares:
+  - name: Media
+    path: /mnt/Hermes/Data/Media
+    comment: "Media files"
+  - name: Nas
+    path: /mnt/Hermes/Nas
+    comment: "NAS storage"
+
+# --- iSCSI (PBS) ---
+truenas_iscsi:
+  portal_ip: "0.0.0.0"
+  portal_port: 3260
+  initiator_auth_network: ["10.0.0.80/32"]    # PBS VM
+  extent_name: pbs
+  extent_disk: "zvol/Hermes/ISCI/pbs"
+  target_name: pbs

@@ -1,0 +1,116 @@
+---
+proxmox_pve_node: wasp
+proxmox_api_token_secret: "{{ vault_proxmox_wasp_api_token_secret }}"
+
+# Réseau — adapter proxmox_phys_iface au nom réel : `ip link` ou `lshw -class network`
+proxmox_phys_ifaces:
+  - eno1
+proxmox_vmbr0_addr: 10.0.0.82/24
+proxmox_vmbr0_gw: 10.0.0.1
+proxmox_vmbr1_addr: 10.100.0.254/24  # IP optionnelle du host sur le bridge interne
+proxmox_vmbr1_vlan: 100
+
+proxmox_storages:
+  - name: local-zfs
+    type: zfspool
+    pool: rpool/data
+    content: [images, rootdir]
+    nodes: [wasp]
+    sparse: true
+
+  - name: Plex
+    type: nfs
+    server: 10.100.0.10
+    export: /mnt/Hermes/Data/Media/Videos
+    path: /mnt/pve/Plex
+    content: [snippets]
+
+  - name: SeedBox
+    type: nfs
+    server: 10.100.0.10
+    export: /mnt/Hermes/Data/Media
+    path: /mnt/pve/SeedBox
+    content: [snippets]
+
+  - name: Git
+    type: nfs
+    server: 10.100.0.10
+    export: /mnt/Hermes/Git
+    path: /mnt/pve/Git
+    content: [snippets]
+
+  - name: Backups
+    type: pbs
+    server: 10.0.0.80
+    datastore: pve
+    username: root@pam
+    fingerprint: "{{ vault_pbs_fingerprint }}"
+    content: [backup]
+
+# Schéma VMID : vmbr1 → 1XXX, vmbr0 → 9XXX (XXX = last octet zero-padded)
+# Dual-homed → règle vmbr1
+
+proxmox_lxc:
+  - vmid: 9086                                              # 9 + 086 (10.0.0.86)
+    hostname: adguard
+    description: "AdGuard Home — DNS"
+    cores: 1
+    memory: 1024
+    swap: 2048
+    disk: 8
+    unprivileged: true
+    features:
+      - nesting=1
+    startup: "order=1"
+    netif:
+      net0: "name=eth0,bridge=vmbr0,ip=10.0.0.86/24,gw=10.0.0.1"
+
+  - vmid: 9087                                              # 9 + 087 (10.0.0.87)
+    hostname: unbound
+    description: "Unbound DNS"
+    cores: 1
+    memory: 128
+    disk: 2
+    unprivileged: true
+    netif:
+      net0: "name=eth0,bridge=vmbr0,ip=10.0.0.87/24,gw=10.0.0.1"
+
+  - vmid: 1106                                              # 1 + 106 (10.100.0.106)
+    hostname: semaphore
+    description: "Semaphore — UI Ansible"
+    cores: 2
+    memory: 512
+    disk: 8
+    unprivileged: true
+    netif:
+      net0: "name=eth0,bridge=vmbr1,ip=10.100.0.106/24,gw=10.100.0.1"
+
+  - vmid: 1107                                              # 1 + 107 (10.100.0.107)
+    hostname: gitea
+    description: "Gitea — Git server"
+    cores: 2
+    memory: 1024
+    disk: 8
+    unprivileged: true
+    mounts:
+      mp0: "/mnt/pve/Git,mp=/opt/gitea,shared=1"
+    netif:
+      net0: "name=eth0,bridge=vmbr1,ip=10.100.0.107/24,gw=10.100.0.1"
+
+  - vmid: 1220                                              # 1 + 220 (10.100.0.220)
+    hostname: tailscale
+    description: "LXC Tailscale — proxy vers réseau 192.168.1.x (Hades)"
+    cores: 1
+    memory: 1024
+    swap: 2048
+    disk: 8
+    unprivileged: true
+    features:
+      - nesting=1
+    netif:
+      net0: "name=eth0,bridge=vmbr1,ip=10.100.0.220/24,gw=10.100.0.1"
+    lxc_raw:
+      - "lxc.cgroup2.devices.allow: c 10:200 rwm"
+      - "lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file"
+
+proxmox_vms: []

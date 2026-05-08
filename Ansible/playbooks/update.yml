@@ -1,0 +1,151 @@
+---
+# Mise à jour de tous les hosts gérés
+#
+# Exclusions :
+#   - ilo                 : interfaces HP iLO, pas de SSH OS
+#   - network             : router/switch, pas de SSH Linux standard
+#   - home_assistant      : HAOS, mise à jour via son interface propre
+#   - proxmox_hypervisors : play dédié ci-dessous (serial=1)
+#   - k3s_*               : play dédié ci-dessous (serial=1)
+#   - truenas_scale       : play dédié ci-dessous (serial=1)
+#
+# Utilisation :
+#   Tout mettre à jour :        ansible-playbook playbooks/update.yml
+#   Un groupe seulement :       ansible-playbook playbooks/update.yml --limit lxc
+#   Un host seulement :         ansible-playbook playbooks/update.yml --limit jellyfin
+
+# --- LXC, VMs applicatives, VPS, PBS ---
+- name: Update Linux hosts
+  hosts: "all:!ilo:!network:!truenas:!home_assistant:!proxmox_hypervisors:!k3s_masters:!k3s_workers"
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Update apt cache and upgrade packages
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: dist
+        cache_valid_time: 3600
+
+    - name: Check if reboot required
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: reboot_required_stat
+
+    - name: Reboot if required
+      ansible.builtin.reboot:
+        reboot_timeout: 300
+      when: reboot_required_stat.stat.exists
+
+# --- K3S : rolling update un nœud à la fois ---
+- name: Update K3S nodes (rolling)
+  hosts: k3s_masters:k3s_workers
+  gather_facts: false
+  become: true
+  serial: 1
+  tasks:
+    - name: Update apt cache and upgrade packages
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: dist
+        cache_valid_time: 3600
+
+    - name: Check if reboot required
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: reboot_required_stat
+
+    - name: Reboot if required
+      ansible.builtin.reboot:
+        reboot_timeout: 300
+      when: reboot_required_stat.stat.exists
+
+# --- Proxmox hypervisors : un à la fois ---
+- name: Update Proxmox hypervisors
+  hosts: proxmox_hypervisors
+  gather_facts: false
+  become: true
+  serial: 1
+  tasks:
+    - name: Update apt cache and upgrade packages
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: dist
+        cache_valid_time: 3600
+
+    - name: Check if reboot required
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: reboot_required_stat
+
+    - name: Reboot if required
+      ansible.builtin.reboot:
+        reboot_timeout: 600
+      when: reboot_required_stat.stat.exists
+
+# --- TrueNAS Scale : via API REST (un à la fois) ---
+- name: Update TrueNAS Scale hosts
+  hosts: truenas
+  gather_facts: false
+  serial: 1
+  vars:
+    truenas_api_base: "https://{{ ansible_host }}/api/v2.0"
+  tasks:
+    - name: Check for available update
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/update/check_available"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+      register: update_check
+
+    - name: Skip if no update available
+      ansible.builtin.meta: end_host
+      when: update_check.json.status == "UNAVAILABLE"
+
+    - name: Download and apply update
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/update/update"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          reboot: false
+        validate_certs: false
+        timeout: 3600
+      register: update_job
+
+    - name: Wait for update job to complete
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/core/get_jobs?id={{ update_job.json }}"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+      register: job_status
+      until: job_status.json[0].state in ['SUCCESS', 'FAILED']
+      retries: 60
+      delay: 30
+
+    - name: Fail if update job failed
+      ansible.builtin.fail:
+        msg: "Update job failed on {{ inventory_hostname }}"
+      when: job_status.json[0].state == 'FAILED'
+
+    - name: Reboot after update
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/system/reboot"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+
+    - name: Wait for TrueNAS to come back online
+      ansible.builtin.wait_for:
+        host: "{{ ansible_host }}"
+        port: 443
+        delay: 30
+        timeout: 600
+      delegate_to: localhost

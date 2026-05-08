@@ -1,0 +1,395 @@
+---
+# Recréation des shares TrueNAS Scale via API REST (v2.0)
+# Datasets et zvols gérés manuellement (import depuis disks existants)
+#
+# ansible-playbook playbooks/truenas_shares.yml                    # tout
+# ansible-playbook playbooks/truenas_shares.yml --tags nfs
+# ansible-playbook playbooks/truenas_shares.yml --tags smb
+# ansible-playbook playbooks/truenas_shares.yml --tags iscsi
+# ansible-playbook playbooks/truenas_shares.yml --limit truenas_hermes
+
+- name: Configure TrueNAS Scale shares
+  hosts: truenas
+  gather_facts: false
+  connection: local
+  vars:
+    truenas_api_base: "https://{{ ansible_host }}/api/v2.0"
+
+  pre_tasks:
+    - name: Recharger le vault
+      ansible.builtin.include_vars:
+        file: "{{ inventory_dir }}/group_vars/all/vault.yml"
+      failed_when: false
+
+  tasks:
+
+    # =========================================================
+    # NFS
+    # =========================================================
+    - name: Get existing NFS shares
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/sharing/nfs"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+      register: existing_nfs
+      when: truenas_nfs_shares | default([]) | length > 0
+      tags: nfs
+
+    - name: Create NFS shares
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/sharing/nfs"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          path: "{{ item.path }}"
+          comment: "{{ item.comment | default('') }}"
+          networks: "{{ item.networks | default([]) }}"
+          hosts: "{{ item.hosts | default([]) }}"
+          ro: "{{ item.ro | default(false) }}"
+        validate_certs: false
+        status_code: [200]
+      loop: "{{ truenas_nfs_shares | default([]) }}"
+      loop_control:
+        label: "{{ item.path }}"
+      when: item.path not in (existing_nfs.json | default([]) | map(attribute='path') | list)
+      tags: nfs
+
+    - name: Ensure NFS service is enabled and running
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/service/start"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          service: nfs
+        validate_certs: false
+        status_code: [200]
+      when: truenas_nfs_shares | default([]) | length > 0
+      tags: nfs
+
+    # =========================================================
+    # SMB — Users
+    # =========================================================
+    - name: Get existing users
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/user"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+      register: existing_users
+      when: truenas_smb_users | default([]) | length > 0
+      tags: smb
+
+    - name: Create SMB users
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/user"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          username: "{{ item.username }}"
+          password: "{{ item.password }}"
+          full_name: "{{ item.full_name | default(item.username) }}"
+          group_create: true
+          smb: true
+          shell: /usr/sbin/nologin
+        validate_certs: false
+        status_code: [200]
+      loop: "{{ truenas_smb_users | default([]) }}"
+      loop_control:
+        label: "{{ item.username }}"
+      when: item.username not in (existing_users.json | default([]) | map(attribute='username') | list)
+      tags: smb
+
+    # =========================================================
+    # SMB — Shares
+    # =========================================================
+    - name: Get existing SMB shares
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/sharing/smb"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+      register: existing_smb
+      when: truenas_smb_shares | default([]) | length > 0
+      tags: smb
+
+    - name: Create SMB shares
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/sharing/smb"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          path: "{{ item.path }}"
+          name: "{{ item.name }}"
+          comment: "{{ item.comment | default('') }}"
+          purpose: DEFAULT_SHARE
+        validate_certs: false
+        status_code: [200]
+      loop: "{{ truenas_smb_shares | default([]) }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when: item.name not in (existing_smb.json | default([]) | map(attribute='name') | list)
+      tags: smb
+
+    - name: Ensure SMB service is enabled and running
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/service/start"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          service: cifs
+        validate_certs: false
+        status_code: [200]
+      when: truenas_smb_shares | default([]) | length > 0
+      tags: smb
+
+    # =========================================================
+    # iSCSI — Portal
+    # =========================================================
+    - name: Get existing iSCSI portals
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/iscsi/portal"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+      register: existing_portals
+      when: truenas_iscsi is defined
+      tags: iscsi
+
+    - name: Create iSCSI portal if none exists
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/iscsi/portal"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          listen:
+            - ip: "{{ truenas_iscsi.portal_ip }}"
+              port: "{{ truenas_iscsi.portal_port }}"
+          comment: ansible
+        validate_certs: false
+        status_code: [200]
+      register: created_portal
+      when:
+        - truenas_iscsi is defined
+        - existing_portals.json | default([]) | length == 0
+      tags: iscsi
+
+    - name: Set portal ID fact
+      ansible.builtin.set_fact:
+        iscsi_portal_id: "{{ (existing_portals.json[0].id if existing_portals.json | length > 0 else created_portal.json.id) }}"
+      when: truenas_iscsi is defined
+      tags: iscsi
+
+    # =========================================================
+    # iSCSI — Initiator group
+    # =========================================================
+    - name: Get existing iSCSI initiator groups
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/iscsi/initiator"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+      register: existing_initiators
+      when: truenas_iscsi is defined
+      tags: iscsi
+
+    - name: Create iSCSI initiator group for PBS
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/iscsi/initiator"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          initiators: []
+          auth_network: "{{ truenas_iscsi.initiator_auth_network }}"
+          comment: "{{ truenas_iscsi.extent_name }}"
+        validate_certs: false
+        status_code: [200]
+      register: created_initiator
+      when:
+        - truenas_iscsi is defined
+        - truenas_iscsi.extent_name not in (existing_initiators.json | default([]) | map(attribute='comment') | list)
+      tags: iscsi
+
+    - name: Set initiator ID fact
+      ansible.builtin.set_fact:
+        iscsi_initiator_id: >-
+          {{
+            (existing_initiators.json
+             | selectattr('comment', 'equalto', truenas_iscsi.extent_name)
+             | map(attribute='id') | list | first)
+            if truenas_iscsi.extent_name in (existing_initiators.json | map(attribute='comment') | list)
+            else created_initiator.json.id
+          }}
+      when: truenas_iscsi is defined
+      tags: iscsi
+
+    # =========================================================
+    # iSCSI — Extent
+    # =========================================================
+    - name: Get existing iSCSI extents
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/iscsi/extent"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+      register: existing_extents
+      when: truenas_iscsi is defined
+      tags: iscsi
+
+    - name: Create iSCSI extent for PBS
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/iscsi/extent"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          name: "{{ truenas_iscsi.extent_name }}"
+          type: DISK
+          disk: "{{ truenas_iscsi.extent_disk }}"
+          comment: "{{ truenas_iscsi.extent_name }}"
+        validate_certs: false
+        status_code: [200]
+      register: created_extent
+      when:
+        - truenas_iscsi is defined
+        - truenas_iscsi.extent_name not in (existing_extents.json | default([]) | map(attribute='name') | list)
+      tags: iscsi
+
+    - name: Set extent ID fact
+      ansible.builtin.set_fact:
+        iscsi_extent_id: >-
+          {{
+            (existing_extents.json
+             | selectattr('name', 'equalto', truenas_iscsi.extent_name)
+             | map(attribute='id') | list | first)
+            if truenas_iscsi.extent_name in (existing_extents.json | map(attribute='name') | list)
+            else created_extent.json.id
+          }}
+      when: truenas_iscsi is defined
+      tags: iscsi
+
+    # =========================================================
+    # iSCSI — Target
+    # =========================================================
+    - name: Get existing iSCSI targets
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/iscsi/target"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+      register: existing_targets
+      when: truenas_iscsi is defined
+      tags: iscsi
+
+    - name: Create iSCSI target for PBS
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/iscsi/target"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          name: "{{ truenas_iscsi.target_name }}"
+          groups:
+            - portal: "{{ iscsi_portal_id | int }}"
+              initiator: "{{ iscsi_initiator_id | int }}"
+              auth_method: NONE
+        validate_certs: false
+        status_code: [200]
+      register: created_target
+      when:
+        - truenas_iscsi is defined
+        - truenas_iscsi.target_name not in (existing_targets.json | default([]) | map(attribute='name') | list)
+      tags: iscsi
+
+    - name: Set target ID fact
+      ansible.builtin.set_fact:
+        iscsi_target_id: >-
+          {{
+            (existing_targets.json
+             | selectattr('name', 'equalto', truenas_iscsi.target_name)
+             | map(attribute='id') | list | first)
+            if truenas_iscsi.target_name in (existing_targets.json | map(attribute='name') | list)
+            else created_target.json.id
+          }}
+      when: truenas_iscsi is defined
+      tags: iscsi
+
+    # =========================================================
+    # iSCSI — Target ↔ Extent association
+    # =========================================================
+    - name: Get existing target-extent associations
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/iscsi/targetextent"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+      register: existing_associations
+      when: truenas_iscsi is defined
+      tags: iscsi
+
+    - name: Associate iSCSI target with extent
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/iscsi/targetextent"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          target: "{{ iscsi_target_id | int }}"
+          extent: "{{ iscsi_extent_id | int }}"
+          lunid: 0
+        validate_certs: false
+        status_code: [200]
+      when:
+        - truenas_iscsi is defined
+        - iscsi_target_id | int not in (existing_associations.json | default([]) | map(attribute='target') | list)
+      tags: iscsi
+
+    - name: Ensure iSCSI service is enabled and running
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/service/start"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          service: iscsitarget
+        validate_certs: false
+        status_code: [200]
+      when: truenas_iscsi is defined
+      tags: iscsi

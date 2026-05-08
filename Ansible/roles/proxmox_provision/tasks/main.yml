@@ -1,0 +1,6 @@
+---
+- import_tasks: storage.yml
+- import_tasks: template.yml
+- import_tasks: iso.yml
+- import_tasks: lxc.yml
+- import_tasks: vm.yml

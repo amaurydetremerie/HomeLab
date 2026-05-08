@@ -1,0 +1,25 @@
+---
+- name: Configure Proxmox storages
+  community.general.proxmox_storage:
+    api_host: "{{ proxmox_api_host }}"
+    api_user: "{{ proxmox_api_user }}"
+    api_token_id: "{{ proxmox_api_token_id }}"
+    api_token_secret: "{{ proxmox_api_token_secret }}"
+    storage: "{{ item.name }}"
+    type: "{{ item.type }}"
+    content: "{{ item.content }}"
+    nodes: "{{ item.nodes | default(omit) }}"
+    sparse: "{{ item.sparse | default(omit) }}"
+    pool: "{{ item.pool | default(omit) }}"
+    thinpool: "{{ item.thinpool | default(omit) }}"
+    vgname: "{{ item.vgname | default(omit) }}"
+    server: "{{ item.server | default(omit) }}"
+    export: "{{ item.export | default(omit) }}"
+    path: "{{ item.path | default(omit) }}"
+    datastore: "{{ item.datastore | default(omit) }}"
+    username: "{{ item.username | default(omit) }}"
+    fingerprint: "{{ item.fingerprint | default(omit) }}"
+    state: present
+  loop: "{{ proxmox_storages }}"
+  loop_control:
+    label: "{{ item.name }} ({{ item.type }})"

@@ -1,0 +1,5 @@
+---
+# IP côté réseau de gestion (10.0.0.x)
+ansible_host: 10.0.0.85
+# IP côté réseau services (10.100.0.x) — interface de passerelle
+traefik_internal_ip: 10.100.0.1

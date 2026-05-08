@@ -1,0 +1,39 @@
+---
+# Fichier de référence — liste complète des secrets à définir dans le vault Ansible
+#
+# Créer le vault chiffré :
+#   ansible-vault create inventory/group_vars/all/vault.yml
+#
+# Modifier le vault :
+#   ansible-vault edit inventory/group_vars/all/vault.yml
+#
+# Lancer un playbook avec le vault :
+#   ansible-playbook playbooks/site.yml --ask-vault-pass
+#   ansible-playbook playbooks/site.yml --vault-password-file ~/.vault_pass
+
+# ── Proxmox ───────────────────────────────────────────────────────────────
+# Généré par proxmox_bootstrap.yml (pveum user token add ansible@pam ansible)
+# Hosts distincts, tokens distincts
+vault_proxmox_flash_api_token_secret: ""
+vault_proxmox_wasp_api_token_secret: ""
+
+# ── TrueNAS ───────────────────────────────────────────────────────────────
+# Généré lors de l'installation TrueNAS : UI → Credentials → API Keys
+vault_truenas_hermes_api_key: ""
+vault_truenas_hades_api_key: ""
+
+# Mot de passe du compte SMB (défini librement)
+vault_truenas_hermes_smb_password: ""
+
+# ── PBS ───────────────────────────────────────────────────────────────────
+# Fingerprint TLS du serveur PBS (Proxmox UI → PBS → Fingerprint, ou : openssl s_client -connect 10.0.0.80:8007 2>/dev/null | openssl x509 -fingerprint -sha256 -noout)
+vault_pbs_fingerprint: ""
+
+# ── LXC ───────────────────────────────────────────────────────────────────
+# Mot de passe root des LXC pour accès console d'urgence (Proxmox UI)
+vault_lxc_root_password: ""
+
+# ── iLO HP ────────────────────────────────────────────────────────────────
+# Mot de passe du compte Administrator iLO (sur l'étiquette du serveur ou changé via UI)
+vault_ilo_flash_password: ""
+vault_ilo_hades_password: ""

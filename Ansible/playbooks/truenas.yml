@@ -1,0 +1,133 @@
+---
+# Gestion des apps TrueNAS Scale via API REST (v2.0)
+# Compatible TrueNAS SCALE Electric Eel (24.10+)
+#
+# Utilisation :
+#   Lister les apps :              ansible-playbook playbooks/truenas.yml --tags list
+#   MAJ toutes les apps dispo :    ansible-playbook playbooks/truenas.yml --tags upgrade_all
+#   MAJ une app :                  ansible-playbook playbooks/truenas.yml --tags upgrade \
+#                                    --extra-vars "truenas_app=app-name"
+#   Démarrer une app :             ansible-playbook playbooks/truenas.yml --tags start \
+#                                    --extra-vars "truenas_app=app-name"
+#   Arrêter une app :              ansible-playbook playbooks/truenas.yml --tags stop \
+#                                    --extra-vars "truenas_app=app-name"
+#   Host ciblé :                   ansible-playbook playbooks/truenas.yml --limit truenas_hermes
+
+- name: Manage TrueNAS Scale apps
+  hosts: truenas
+  gather_facts: false
+  connection: local
+  vars:
+    truenas_api_base: "https://{{ ansible_host }}/api/v2.0"
+  tasks:
+
+    - name: Get all apps
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/app"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+      register: apps_list
+      tags: [list, upgrade_all, always]
+
+    - name: Display apps
+      ansible.builtin.debug:
+        msg: >-
+          {{ apps_list.json
+             | map(attribute='name') | zip(
+               apps_list.json | map(attribute='state'),
+               apps_list.json | map(attribute='upgrade_available')
+             )
+             | list }}
+      tags: list
+
+    # --- Upgrade toutes les apps qui ont une mise à jour disponible ---
+    - name: Trigger upgrade for apps with available updates
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/app/id/{{ item.name }}/upgrade"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+        status_code: [200]
+      loop: "{{ apps_list.json | selectattr('upgrade_available', 'equalto', true) | list }}"
+      loop_control:
+        label: "{{ item.name }}"
+      register: upgrade_jobs
+      tags: upgrade_all
+
+    - name: Wait for upgrade jobs to complete
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/core/get_jobs?id={{ item.json }}"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+      loop: "{{ upgrade_jobs.results | default([]) | rejectattr('skipped', 'defined') | list }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+      register: job_status
+      until: job_status.json[0].state in ['SUCCESS', 'FAILED']
+      retries: 60
+      delay: 10
+      tags: upgrade_all
+
+    - name: Fail if any upgrade job failed
+      ansible.builtin.fail:
+        msg: "Upgrade failed for app {{ item.item.item.name }}"
+      loop: "{{ job_status.results | default([]) }}"
+      when: item.json[0].state == 'FAILED'
+      tags: upgrade_all
+
+    # --- Upgrade app unique (--extra-vars "truenas_app=<name>") ---
+    - name: Upgrade single app
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/app/id/{{ truenas_app }}/upgrade"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+        status_code: [200]
+      register: single_upgrade_job
+      tags: [upgrade, never]
+
+    - name: Wait for single app upgrade
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/core/get_jobs?id={{ single_upgrade_job.json }}"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+      register: single_job_status
+      until: single_job_status.json[0].state in ['SUCCESS', 'FAILED']
+      retries: 60
+      delay: 10
+      tags: [upgrade, never]
+
+    - name: Fail if single app upgrade failed
+      ansible.builtin.fail:
+        msg: "Upgrade failed for {{ truenas_app }}: {{ single_job_status.json[0].error }}"
+      when: single_job_status.json[0].state == 'FAILED'
+      tags: [upgrade, never]
+
+    # --- Start / Stop (--extra-vars "truenas_app=<name>") ---
+    - name: Start app
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/app/id/{{ truenas_app }}/start"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+        status_code: [200]
+      tags: [start, never]
+
+    - name: Stop app
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/app/id/{{ truenas_app }}/stop"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+        status_code: [200]
+      tags: [stop, never]

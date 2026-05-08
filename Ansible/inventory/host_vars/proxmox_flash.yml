@@ -1,0 +1,275 @@
+---
+proxmox_pve_node: flash
+proxmox_api_token_secret: "{{ vault_proxmox_flash_api_token_secret }}"
+
+# Réseau — adapter proxmox_phys_iface au nom réel : `ip link` ou `lshw -class network`
+proxmox_phys_ifaces:
+  - eno1
+  - eno2
+proxmox_vmbr0_addr: 10.0.0.81/24
+proxmox_vmbr0_gw: 10.0.0.1
+proxmox_vmbr1_addr: 10.100.0.253/24  # IP optionnelle du host sur le bridge interne
+proxmox_vmbr1_vlan: 100
+
+proxmox_storages:
+  - name: local-zfs
+    type: zfspool
+    pool: rpool/data
+    content: [images, rootdir]
+    nodes: [flash]
+    sparse: true
+
+  - name: Plex
+    type: nfs
+    server: 10.100.0.10
+    export: /mnt/Hermes/Data/Media/Videos
+    path: /mnt/pve/Plex
+    content: [snippets]
+
+  - name: SeedBox
+    type: nfs
+    server: 10.100.0.10
+    export: /mnt/Hermes/Data/Media
+    path: /mnt/pve/SeedBox
+    content: [snippets]
+
+  - name: Git
+    type: nfs
+    server: 10.100.0.10
+    export: /mnt/Hermes/Git
+    path: /mnt/pve/Git
+    content: [snippets]
+
+  - name: Backups
+    type: pbs
+    server: 10.0.0.80
+    datastore: pve
+    username: root@pam
+    fingerprint: "{{ vault_pbs_fingerprint }}"
+    content: [backup]
+
+# ISOs pour les VM — vérifier les URLs avant déploiement (versions à jour)
+proxmox_isos:
+  - filename: debian-12-netinst.iso
+    url: "https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-12.10.0-amd64-netinst.iso"
+  - filename: TrueNAS-SCALE.iso
+    url: "https://download.sys.truenas.net/TrueNAS-SCALE-24.10.2/TrueNAS-SCALE-24.10.2.3.iso"
+  - filename: proxmox-backup-server.iso
+    url: "https://enterprise.proxmox.com/iso/proxmox-backup-server_3.3-1.iso"
+
+# Schéma VMID : vmbr1 → 1XXX, vmbr0 → 9XXX (XXX = last octet zero-padded)
+# Dual-homed → règle vmbr1
+
+proxmox_lxc:
+  - vmid: 1001                                              # 1 + 001 (10.100.0.1)
+    hostname: traefik
+    description: "Reverse proxy — passerelle vmbr0 <-> vmbr1"
+    cores: 1
+    memory: 1024
+    swap: 2048
+    disk: 16
+    unprivileged: true
+    features:
+      - nesting=1
+    startup: "order=2"
+    netif:
+      net0: "name=eth0,bridge=vmbr0,ip=10.0.0.85/24,gw=10.0.0.1"
+      net1: "name=eth1,bridge=vmbr1,ip=10.100.0.1/24"
+
+  - vmid: 1103                                              # 1 + 103 (10.100.0.103)
+    hostname: webhook
+    description: "Webhook server"
+    cores: 1
+    memory: 1024
+    swap: 2048
+    disk: 4
+    unprivileged: true
+    features:
+      - nesting=1
+    netif:
+      net0: "name=eth0,bridge=vmbr1,ip=10.100.0.103/24,gw=10.100.0.1"
+
+  - vmid: 1104                                              # 1 + 104 (10.100.0.104)
+    hostname: ollama
+    description: "Ollama LLM server"
+    cores: 8
+    memory: 32768
+    swap: 4096
+    disk: 8
+    unprivileged: true
+    onboot: true
+    features:
+      - nesting=1
+    mounts:
+      mp0: "local-zfs:80,mp=/mnt/ollama"
+    netif:
+      net0: "name=eth0,bridge=vmbr1,ip=10.100.0.104/24,gw=10.100.0.1"
+    # GPU passthrough — à définir selon le device iGPU/dGPU du host
+    # lxc_raw:
+    #   - "lxc.cgroup2.devices.allow: c 226:0 rwm"    # /dev/dri/card0
+    #   - "lxc.cgroup2.devices.allow: c 226:128 rwm"  # /dev/dri/renderD128
+    #   - "lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir"
+
+  - vmid: 1105                                              # 1 + 105 (10.100.0.105)
+    hostname: qbittorrent
+    description: "qBittorrent"
+    cores: 1
+    memory: 4096
+    swap: 8192
+    disk: 8
+    unprivileged: true
+    features:
+      - keyctl=1
+      - nesting=1
+    mounts:
+      mp0: "/mnt/pve/SeedBox,mp=/media/seedbox,shared=1"
+    netif:
+      net0: "name=eth0,bridge=vmbr1,ip=10.100.0.105/24,gw=10.100.0.1"
+
+  - vmid: 1201                                              # 1 + 201 (10.100.0.201)
+    hostname: seedbox
+    description: "Seedbox"
+    cores: 1
+    memory: 2048
+    swap: 4096
+    disk: 32
+    unprivileged: true
+    features:
+      - nesting=1
+    mounts:
+      mp0: "/mnt/pve/SeedBox,mp=/media/seedbox,shared=1"
+    netif:
+      net0: "name=eth0,bridge=vmbr1,ip=10.100.0.201/24,gw=10.100.0.1"
+
+  - vmid: 1202                                              # 1 + 202 (10.100.0.202)
+    hostname: jellyfin
+    description: "Jellyfin media server"
+    cores: 4
+    memory: 4096
+    swap: 8192
+    disk: 8
+    unprivileged: true
+    features:
+      - nesting=1
+    mounts:
+      mp0: "/mnt/pve/Plex,mp=/mnt/media/seedbox,shared=1"
+    netif:
+      net0: "name=eth0,bridge=vmbr1,ip=10.100.0.202/24,gw=10.100.0.1"
+    # GPU passthrough — à définir selon le device iGPU/dGPU du host
+    # lxc_raw:
+    #   - "lxc.cgroup2.devices.allow: c 226:0 rwm"    # /dev/dri/card0
+    #   - "lxc.cgroup2.devices.allow: c 226:128 rwm"  # /dev/dri/renderD128
+    #   - "lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir"
+
+proxmox_vms:
+  - vmid: 1010                                              # 1 + 010 (10.100.0.10)
+    name: Hermes
+    description: "TrueNAS Scale"
+    bios: ovmf
+    cores: 2
+    sockets: 1
+    memory: 16384
+    balloon: 8192
+    ostype: l26
+    onboot: true
+    startup: "order=2,up=300,down=240"
+    boot: "order=ide2;scsi0"                               # Passer à order=scsi0;net0 après installation
+    net:
+      net0: "virtio=BC:24:11:38:22:4D,bridge=vmbr1,firewall=1"
+    ide:
+      ide2: "local:iso/TrueNAS-SCALE.iso,media=cdrom"     # Retirer après installation
+    scsi:
+      scsi0: "local-zfs:16,discard=on,iothread=1,replicate=0,ssd=1"
+      scsi1: "local-zfs:32,backup=0,discard=on,iothread=1,replicate=0,ssd=1"
+      scsi2: "local-zfs:32,backup=0,discard=on,iothread=1,replicate=0,ssd=1"
+      scsi10: "/dev/disk/by-id/wwn-0x5000c5007f66b15f,backup=0,iothread=1,size=1172112984K"
+      scsi11: "/dev/disk/by-id/wwn-0x5000c50089000347,backup=0,iothread=1,size=1172112984K"
+      scsi12: "/dev/disk/by-id/wwn-0x5000c500890004d3,backup=0,iothread=1,size=1172112984K"
+      scsi13: "/dev/disk/by-id/wwn-0x5000c5008f2a402f,backup=0,iothread=1,size=1172112984K"
+      scsi14: "/dev/disk/by-id/wwn-0x5000c500964df29b,backup=0,iothread=1,size=1172112984K"
+      scsi15: "/dev/disk/by-id/wwn-0x5000cca01d9929c0,backup=0,iothread=1,size=1172112984K"
+      scsi16: "/dev/disk/by-id/wwn-0x5000cca01d9958d8,backup=0,iothread=1,size=1172112984K"
+      scsi17: "/dev/disk/by-id/wwn-0x5000cca072a73148,backup=0,iothread=1,size=1172112984K"
+
+  - vmid: 1151                                              # 1 + 151 (10.100.0.151)
+    name: K3S-Master
+    description: "K3S Master node"
+    cores: 4
+    sockets: 1
+    memory: 16384
+    balloon: 8192
+    ostype: l26
+    onboot: true
+    boot: "order=ide2;scsi0"                               # Passer à order=scsi0;net0 après installation
+    net:
+      net0: "virtio=BC:24:11:40:2D:22,bridge=vmbr1,firewall=1"
+    ide:
+      ide2: "local:iso/debian-12-netinst.iso,media=cdrom"  # Retirer après installation
+    scsi:
+      scsi0: "local-zfs:32,cache=writeback,discard=on,iothread=1,ssd=1"
+
+  - vmid: 1152                                              # 1 + 152 (10.100.0.152)
+    name: K3S-Worker-01
+    description: "K3S Worker node"
+    cores: 2
+    sockets: 1
+    memory: 16384
+    balloon: 8192
+    ostype: l26
+    onboot: true
+    boot: "order=ide2;scsi0"                               # Passer à order=scsi0;net0 après installation
+    net:
+      net0: "virtio=BC:24:11:1F:47:EB,bridge=vmbr1,firewall=1"
+    ide:
+      ide2: "local:iso/debian-12-netinst.iso,media=cdrom"  # Retirer après installation
+    scsi:
+      scsi0: "local-zfs:32,cache=writeback,discard=on,iothread=1,ssd=1"
+
+  - vmid: 9080                                              # 9 + 080 (10.0.0.80)
+    name: PBS
+    description: "Proxmox Backup Server"
+    cores: 1
+    sockets: 2
+    memory: 8192
+    balloon: 4096
+    ostype: l26
+    onboot: true
+    boot: "order=ide2;scsi0"                               # Passer à order=scsi0;net0 après installation
+    net:
+      net0: "virtio=BC:24:11:0E:31:4A,bridge=vmbr0,firewall=1"
+    ide:
+      ide2: "local:iso/proxmox-backup-server.iso,media=cdrom"  # Retirer après installation
+    scsi:
+      scsi0: "local-zfs:16,discard=on,iothread=1,replicate=0,ssd=1"
+
+  # HomeAssistant : HAOS ne s'installe pas depuis ISO
+  # Déploiement initial : créer la VM sans disk, puis importer l'image manuellement :
+  #   wget https://github.com/home-assistant/operating-system/releases/download/X.X/haos_ova-X.X.qcow2.xz
+  #   unxz haos_ova-X.X.qcow2.xz
+  #   qm importdisk 9095 haos_ova-X.X.qcow2 local-zfs
+  #   Attacher le disk importé comme scsi0 dans l'UI PVE
+  - vmid: 9095                                              # 9 + 095 (10.0.0.95)
+    name: HomeAssistant
+    description: "Home Assistant OS"
+    bios: ovmf
+    cores: 2
+    sockets: 1
+    memory: 6144
+    balloon: 3072
+    ostype: l26
+    onboot: true
+    scsihw: virtio-scsi-pci
+    localtime: true
+    tablet: false
+    boot: "order=scsi0"
+    net:
+      net0: "virtio=BC:24:11:2F:55:94,bridge=vmbr0"
+    scsi:
+      scsi0: "local-zfs:32,cache=writethrough,discard=on,ssd=1"
+    efidisk0:
+      storage: local-zfs
+      format: raw
+      efitype: 4m
+    usb:
+      usb0: "host=10c4:ea60"
+      usb1: "host=051d:0003"

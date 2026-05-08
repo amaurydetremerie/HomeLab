@@ -1,0 +1,93 @@
+---
+# Point d'entrée global — provision complète du HomeLab from scratch
+#
+# ┌─────────────────────────────────────────────────────────────────────────┐
+# │ PRÉ-REQUIS MANUELS (avant de lancer ce playbook)                        │
+# │   1. Installer Proxmox sur flash (10.0.0.81) et wasp (10.0.0.82)       │
+# │   2. Copier la clé SSH root :                                            │
+# │        ssh-copy-id root@10.0.0.81                                        │
+# │        ssh-copy-id root@10.0.0.82                                        │
+# └─────────────────────────────────────────────────────────────────────────┘
+#
+# Séquence :
+#   [1] proxmox_bootstrap → AUTO  : ansible@pam + token API Proxmox
+#                           PAUSE : stocker le token dans vault
+#   [2] proxmox           → AUTO  : réseau, storage, LXC (Debian), VMs (coques), clés SSH LXC
+#                           PAUSE : installer l'OS sur les VMs via console Proxmox
+#   [3] truenas_pool      → AUTO  : datasets + zvols
+#                           PAUSE*: créer/importer le pool si absent (conditionnel)
+#   [4] truenas_shares    → AUTO  : shares NFS / SMB / iSCSI
+#   [5] k3s               → AUTO  : K3S master + workers, ArgoCD, apps via sync waves
+#                           PAUSE*: init Vault si premier déploiement (conditionnel)
+#   [6] apps LXC/VM       → AUTO  : à venir
+#
+# Usage ciblé :
+#   ansible-playbook playbooks/site.yml --limit proxmox_flash
+#   ansible-playbook playbooks/proxmox.yml -e target=proxmox_flash
+
+# ── [1] Bootstrap Proxmox ─────────────────────────────────────────────────
+# AUTO  : création ansible@pam + token API via SSH
+# PAUSE : stocker le token dans vault avant de continuer
+- import_playbook: proxmox_bootstrap.yml
+
+# ── [2] Provision Proxmox ─────────────────────────────────────────────────
+# AUTO  : réseau, storage, template LXC, LXC (OS Debian inclus), VMs (coques vides), clés SSH LXC
+- import_playbook: proxmox.yml
+
+# PAUSE : installation OS sur les VMs (pas d'OS avant cloud-init)
+- name: Installation OS sur les VMs
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Installer l'OS sur les VMs via console Proxmox
+      ansible.builtin.pause:
+        prompt: |
+
+          ╔══════════════════════════════════════════════════════════════════════╗
+          ║  ÉTAPE MANUELLE — Installation OS sur les VMs                       ║
+          ╠══════════════════════════════════════════════════════════════════════╣
+          ║  Les VMs sont des coques vides. Installer via la console Proxmox :  ║
+          ║                                                                      ║
+          ║  • Hermes (vmid 1010) — TrueNAS Scale                               ║
+          ║    1. Démarrer + installer depuis ISO TrueNAS-SCALE.iso             ║
+          ║    2. IP statique : 10.100.0.10 / GW 10.100.0.1                    ║
+          ║    3. Après install : retirer ide2, boot → order=scsi0              ║
+          ║    4. Créer le token API dans l'UI TrueNAS et le stocker dans vault ║
+          ║                                                                      ║
+          ║  • K3S-Master (vmid 1151) / K3S-Worker (vmid 1152) — Debian 12     ║
+          ║    1. Démarrer + installation minimale depuis ISO debian-12-netinst ║
+          ║    2. IP statique : 10.100.0.151 / .152 / GW 10.100.0.1            ║
+          ║    3. Après install : retirer ide2, boot → order=scsi0              ║
+          ║    4. Copier clé SSH : ssh-copy-id root@10.100.0.151 (et .152)      ║
+          ║    → Remplacer par cloud-init pour automatiser cette étape          ║
+          ║                                                                      ║
+          ║  • PBS (vmid 9080) — Proxmox Backup Server                          ║
+          ║    1. Démarrer + installer depuis ISO proxmox-backup-server.iso     ║
+          ║    2. IP statique : 10.0.0.80 / GW 10.0.0.1                        ║
+          ║    3. Après install : retirer ide2, boot → order=scsi0              ║
+          ║                                                                      ║
+          ║  • HomeAssistant (vmid 9095) — import qcow2                         ║
+          ║    Voir commentaire dans host_vars/proxmox_flash.yml                ║
+          ║                                                                      ║
+          ║  → Appuyer sur Entrée une fois tous les OS installés                ║
+          ╚══════════════════════════════════════════════════════════════════════╝
+
+# ── [3] TrueNAS — pool + datasets + zvols ─────────────────────────────────
+# AUTO  : datasets + zvols (idempotent)
+# PAUSE*: créer/importer le pool si absent (conditionnel)
+- import_playbook: truenas_pool.yml
+
+# ── [4] TrueNAS — shares ──────────────────────────────────────────────────
+# AUTO  : shares NFS / SMB / iSCSI
+- import_playbook: truenas_shares.yml
+
+# ── [5] K3S + ArgoCD ──────────────────────────────────────────────────────
+# AUTO  : K3S master + workers, Helm, ArgoCD, toutes les apps via sync waves
+# PAUSE*: init Vault si premier déploiement (conditionnel)
+- import_playbook: k3s.yml
+
+# ── [6] Applications LXC/VM ───────────────────────────────────────────────
+# AUTO (à venir) — ajouter les playbooks ici dans l'ordre de dépendance :
+# - import_playbook: traefik.yml
+# - import_playbook: jellyfin.yml
+# - import_playbook: ...

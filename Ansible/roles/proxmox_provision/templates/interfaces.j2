@@ -1,0 +1,76 @@
+# This file is managed by Ansible — modifications manuelles écrasées au prochain run
+
+auto lo
+iface lo inet loopback
+
+{% for proxmox_phys_iface in proxmox_phys_ifaces %}
+  {{ proxmox_phys_iface }}
+  iface {{ proxmox_phys_iface }} inet manual
+{% set colour_count = 0 %}
+
+auto bond0
+iface bond0 inet manual
+        bond-slaves {{ proxmox_phys_ifaces | join(' ') }}
+        bond-miimon 100
+        bond-mode balance-xor
+        bond-xmit-hash-policy layer2+3
+
+# Réseau gestion (10.0.0.x) — accès SSH, API Proxmox, iLO
+auto vmbr0
+iface vmbr0 inet static
+        address {{ proxmox_vmbr0_addr }}
+        gateway {{ proxmox_vmbr0_gw }}
+        bridge-ports {{ proxmox_phys_iface }}
+        bridge-stp off
+        bridge-fd 0
+        bridge-vlan-aware no
+
+auto vmbr1
+iface vmbr1 inet static
+        address {{ proxmox_vmbr1_addr }}
+        bridge-ports none
+        bridge-stp off
+        bridge-fd 0
+        bridge-vlan-aware no
+
+
+
+# This file is managed by Ansible — modifications manuelles écrasées au prochain run
+
+auto lo
+iface lo inet loopback
+
+{% for iface in proxmox_phys_ifaces %}
+auto {{ iface }}
+iface {{ iface }} inet manual
+
+{% endfor %}
+
+{% if proxmox_phys_ifaces | length > 1 %}
+auto bond0
+iface bond0 inet manual
+    bond-slaves {{ proxmox_phys_ifaces | join(' ') }}
+    bond-miimon 100
+    bond-mode balance-xor
+    bond-xmit-hash-policy layer2+3
+{% set uplink_iface = 'bond0' %}
+{% else %}
+{% set uplink_iface = proxmox_phys_ifaces[0] %}
+{% endif %}
+
+auto vmbr0
+iface vmbr0 inet static
+    address {{ proxmox_vmbr0_addr }}
+    gateway {{ proxmox_vmbr0_gw }}
+    bridge-ports {{ uplink_iface }}
+    bridge-stp off
+    bridge-fd 0
+
+auto vmbr1
+iface vmbr1 inet static
+    address {{ proxmox_vmbr1_addr }}
+    bridge-ports {{ uplink_iface }}.{{ proxmox_vmbr1_vlan }}
+    bridge-stp off
+    bridge-fd 0
+    bridge-vlan-aware yes
+    bridge-vids 2-4094

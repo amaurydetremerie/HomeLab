@@ -1,0 +1,45 @@
+---
+- name: Get existing ISOs on local storage
+  ansible.builtin.uri:
+    url: "https://{{ proxmox_api_host }}/api2/json/nodes/{{ proxmox_node }}/storage/local/content?content=iso"
+    method: GET
+    headers:
+      Authorization: "PVEAPIToken={{ proxmox_api_user }}!{{ proxmox_api_token_id }}={{ proxmox_api_token_secret }}"
+    validate_certs: false
+  register: existing_isos
+  when: proxmox_isos | default([]) | length > 0
+
+- name: Download ISO files via Proxmox node
+  ansible.builtin.uri:
+    url: "https://{{ proxmox_api_host }}/api2/json/nodes/{{ proxmox_node }}/storage/local/download-url"
+    method: POST
+    headers:
+      Authorization: "PVEAPIToken={{ proxmox_api_user }}!{{ proxmox_api_token_id }}={{ proxmox_api_token_secret }}"
+    body_format: json
+    body:
+      url: "{{ item.url }}"
+      filename: "{{ item.filename }}"
+      content: iso
+    validate_certs: false
+  loop: "{{ proxmox_isos | default([]) }}"
+  loop_control:
+    label: "{{ item.filename }}"
+  when:
+    - proxmox_isos | default([]) | length > 0
+    - item.filename not in (existing_isos.json.data | map(attribute='volid') | map('regex_replace', '^local:iso/', '') | list)
+  register: download_tasks
+
+- name: Wait for ISO downloads to complete
+  ansible.builtin.uri:
+    url: "https://{{ proxmox_api_host }}/api2/json/nodes/{{ proxmox_node }}/tasks/{{ item.json.data }}/status"
+    method: GET
+    headers:
+      Authorization: "PVEAPIToken={{ proxmox_api_user }}!{{ proxmox_api_token_id }}={{ proxmox_api_token_secret }}"
+    validate_certs: false
+  loop: "{{ (download_tasks.results | default([])) | rejectattr('skipped', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.item.filename }}"
+  register: task_status
+  until: task_status.json.data.status == 'stopped'
+  retries: 120
+  delay: 10

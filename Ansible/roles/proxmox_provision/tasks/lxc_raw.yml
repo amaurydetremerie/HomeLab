@@ -1,0 +1,13 @@
+---
+# Directives LXC brutes non gérées par le module community.general.proxmox
+# (accès devices, bind-mounts système, passthrough GPU, TUN, USB, ...)
+# Le fichier /etc/pve/lxc/<vmid>.conf doit exister (container créé au play précédent)
+# Les changements prennent effet au prochain démarrage du container
+- name: Add raw directives to LXC configs
+  ansible.builtin.blockinfile:
+    path: "/etc/pve/lxc/{{ item.vmid }}.conf"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    block: "{{ item.lxc_raw | join('\n') }}"
+  loop: "{{ proxmox_lxc | selectattr('lxc_raw', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.hostname }} (vmid={{ item.vmid }})"
