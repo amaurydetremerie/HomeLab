@@ -1,0 +1,9 @@
+---
+# Toutes les machines Linux gérées par Ansible post-hardening
+# Sous-groupes : lxc, k3s_masters, k3s_workers, vps
+# Surcharger hardening_level dans host_vars si nécessaire (traefik → 3, vps → 3)
+ansible_user: ansible
+ansible_become: true
+ansible_become_method: sudo
+
+hardening_level: 2

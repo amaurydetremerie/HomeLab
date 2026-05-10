@@ -26,12 +26,21 @@ vault_truenas_hades_api_key: ""
 vault_truenas_hermes_smb_password: ""
 
 # ── PBS ───────────────────────────────────────────────────────────────────
-# Fingerprint TLS du serveur PBS (Proxmox UI → PBS → Fingerprint, ou : openssl s_client -connect 10.0.0.80:8007 2>/dev/null | openssl x509 -fingerprint -sha256 -noout)
+# Token API PBS — généré par proxmox_pbs.yml (proxmox-backup-manager user token create ansible@pbs ansible)
+vault_pbs_api_token_secret: ""
+
+# Fingerprint TLS du serveur PBS — extrait automatiquement par proxmox_pbs.yml
+# Commande manuelle : openssl x509 -fingerprint -sha256 -noout -in /etc/proxmox-backup/proxy.pem
 vault_pbs_fingerprint: ""
 
 # ── LXC ───────────────────────────────────────────────────────────────────
 # Mot de passe root des LXC pour accès console d'urgence (Proxmox UI)
 vault_lxc_root_password: ""
+
+# ── Utilisateurs Linux ─────────────────────────────────────────────────────
+# Mot de passe commun pour l'utilisateur wiserisk sur LXC/VMs/VPS/Pi
+# Utilisé pour sudo (le user ansible a NOPASSWD sudo — pas de mot de passe requis)
+vault_linux_user_password: ""
 
 # ── iLO HP ────────────────────────────────────────────────────────────────
 # Mot de passe du compte Administrator iLO (sur l'étiquette du serveur ou changé via UI)

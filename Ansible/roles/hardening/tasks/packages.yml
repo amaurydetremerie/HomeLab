@@ -1,0 +1,36 @@
+---
+- name: Installer fail2ban et unattended-upgrades
+  ansible.builtin.apt:
+    name:
+      - fail2ban
+      - unattended-upgrades
+    state: present
+    update_cache: true
+
+- name: Configurer fail2ban (jail.local de base)
+  ansible.builtin.copy:
+    dest: /etc/fail2ban/jail.local
+    content: |
+      [DEFAULT]
+      bantime  = 3600
+      findtime = 600
+      maxretry = 5
+      backend  = systemd
+
+      [sshd]
+      enabled = true
+      port    = {{ hardening_ssh_port }}
+    mode: "0644"
+  notify: restart fail2ban
+
+- name: Activer et démarrer fail2ban
+  ansible.builtin.systemd:
+    name: fail2ban
+    enabled: true
+    state: started
+
+- name: Activer unattended-upgrades
+  ansible.builtin.systemd:
+    name: unattended-upgrades
+    enabled: true
+    state: started

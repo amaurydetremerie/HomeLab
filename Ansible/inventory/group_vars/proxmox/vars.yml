@@ -1,0 +1,10 @@
+---
+# Connexion via ansible user (NOPASSWD sudo)
+# hardening.yml tourne en [1] dans site.yml — ansible user existe avant tout autre playbook
+ansible_user: ansible
+ansible_become: true
+ansible_become_method: sudo
+
+# Level 1 : users + SSH key-only + fail2ban
+# Pas de ufw — Proxmox a son propre firewall (Datacenter → Firewall)
+hardening_level: 1

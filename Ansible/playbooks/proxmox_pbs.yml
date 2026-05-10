@@ -1,0 +1,178 @@
+---
+# Configuration PBS — iSCSI, datastore, user ansible@pbs, fingerprint
+# Pré-requis : hardening.yml exécuté sur PBS (user ansible créé), truenas_shares.yml exécuté
+#
+# ansible-playbook playbooks/proxmox_pbs.yml
+
+# 1. Vérifier que le portal iSCSI TrueNAS est joignable avant de continuer
+- name: Verify TrueNAS iSCSI portal is reachable
+  hosts: localhost
+  gather_facts: false
+  tasks:
+
+    - name: Attendre que le portal iSCSI TrueNAS soit accessible
+      ansible.builtin.wait_for:
+        host: "{{ hostvars['pbs'].pbs_iscsi.portal | split(':') | first }}"
+        port: "{{ hostvars['pbs'].pbs_iscsi.portal | split(':') | last | int }}"
+        timeout: 30
+        msg: "Portal iSCSI {{ hostvars['pbs'].pbs_iscsi.portal }} inaccessible — vérifier que truenas_shares.yml a été exécuté"
+
+# 2. Configurer PBS
+- name: Configure PBS
+  hosts: pbs
+  gather_facts: false
+  become: true
+  vars:
+    _iscsi_disk: "/dev/disk/by-path/ip-{{ pbs_iscsi.portal }}-iscsi-{{ pbs_iscsi.iqn }}-lun-0"
+
+  tasks:
+
+    # --- iSCSI (idempotent) ---
+    - name: Installer open-iscsi
+      ansible.builtin.apt:
+        name: open-iscsi
+        state: present
+        update_cache: true
+
+    - name: Activer et démarrer iscsid
+      ansible.builtin.systemd:
+        name: iscsid
+        enabled: true
+        state: started
+
+    - name: Découvrir les targets iSCSI sur TrueNAS
+      ansible.builtin.command: "iscsiadm -m discovery -t sendtargets -p {{ pbs_iscsi.portal }}"
+      changed_when: false
+
+    - name: Vérifier si la session iSCSI est déjà active
+      ansible.builtin.command: iscsiadm -m session
+      register: iscsi_sessions
+      changed_when: false
+      failed_when: false
+
+    - name: Se connecter au target iSCSI
+      ansible.builtin.command: "iscsiadm -m node -T {{ pbs_iscsi.iqn }} -p {{ pbs_iscsi.portal }} --login"
+      when: pbs_iscsi.iqn not in iscsi_sessions.stdout
+      changed_when: true
+
+    - name: Configurer la connexion iSCSI persistante (auto-login au boot)
+      ansible.builtin.command: >
+        iscsiadm -m node -T {{ pbs_iscsi.iqn }} -p {{ pbs_iscsi.portal }}
+        --op update -n node.startup -v automatic
+      changed_when: true
+
+    - name: Attendre que le disque iSCSI apparaisse
+      ansible.builtin.wait_for:
+        path: "{{ _iscsi_disk }}"
+        timeout: 30
+
+    # --- Format + mount (idempotent) ---
+    - name: Vérifier si le disque est déjà formaté
+      ansible.builtin.command: "blkid {{ _iscsi_disk }}"
+      register: blkid_check
+      changed_when: false
+      failed_when: false
+
+    - name: Formater le disque iSCSI en XFS
+      ansible.builtin.command: "mkfs.xfs {{ _iscsi_disk }}"
+      when: blkid_check.rc != 0
+      changed_when: true
+
+    - name: Créer le répertoire de mount
+      ansible.builtin.file:
+        path: "{{ pbs_datastore.path }}"
+        state: directory
+        mode: "0755"
+
+    - name: Récupérer l'UUID du disque iSCSI
+      ansible.builtin.command: "blkid -s UUID -o value {{ _iscsi_disk }}"
+      register: disk_uuid
+      changed_when: false
+
+    - name: Ajouter l'entrée fstab et monter (option _netdev pour iSCSI)
+      ansible.posix.mount:
+        path: "{{ pbs_datastore.path }}"
+        src: "UUID={{ disk_uuid.stdout | trim }}"
+        fstype: xfs
+        opts: defaults,_netdev,noatime
+        state: mounted
+
+    # --- Datastore PBS (idempotent) ---
+    - name: Vérifier si le datastore PBS existe déjà
+      ansible.builtin.command: proxmox-backup-manager datastore list --output-format json
+      register: pbs_datastores
+      changed_when: false
+
+    - name: Créer le datastore PBS "{{ pbs_datastore.name }}"
+      ansible.builtin.command: >
+        proxmox-backup-manager datastore create {{ pbs_datastore.name }} {{ pbs_datastore.path }}
+      when: >
+        (pbs_datastores.stdout | from_json)
+        | selectattr('name', 'equalto', pbs_datastore.name) | list | length == 0
+      changed_when: true
+
+    # --- User ansible@pbs + token (même pattern que ansible@pam sur PVE) ---
+    - name: Vérifier si l'utilisateur ansible@pbs existe déjà
+      ansible.builtin.command: proxmox-backup-manager user list --output-format json
+      register: pbs_users
+      changed_when: false
+
+    - name: Créer l'utilisateur ansible@pbs
+      ansible.builtin.command: >
+        proxmox-backup-manager user create ansible@pbs --comment "Ansible automation"
+      when: >
+        (pbs_users.stdout | from_json)
+        | selectattr('userid', 'equalto', 'ansible@pbs') | list | length == 0
+      changed_when: true
+
+    - name: Attribuer le rôle Admin à ansible@pbs sur /
+      ansible.builtin.command: >
+        proxmox-backup-manager acl update --auth-id ansible@pbs --role Admin /
+      changed_when: true
+
+    - name: Vérifier si le token API ansible@pbs existe déjà
+      ansible.builtin.command: >
+        proxmox-backup-manager user token list ansible@pbs --output-format json
+      register: pbs_tokens
+      changed_when: false
+      failed_when: false
+
+    - name: Créer le token API "ansible" pour ansible@pbs
+      ansible.builtin.command: >
+        proxmox-backup-manager user token create ansible@pbs ansible --comment "Ansible automation"
+      register: pbs_token_create
+      when: >
+        pbs_tokens.rc != 0 or
+        (pbs_tokens.stdout | from_json)
+        | selectattr('tokenid', 'equalto', 'ansible') | list | length == 0
+      changed_when: true
+
+    - name: Afficher le token PBS (valeur unique — ne sera plus visible après)
+      ansible.builtin.debug:
+        msg: "{{ pbs_token_create.stdout_lines }}"
+      when: pbs_token_create is changed
+
+    # --- Fingerprint ---
+    - name: Extraire le fingerprint TLS PBS
+      ansible.builtin.command: >
+        openssl x509 -fingerprint -sha256 -noout -in /etc/proxmox-backup/proxy.pem
+      register: pbs_fingerprint_raw
+      changed_when: false
+
+    - name: Pause — stocker token et fingerprint dans vault
+      ansible.builtin.pause:
+        prompt: |
+
+          ╔══════════════════════════════════════════════════════════════════════╗
+          ║  PBS — valeurs à stocker dans le vault                               ║
+          ╠══════════════════════════════════════════════════════════════════════╣
+          ║  Fingerprint : {{ pbs_fingerprint_raw.stdout | regex_replace('.*=', '') }}
+          ║  Token       : voir la sortie "Afficher le token" ci-dessus          ║
+          ║                                                                      ║
+          ║  Dans ansible-vault (inventory/group_vars/all/vault.yml) :          ║
+          ║    vault_pbs_fingerprint: "<fingerprint ci-dessus>"                 ║
+          ║    vault_pbs_api_token_secret: "<valeur du token ci-dessus>"        ║
+          ║                                                                      ║
+          ║  → Appuyer sur Entrée une fois le vault mis à jour                  ║
+          ╚══════════════════════════════════════════════════════════════════════╝
+      when: pbs_token_create is changed or (vault_pbs_fingerprint | default('') | trim | length == 0)

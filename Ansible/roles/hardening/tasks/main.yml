@@ -1,0 +1,8 @@
+---
+- import_tasks: users.yml
+- import_tasks: ssh.yml
+- import_tasks: packages.yml
+- import_tasks: ufw.yml
+  when: hardening_level | int >= 2
+- import_tasks: fail2ban_strict.yml
+  when: hardening_level | int >= 3

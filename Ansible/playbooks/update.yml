@@ -14,7 +14,7 @@
 #   Un groupe seulement :       ansible-playbook playbooks/update.yml --limit lxc
 #   Un host seulement :         ansible-playbook playbooks/update.yml --limit jellyfin
 
-# --- LXC, VMs applicatives, VPS, PBS ---
+# --- LXC, VPS, PBS (ansible user post-hardening) ---
 - name: Update Linux hosts
   hosts: "all:!ilo:!network:!truenas:!home_assistant:!proxmox_hypervisors:!k3s_masters:!k3s_workers"
   gather_facts: false

@@ -4,7 +4,7 @@ proxmox_api_token_secret: "{{ vault_proxmox_wasp_api_token_secret }}"
 
 # Réseau — adapter proxmox_phys_iface au nom réel : `ip link` ou `lshw -class network`
 proxmox_phys_ifaces:
-  - eno1
+  - enp1s0f0
 proxmox_vmbr0_addr: 10.0.0.82/24
 proxmox_vmbr0_gw: 10.0.0.1
 proxmox_vmbr1_addr: 10.100.0.254/24  # IP optionnelle du host sur le bridge interne
@@ -52,6 +52,7 @@ proxmox_storages:
 
 proxmox_lxc:
   - vmid: 9086                                              # 9 + 086 (10.0.0.86)
+    backup: none                                            # Config gérée par Ansible, recréable
     hostname: adguard
     description: "AdGuard Home — DNS"
     cores: 1
@@ -66,6 +67,7 @@ proxmox_lxc:
       net0: "name=eth0,bridge=vmbr0,ip=10.0.0.86/24,gw=10.0.0.1"
 
   - vmid: 9087                                              # 9 + 087 (10.0.0.87)
+    backup: none                                            # Config gérée par Ansible, recréable
     hostname: unbound
     description: "Unbound DNS"
     cores: 1
@@ -76,6 +78,7 @@ proxmox_lxc:
       net0: "name=eth0,bridge=vmbr0,ip=10.0.0.87/24,gw=10.0.0.1"
 
   - vmid: 1106                                              # 1 + 106 (10.100.0.106)
+    backup: non_critical
     hostname: semaphore
     description: "Semaphore — UI Ansible"
     cores: 2
@@ -86,6 +89,7 @@ proxmox_lxc:
       net0: "name=eth0,bridge=vmbr1,ip=10.100.0.106/24,gw=10.100.0.1"
 
   - vmid: 1107                                              # 1 + 107 (10.100.0.107)
+    backup: none                                            # Données (repos + DB) sur NFS, TrueNAS/ZFS les protège
     hostname: gitea
     description: "Gitea — Git server"
     cores: 2
@@ -98,6 +102,7 @@ proxmox_lxc:
       net0: "name=eth0,bridge=vmbr1,ip=10.100.0.107/24,gw=10.100.0.1"
 
   - vmid: 1220                                              # 1 + 220 (10.100.0.220)
+    backup: archive                                         # IP Tailscale + exit node liés au device, change très rarement
     hostname: tailscale
     description: "LXC Tailscale — proxy vers réseau 192.168.1.x (Hades)"
     cores: 1
@@ -110,7 +115,10 @@ proxmox_lxc:
     netif:
       net0: "name=eth0,bridge=vmbr1,ip=10.100.0.220/24,gw=10.100.0.1"
     lxc_raw:
+      # cgroup v2 — Proxmox 8+ (unified) et Proxmox 9
       - "lxc.cgroup2.devices.allow: c 10:200 rwm"
+      # cgroup v1 — décommenter si mode hybride/legacy (remplacer la ligne ci-dessus)
+      # - "lxc.cgroup.devices.allow: c 10:200 rwm"
       - "lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file"
 
 proxmox_vms: []

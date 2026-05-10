@@ -1,0 +1,16 @@
+---
+# PBS API — user ansible@pbs créé par proxmox_pbs.yml, même pattern que ansible@pam sur PVE
+pbs_api_host: "{{ ansible_host }}"
+pbs_api_user: "ansible@pbs"
+pbs_api_token_id: "ansible"
+pbs_api_token_secret: "{{ vault_pbs_api_token_secret }}"
+
+pbs_iscsi:
+  portal: "10.100.0.10:3260"
+  # Vérifier via : iscsiadm -m discovery -t sendtargets -p 10.100.0.10:3260
+  # TrueNAS SCALE utilise iqn.2005-10.org.freenas.ctl (héritage FreeNAS, même sur SCALE 24.10+)
+  iqn: "iqn.2005-10.org.freenas.ctl:pbs"
+
+pbs_datastore:
+  name: pve
+  path: /mnt/iscsi-backup

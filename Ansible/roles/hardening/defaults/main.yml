@@ -1,0 +1,20 @@
+---
+# Niveau de hardening appliqué — surcharger dans group_vars ou host_vars
+#   1 : baseline  — users (wiserisk/ansible), SSH key-only, disable root SSH, fail2ban
+#   2 : interne   — niveau 1 + ufw (deny inbound, SSH + ports custom)
+#   3 : exposé    — niveau 2 + fail2ban strict + SSH AllowUsers
+hardening_level: 1
+
+# Noms des utilisateurs créés (surchargeables si besoin)
+hardening_wiserisk_user: wiserisk
+hardening_ansible_user: ansible
+
+# Service SSH (ssh sur Debian/Ubuntu, sshd sur RHEL/Arch)
+hardening_ssh_service: ssh
+
+# Port SSH (22 par défaut, changer pour level 3 si nécessaire)
+hardening_ssh_port: 22
+
+# Règles UFW supplémentaires au-delà de SSH — à définir en host_vars
+# Exemple : [{ port: "80", proto: tcp, rule: allow }, ...]
+hardening_ufw_rules: []

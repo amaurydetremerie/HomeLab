@@ -1,4 +1,8 @@
 ---
+# Les ISOs sont stockés sur le storage "local" (répertoire /var/lib/vz/template/iso)
+# Ce storage existe sur toute installation Proxmox, avec ou sans ZFS.
+# Attention : les disques LXC/VM dans host_vars utilisent "local-zfs" — nécessite
+# une installation Proxmox avec ZFS (si non-ZFS : remplacer par "local-lvm").
 - name: Get existing ISOs on local storage
   ansible.builtin.uri:
     url: "https://{{ proxmox_api_host }}/api2/json/nodes/{{ proxmox_node }}/storage/local/content?content=iso"

@@ -1,0 +1,41 @@
+---
+# Configuration des storages Proxmox — à lancer après proxmox_pbs.yml
+# Contenu déplacé depuis roles/proxmox_provision/tasks/storage.yml
+#
+# ansible-playbook playbooks/proxmox_storage.yml
+# ansible-playbook playbooks/proxmox_storage.yml --limit proxmox_flash
+
+- name: Configure Proxmox storages
+  hosts: "{{ target | default('proxmox_hypervisors') }}"
+  gather_facts: false
+  connection: local
+  pre_tasks:
+    - name: Recharger le vault (fingerprint PBS potentiellement ajouté)
+      ansible.builtin.include_vars:
+        file: "{{ inventory_dir }}/group_vars/all/vault.yml"
+      failed_when: false
+  tasks:
+    - name: Configure storage {{ item.name }} ({{ item.type }})
+      community.general.proxmox_storage:
+        api_host: "{{ ansible_host }}"
+        api_user: "ansible@pam"
+        api_token_id: "ansible"
+        api_token_secret: "{{ proxmox_api_token_secret }}"
+        storage: "{{ item.name }}"
+        type: "{{ item.type }}"
+        content: "{{ item.content }}"
+        nodes: "{{ item.nodes | default(omit) }}"
+        sparse: "{{ item.sparse | default(omit) }}"
+        pool: "{{ item.pool | default(omit) }}"
+        thinpool: "{{ item.thinpool | default(omit) }}"
+        vgname: "{{ item.vgname | default(omit) }}"
+        server: "{{ item.server | default(omit) }}"
+        export: "{{ item.export | default(omit) }}"
+        path: "{{ item.path | default(omit) }}"
+        datastore: "{{ item.datastore | default(omit) }}"
+        username: "{{ item.username | default(omit) }}"
+        fingerprint: "{{ item.fingerprint | default(omit) }}"
+        state: present
+      loop: "{{ proxmox_storages }}"
+      loop_control:
+        label: "{{ item.name }} ({{ item.type }})"

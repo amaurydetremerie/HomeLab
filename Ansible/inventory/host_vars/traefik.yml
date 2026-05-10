@@ -3,3 +3,14 @@
 ansible_host: 10.0.0.85
 # IP côté réseau services (10.100.0.x) — interface de passerelle
 traefik_internal_ip: 10.100.0.1
+
+# Passerelle DMZ — hardening level 3 (exposé internet via VPS)
+hardening_level: 3
+
+hardening_ufw_rules:
+  - port: "80"
+    proto: tcp
+    rule: allow
+  - port: "443"
+    proto: tcp
+    rule: allow

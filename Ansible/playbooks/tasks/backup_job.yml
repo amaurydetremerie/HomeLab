@@ -1,0 +1,77 @@
+---
+# Gère un job de backup Proxmox (create/update/delete) pour _backup_type
+# Requis : _backup_type, _vmids_by_type, _existing_jobs, _pve_api_url, _pve_auth_header
+#          proxmox_backup_types, proxmox_backup_mailto
+
+- name: "Initialiser les facts pour ansible-{{ _backup_type }}"
+  ansible.builtin.set_fact:
+    _job_cfg: "{{ proxmox_backup_types[_backup_type] }}"
+    _job_vmids: "{{ _vmids_by_type[_backup_type] }}"
+    _job_existing: >-
+      {{ (_existing_jobs.json.data | default([]))
+         | selectattr('id', 'equalto', 'ansible-' ~ _backup_type)
+         | list | first | default({}) }}
+
+- name: "Calculer l'état du job ansible-{{ _backup_type }}"
+  ansible.builtin.set_fact:
+    _job_exists: "{{ _job_existing | length > 0 }}"
+    _job_current_vmids: >-
+      {{ (_job_existing.vmid | default(''))
+         | split(',') | reject('equalto', '')
+         | map('int') | sort | list }}
+    _job_desired_vmids: "{{ _job_vmids | map('int') | sort | list }}"
+
+- name: "Construire le body de la requête pour ansible-{{ _backup_type }}"
+  ansible.builtin.set_fact:
+    _job_body: >-
+      {{ {
+        'schedule': _job_cfg.schedule,
+        'storage': _job_cfg.storage,
+        'vmid': _job_vmids | join(','),
+        'mode': _job_cfg.mode,
+        'compress': _job_cfg.compress,
+        'mailnotification': _job_cfg.mailnotification,
+        'mailto': proxmox_backup_mailto
+      } | combine(
+        {'prune-backups': _job_cfg.prune_backups}
+        if _job_cfg.prune_backups is defined else {}
+      ) }}
+
+- name: "Supprimer le job ansible-{{ _backup_type }} (aucune VM assignée)"
+  ansible.builtin.uri:
+    url: "{{ _pve_api_url }}/cluster/backup/ansible-{{ _backup_type }}"
+    method: DELETE
+    headers:
+      Authorization: "{{ _pve_auth_header }}"
+    validate_certs: false
+    status_code: [200, 204]
+  when: _job_vmids | length == 0 and _job_exists | bool
+
+- name: "Créer le job ansible-{{ _backup_type }}"
+  ansible.builtin.uri:
+    url: "{{ _pve_api_url }}/cluster/backup"
+    method: POST
+    headers:
+      Authorization: "{{ _pve_auth_header }}"
+    body_format: form-urlencoded
+    body: "{{ _job_body | combine({'id': 'ansible-' ~ _backup_type}) }}"
+    validate_certs: false
+    status_code: 200
+  when: _job_vmids | length > 0 and not (_job_exists | bool)
+
+- name: "Mettre à jour le job ansible-{{ _backup_type }}"
+  ansible.builtin.uri:
+    url: "{{ _pve_api_url }}/cluster/backup/ansible-{{ _backup_type }}"
+    method: PUT
+    headers:
+      Authorization: "{{ _pve_auth_header }}"
+    body_format: form-urlencoded
+    body: "{{ _job_body }}"
+    validate_certs: false
+    status_code: 200
+  when: >
+    _job_vmids | length > 0 and (_job_exists | bool) and (
+      _job_current_vmids != _job_desired_vmids
+      or (_job_existing.schedule | default('')) != _job_cfg.schedule
+      or (_job_existing.storage | default('')) != _job_cfg.storage
+    )

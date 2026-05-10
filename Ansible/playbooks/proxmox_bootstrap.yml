@@ -1,10 +1,8 @@
 ---
 # Bootstrap Proxmox — création de ansible@pam et du token API
-# Connexion SSH directe (avant que le token API existe)
+# Connexion via ansible user (NOPASSWD sudo) — hardening.yml doit avoir tourné avant
 #
-# Pré-requis unique : clé SSH root copiée sur les hyperviseurs
-#   ssh-copy-id root@10.0.0.81  (flash)
-#   ssh-copy-id root@10.0.0.82  (wasp)
+# Pré-requis : hardening.yml déjà exécuté sur les hyperviseurs (user ansible créé)
 #
 # ansible-playbook playbooks/proxmox_bootstrap.yml
 # ansible-playbook playbooks/proxmox_bootstrap.yml --limit proxmox_flash
@@ -51,3 +49,5 @@
           ║  → Appuyer sur Entrée une fois le vault mis à jour                  ║
           ╚══════════════════════════════════════════════════════════════════════╝
       when: token_output.rc == 0
+
+- ansible.builtin.import_playbook: proxmox_gpu.yml

@@ -13,7 +13,7 @@
         name: proxmox_provision
         tasks_from: network.yml
 
-# 2. Provision storage / template / ISO / LXC / VM (API REST)
+# 2. Provision template / ISO / LXC / VM (API REST) — storage géré par proxmox_storage.yml
 - name: Provision Proxmox infrastructure
   hosts: "{{ target | default('proxmox_hypervisors') }}"
   gather_facts: false

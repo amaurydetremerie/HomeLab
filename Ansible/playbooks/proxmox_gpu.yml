@@ -1,0 +1,23 @@
+---
+# Installation des drivers GPU sur les hyperviseurs Proxmox
+# Jouable seul lors de l'ajout d'un GPU sans relancer le bootstrap complet
+#
+# ansible-playbook playbooks/proxmox_gpu.yml
+# ansible-playbook playbooks/proxmox_gpu.yml --limit proxmox_flash
+#
+# proxmox_gpus dans host_vars : dict keyed par vendor (nvidia/amd/intel)
+# Ne blackliste PAS les drivers — le host doit les charger pour que les LXC y accèdent
+- name: Install GPU drivers on Proxmox hypervisors
+  hosts: proxmox_hypervisors
+  gather_facts: true
+  become: true
+  tasks:
+
+    - ansible.builtin.include_tasks: tasks/gpu_nvidia.yml
+      when: (proxmox_gpus | default({})).nvidia is defined
+
+    - ansible.builtin.include_tasks: tasks/gpu_amd.yml
+      when: (proxmox_gpus | default({})).amd is defined
+
+    - ansible.builtin.include_tasks: tasks/gpu_intel.yml
+      when: (proxmox_gpus | default({})).intel is defined

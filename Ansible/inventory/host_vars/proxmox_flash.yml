@@ -11,6 +11,13 @@ proxmox_vmbr0_gw: 10.0.0.1
 proxmox_vmbr1_addr: 10.100.0.253/24  # IP optionnelle du host sur le bridge interne
 proxmox_vmbr1_vlan: 100
 
+# GPUs installés — LXC passthrough (pas VFIO)
+# nvidia → installer .run + DKMS | amd/intel → paquets apt
+# Ajouter une clé amd/intel pour un second GPU d'un autre vendor
+proxmox_gpus:
+  nvidia:
+    driver_url: "https://us.download.nvidia.com/XFree86/Linux-x86_64/570.172.08/NVIDIA-Linux-x86_64-570.172.08.run"
+
 proxmox_storages:
   - name: local-zfs
     type: zfspool
@@ -62,6 +69,7 @@ proxmox_isos:
 
 proxmox_lxc:
   - vmid: 1001                                              # 1 + 001 (10.100.0.1)
+    backup: none                                            # Config dans Ansible, recréable
     hostname: traefik
     description: "Reverse proxy — passerelle vmbr0 <-> vmbr1"
     cores: 1
@@ -77,6 +85,7 @@ proxmox_lxc:
       net1: "name=eth1,bridge=vmbr1,ip=10.100.0.1/24"
 
   - vmid: 1103                                              # 1 + 103 (10.100.0.103)
+    backup: none
     hostname: webhook
     description: "Webhook server"
     cores: 1
@@ -90,6 +99,7 @@ proxmox_lxc:
       net0: "name=eth0,bridge=vmbr1,ip=10.100.0.103/24,gw=10.100.0.1"
 
   - vmid: 1104                                              # 1 + 104 (10.100.0.104)
+    backup: none                                            # Modèles sur storage séparé (mp0), recréable
     hostname: ollama
     description: "Ollama LLM server"
     cores: 8
@@ -104,13 +114,28 @@ proxmox_lxc:
       mp0: "local-zfs:80,mp=/mnt/ollama"
     netif:
       net0: "name=eth0,bridge=vmbr1,ip=10.100.0.104/24,gw=10.100.0.1"
-    # GPU passthrough — à définir selon le device iGPU/dGPU du host
-    # lxc_raw:
-    #   - "lxc.cgroup2.devices.allow: c 226:0 rwm"    # /dev/dri/card0
-    #   - "lxc.cgroup2.devices.allow: c 226:128 rwm"  # /dev/dri/renderD128
-    #   - "lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir"
+    # GPU passthrough — Quadro P2200 (CUDA pour inférence)
+    # 195=nvidia, 509=nvidia-uvm, 234=nvidia-caps, 226=dri
+    lxc_raw:
+      # cgroup v2 — Proxmox 8+ (unified) et Proxmox 9
+      - "lxc.cgroup2.devices.allow: c 195:* rwm"
+      - "lxc.cgroup2.devices.allow: c 509:* rwm"
+      - "lxc.cgroup2.devices.allow: c 234:* rwm"
+      - "lxc.cgroup2.devices.allow: c 226:* rwm"
+      # cgroup v1 — décommenter si mode hybride/legacy (remplacer les lignes ci-dessus)
+      # - "lxc.cgroup.devices.allow: c 195:* rwm"
+      # - "lxc.cgroup.devices.allow: c 509:* rwm"
+      # - "lxc.cgroup.devices.allow: c 234:* rwm"
+      # - "lxc.cgroup.devices.allow: c 226:* rwm"
+      - "lxc.mount.entry: /dev/nvidia0 dev/nvidia0 none bind,optional,create=file"
+      - "lxc.mount.entry: /dev/nvidiactl dev/nvidiactl none bind,optional,create=file"
+      - "lxc.mount.entry: /dev/nvidia-uvm dev/nvidia-uvm none bind,optional,create=file"
+      - "lxc.mount.entry: /dev/nvidia-uvm-tools dev/nvidia-uvm-tools none bind,optional,create=file"
+      - "lxc.mount.entry: /dev/nvidia-caps/nvidia-cap1 dev/nvidia-caps/nvidia-cap1 none bind,optional,create=file"
+      - "lxc.mount.entry: /dev/nvidia-caps/nvidia-cap2 dev/nvidia-caps/nvidia-cap2 none bind,optional,create=file"
 
   - vmid: 1105                                              # 1 + 105 (10.100.0.105)
+    backup: critical
     hostname: qbittorrent
     description: "qBittorrent"
     cores: 1
@@ -127,6 +152,7 @@ proxmox_lxc:
       net0: "name=eth0,bridge=vmbr1,ip=10.100.0.105/24,gw=10.100.0.1"
 
   - vmid: 1201                                              # 1 + 201 (10.100.0.201)
+    backup: critical
     hostname: seedbox
     description: "Seedbox"
     cores: 1
@@ -142,6 +168,7 @@ proxmox_lxc:
       net0: "name=eth0,bridge=vmbr1,ip=10.100.0.201/24,gw=10.100.0.1"
 
   - vmid: 1202                                              # 1 + 202 (10.100.0.202)
+    backup: critical
     hostname: jellyfin
     description: "Jellyfin media server"
     cores: 4
@@ -155,14 +182,30 @@ proxmox_lxc:
       mp0: "/mnt/pve/Plex,mp=/mnt/media/seedbox,shared=1"
     netif:
       net0: "name=eth0,bridge=vmbr1,ip=10.100.0.202/24,gw=10.100.0.1"
-    # GPU passthrough — à définir selon le device iGPU/dGPU du host
-    # lxc_raw:
-    #   - "lxc.cgroup2.devices.allow: c 226:0 rwm"    # /dev/dri/card0
-    #   - "lxc.cgroup2.devices.allow: c 226:128 rwm"  # /dev/dri/renderD128
-    #   - "lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir"
+    # GPU passthrough — Quadro P2200 (NVENC pour transcoding)
+    # 195=nvidia, 509=nvidia-uvm, 234=nvidia-caps, 226=dri
+    lxc_raw:
+      # cgroup v2 — Proxmox 8+ (unified) et Proxmox 9
+      - "lxc.cgroup2.devices.allow: c 195:* rwm"
+      - "lxc.cgroup2.devices.allow: c 509:* rwm"
+      - "lxc.cgroup2.devices.allow: c 234:* rwm"
+      - "lxc.cgroup2.devices.allow: c 226:* rwm"
+      # cgroup v1 — décommenter si mode hybride/legacy (remplacer les lignes ci-dessus)
+      # - "lxc.cgroup.devices.allow: c 195:* rwm"
+      # - "lxc.cgroup.devices.allow: c 509:* rwm"
+      # - "lxc.cgroup.devices.allow: c 234:* rwm"
+      # - "lxc.cgroup.devices.allow: c 226:* rwm"
+      - "lxc.mount.entry: /dev/nvidia0 dev/nvidia0 none bind,optional,create=file"
+      - "lxc.mount.entry: /dev/nvidiactl dev/nvidiactl none bind,optional,create=file"
+      - "lxc.mount.entry: /dev/nvidia-uvm dev/nvidia-uvm none bind,optional,create=file"
+      - "lxc.mount.entry: /dev/nvidia-uvm-tools dev/nvidia-uvm-tools none bind,optional,create=file"
+      - "lxc.mount.entry: /dev/nvidia-caps/nvidia-cap1 dev/nvidia-caps/nvidia-cap1 none bind,optional,create=file"
+      - "lxc.mount.entry: /dev/nvidia-caps/nvidia-cap2 dev/nvidia-caps/nvidia-cap2 none bind,optional,create=file"
+      - "lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir"
 
 proxmox_vms:
   - vmid: 1010                                              # 1 + 010 (10.100.0.10)
+    backup: local                                            # TrueNAS gère le stockage PBS — pas de backup PBS
     name: Hermes
     description: "TrueNAS Scale"
     bios: ovmf
@@ -192,6 +235,7 @@ proxmox_vms:
       scsi17: "/dev/disk/by-id/wwn-0x5000cca072a73148,backup=0,iothread=1,size=1172112984K"
 
   - vmid: 1151                                              # 1 + 151 (10.100.0.151)
+    backup: critical
     name: K3S-Master
     description: "K3S Master node"
     cores: 4
@@ -209,6 +253,7 @@ proxmox_vms:
       scsi0: "local-zfs:32,cache=writeback,discard=on,iothread=1,ssd=1"
 
   - vmid: 1152                                              # 1 + 152 (10.100.0.152)
+    backup: none                                            # Worker sans état persistant, pods rescheduables
     name: K3S-Worker-01
     description: "K3S Worker node"
     cores: 2
@@ -226,6 +271,7 @@ proxmox_vms:
       scsi0: "local-zfs:32,cache=writeback,discard=on,iothread=1,ssd=1"
 
   - vmid: 9080                                              # 9 + 080 (10.0.0.80)
+    backup: local                                           # PBS ne peut pas se sauvegarder lui-même via PBS
     name: PBS
     description: "Proxmox Backup Server"
     cores: 1
@@ -249,6 +295,7 @@ proxmox_vms:
   #   qm importdisk 9095 haos_ova-X.X.qcow2 local-zfs
   #   Attacher le disk importé comme scsi0 dans l'UI PVE
   - vmid: 9095                                              # 9 + 095 (10.0.0.95)
+    backup: non_critical
     name: HomeAssistant
     description: "Home Assistant OS"
     bios: ovmf
