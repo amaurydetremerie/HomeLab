@@ -11,6 +11,10 @@
 #   ansible-playbook playbooks/site.yml --ask-vault-pass
 #   ansible-playbook playbooks/site.yml --vault-password-file ~/.vault_pass
 
+# ── Global ────────────────────────────────────────────────────────────────
+# Adresse mail admin — utilisée pour les alertes backup, ACME Let's Encrypt, SMTP Gitea/Semaphore
+vault_admin_email: ""
+
 # ── Proxmox ───────────────────────────────────────────────────────────────
 # Généré par proxmox_bootstrap.yml (pveum user token add ansible@pam ansible)
 # Hosts distincts, tokens distincts
@@ -46,3 +50,43 @@ vault_linux_user_password: ""
 # Mot de passe du compte Administrator iLO (sur l'étiquette du serveur ou changé via UI)
 vault_ilo_flash_password: ""
 vault_ilo_hades_password: ""
+
+# ── AdGuard ───────────────────────────────────────────────────────────────────
+vault_adguard_user: ""
+vault_adguard_password: ""
+
+# ── Tailscale ─────────────────────────────────────────────────────────────────
+# Clé réutilisable : https://login.tailscale.com/admin/settings/keys
+vault_tailscale_auth_key: ""
+
+# ── Traefik ───────────────────────────────────────────────────────────────────
+vault_traefik_my_auth: ""           # Format : user:realm:ha1 (digest auth)
+vault_traefik_basic_auth: ""        # Format : user:$2y$hash (bcrypt)
+vault_traefik_vault_token: ""       # Token Vault pour sync-ollama-bearer
+vault_traefik_vault_addr: ""        # Ex : https://vault.k3s.wiserisk.be/v1/k3s/data
+
+# ── Gitea ─────────────────────────────────────────────────────────────────────
+vault_gitea_smtp_password: ""
+vault_gitea_secret_key: ""          # openssl rand -hex 32
+vault_gitea_internal_token: ""      # openssl rand -hex 32
+
+# ── Semaphore ─────────────────────────────────────────────────────────────────
+vault_semaphore_cookie_hash: ""           # openssl rand -hex 32
+vault_semaphore_cookie_encryption: ""     # openssl rand -hex 32
+vault_semaphore_access_key_encryption: "" # openssl rand -hex 32
+vault_semaphore_admin_password: ""
+
+# ── WireGuard ─────────────────────────────────────────────────────────────────
+# Clés privées — une par host WireGuard (wg genkey)
+# Convention : vault_wireguard_<hostname>_private_key
+# Référencer dans host_vars/<host>.yml : wireguard_private_key: "{{ vault_wireguard_<hostname>_private_key }}"
+vault_wireguard_vps_private_key: ""       # wg genkey
+# vault_wireguard_flash_private_key: ""
+# vault_wireguard_wasp_private_key: ""
+
+# Clés publiques des peers (wg pubkey < clé_privée)
+# Convention : vault_wg_<hostname>_pubkey
+vault_wg_vps_pubkey: ""
+# vault_wg_flash_pubkey: ""
+# vault_wg_wasp_pubkey: ""
+# vault_wg_laptop_pubkey: ""

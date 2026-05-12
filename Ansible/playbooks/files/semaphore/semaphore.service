@@ -1,0 +1,14 @@
+[Unit]
+Description=Semaphore Ansible UI
+After=network.target
+
+[Service]
+Type=simple
+User=semaphore
+Group=semaphore
+WorkingDirectory=/var/lib/semaphore
+ExecStart=/usr/local/bin/semaphore server --config /etc/semaphore/config.json
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

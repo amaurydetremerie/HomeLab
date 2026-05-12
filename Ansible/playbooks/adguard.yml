@@ -1,0 +1,59 @@
+---
+# Configuration AdGuard Home — LXC 9086 (10.0.0.86) sur Wasp
+# Configure l'upstream DNS (Unbound) et les rewrites DNS locaux via l'API AdGuard.
+# L'installation initiale d'AdGuard est manuelle (binaire adguardhome).
+#
+# Prérequis vault :
+#   vault_adguard_user, vault_adguard_password
+#
+# Utilisation :
+#   ansible-playbook playbooks/adguard.yml
+
+- name: Configure AdGuard Home
+  hosts: "{{ target | default('adguard') }}"
+  gather_facts: false
+  tasks:
+    - name: Configure upstream DNS (Unbound)
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ adguard_port }}/control/dns_config"
+        method: POST
+        user: "{{ vault_adguard_user }}"
+        password: "{{ vault_adguard_password }}"
+        force_basic_auth: true
+        body_format: json
+        body:
+          upstream_dns:
+            - "{{ adguard_upstream_dns }}"
+          bootstrap_dns:
+            - "1.1.1.1"
+            - "8.8.8.8"
+          upstream_mode: "parallel"
+        status_code: [200]
+
+    - name: Get current DNS rewrites
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ adguard_port }}/control/rewrite/list"
+        method: GET
+        user: "{{ vault_adguard_user }}"
+        password: "{{ vault_adguard_password }}"
+        force_basic_auth: true
+        status_code: [200]
+      register: current_rewrites
+
+    - name: Add missing DNS rewrites
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ adguard_port }}/control/rewrite/add"
+        method: POST
+        user: "{{ vault_adguard_user }}"
+        password: "{{ vault_adguard_password }}"
+        force_basic_auth: true
+        body_format: json
+        body:
+          domain: "{{ item.domain }}"
+          answer: "{{ item.answer }}"
+        status_code: [200]
+      loop: "{{ adguard_dns_rewrites }}"
+      when: >
+        current_rewrites.json
+        | selectattr('domain', 'equalto', item.domain)
+        | list | length == 0

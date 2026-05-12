@@ -1,0 +1,14 @@
+[Unit]
+Description=qBittorrent-nox
+After=network.target
+
+[Service]
+User=qbittorrent
+Group=qbittorrent
+Type=simple
+ExecStart=/usr/bin/qbittorrent-nox --webui-port={{ qbittorrent_webui_port }} --profile=/var/lib/qbittorrent
+Restart=on-failure
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

@@ -13,7 +13,7 @@ wiserisk_ssh_public_key: ""
 
 # ── Backup jobs ────────────────────────────────────────────────────────────────
 # Destinataire des alertes mail (failure only)
-proxmox_backup_mailto: "killamaury@gmail.com"
+proxmox_backup_mailto: "{{ vault_admin_email }}"
 
 # Définitions des types de backup — référencés par backup: <type> sur chaque LXC/VM
 # Les VMIDs avec backup: none (ou sans champ backup) sont exclus de tous les jobs

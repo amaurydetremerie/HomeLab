@@ -55,30 +55,64 @@
 
 ## Bloc 4 — Services LXC (dans l'ordre de dépendances)
 
-- [ ] **AdGuard + Unbound** *(DNS — requis par la plupart des autres services)*
-  Créer `playbooks/adguard.yml` et `playbooks/unbound.yml` — installation, config des zones locales, pointage Proxmox + hosts vers AdGuard
+- [x] **Unbound** *(DNS récursif upstream d'AdGuard)*
+  `playbooks/unbound.yml` — Unbound récursif (root hints + DNSSEC) sur LXC 9087 (10.0.0.87, Wasp).
+  Config dans `playbooks/files/unbound/unbound.conf`.
+  **À faire** : créer le LXC (via `proxmox_wasp.yml`), lancer le playbook, pointer AdGuard vers 10.0.0.87.
 
-- [ ] **Traefik** *(reverse proxy — requis pour accès HTTPS aux services)*
-  Créer `playbooks/traefik.yml` — installer Traefik, déployer `traefik.service`, `traefik.toml` et les configs dynamiques depuis `Traefik/`.
-  Toute modification de config passe ensuite par ce playbook.
+- [x] **AdGuard** *(DNS filtrage pub)*
+  `playbooks/adguard.yml` — configure via API AdGuard : upstream = Unbound (10.0.0.87), rewrite `*.wiserisk.home → 10.0.0.85`.
+  Config dans `host_vars/adguard.yml`. Secrets : `vault_adguard_user`, `vault_adguard_password`.
+  **À faire** : remplir le vault, lancer le playbook sur le LXC existant (9086, 10.0.0.86).
 
-- [ ] **Gitea**
-  Créer `playbooks/gitea.yml` — installation, config SMTP, migration des repos si nécessaire
+- [x] **Traefik** *(reverse proxy)*
+  `playbooks/traefik.yml` — déploie binaire (optionnel), `Traefik/` → `/etc/Homelab/Traefik/`, overrides systemd avec secrets vault.
+  Configs dynamiques Gitea et Semaphore ajoutées dans `Traefik/traefik_dynamic/`.
+  Tag `--tags config` pour ne pousser que les configs sans toucher au binaire.
+  Secrets : `vault_traefik_my_auth`, `vault_traefik_basic_auth`, `vault_traefik_vault_token`, `vault_traefik_vault_addr`.
+  **À faire** : remplir le vault, lancer sur le LXC existant (1001, 10.0.0.85).
 
-- [ ] **Semaphore** *(UI Ansible)*
-  Créer `playbooks/semaphore.yml` — installation, connexion à l'inventaire Git, définition des templates de playbooks
+- [x] **Gitea**
+  `playbooks/gitea.yml` — binaire v1.26.1, user `git`, toutes les données sur NFS `/opt/gitea`.
+  Config `app.ini` dans `playbooks/templates/gitea/app.ini.j2`, service dans `playbooks/files/gitea/gitea.service`.
+  Secrets : `vault_gitea_smtp_password`, `vault_gitea_secret_key`, `vault_gitea_internal_token`.
+  **À faire** : créer le LXC (via `proxmox_wasp.yml`), remplir le vault, lancer le playbook.
+  Migration des repos existants à faire manuellement après premier démarrage.
 
-- [ ] **Tailscale** *(accès distant + proxy vers réseau Hades 192.168.1.x)*
-  Créer `playbooks/tailscale.yml` — installation dans le LXC tailscale (vmid 1220), config subnet routing vers 192.168.1.0/24
+- [x] **Semaphore** *(UI Ansible)*
+  `playbooks/semaphore.yml` — binaire v2.18.2, DB bolt, config JSON dans `playbooks/templates/semaphore/config.json.j2`.
+  Secrets : `vault_semaphore_cookie_hash/encryption/access_key_encryption`, `vault_semaphore_admin_password`.
+  **À faire** : créer le LXC (via `proxmox_wasp.yml`), remplir le vault, lancer le playbook.
+  Connexion à l'inventaire Git et définition des templates de playbooks à faire dans l'UI après démarrage.
 
-- [ ] **Jellyfin**
-  Créer `playbooks/jellyfin.yml` — installation, config NFS media mount, activation GPU transcoding si GPU passthrough actif
+- [x] **Tailscale** *(accès distant + subnet router)*
+  `playbooks/tailscale.yml` — exit node + subnet router (`10.0.0.0/24`, `10.100.0.0/24`) + port forwarding socat vers Hades.
+  Config dans `host_vars/tailscale.yml`. Routes 192.168.1.x exposées via `tailscale_hades` (app TrueNAS, non géré).
+  Secrets : `vault_tailscale_auth_key`.
+  **À faire** : remplir le vault, lancer sur le LXC existant (1220, 10.100.0.220).
+  Après déploiement : approuver subnet routes + exit node dans l'admin Tailscale.
 
-- [ ] **qBittorrent + Seedbox**
-  Créer `playbooks/qbittorrent.yml` et `playbooks/seedbox.yml`
+- [x] **Jellyfin**
+  `playbooks/jellyfin.yml` — apt repo officiel, user `jellyfin` ajouté aux groupes `video`+`render` pour GPU NVENC.
+  GPU passthrough déjà configuré dans `proxmox_flash.yml`. Médias sur NFS `/mnt/media/seedbox`.
+  **À faire** : lancer sur le LXC existant (1202, 10.100.0.202).
+  Config initiale (librairies, users, NVENC) via web UI au premier lancement : http://10.100.0.202:8096.
 
-- [ ] **Ollama**
-  Créer `playbooks/ollama.yml` — installation, config GPU, exposition API
+- [x] **qBittorrent**
+  `playbooks/qbittorrent.yml` — qbittorrent-nox, user dédié, service sur port 8090.
+  **À faire** : lancer sur le LXC existant (1105, 10.100.0.105).
+
+- [x] **Seedbox** *(suite \*arr)*
+  `playbooks/seedbox.yml` — installe les services listés dans `host_vars/seedbox.yml` (`seedbox_services`).
+  Actuellement : Radarr v6.1.1 + Sonarr v4.0.17. Extensible sans modifier le playbook.
+  **À faire** : supprimer Swizzin du LXC existant (1201, 10.100.0.201), puis lancer le playbook.
+  Prowlarr et Flaresolverr restent dans K3S.
+
+- [x] **Ollama**
+  `playbooks/ollama.yml` — install script officiel, override systemd (`OLLAMA_HOST=0.0.0.0`, `OLLAMA_MODELS=/mnt/ollama`).
+  Modèles dans `host_vars/ollama.yml` (`ollama_models`) — le playbook pull les manquants à chaque run.
+  GPU passthrough déjà configuré dans `proxmox_flash.yml`.
+  **À faire** : lancer sur le LXC existant (1104, 10.100.0.104).
 
 ---
 
@@ -113,10 +147,22 @@
 
 ## Bloc 8 — VPS
 
+- [x] **Playbooks VPS**
+  `playbooks/wireguard.yml` — serveur ou client selon `wireguard_role: server|client`.
+  Template `wg.conf.j2` : PostUp/PostDown NAT côté serveur, Endpoint + PersistentKeepalive côté client.
+  `playbooks/gatus.yml` — monitoring uptime (binaire GitHub, config YAML via template).
+  `playbooks/vps.yml` — orchestrateur : wireguard → unbound → adguard → traefik → gatus, chaque service taggable séparément.
+  Unbound sur VPS écoute uniquement sur `127.0.0.1:5335` (config `files/unbound/unbound_loopback.conf`).
+  AdGuard sur VPS : port admin `3000` (port 80 occupé par Traefik), upstream = `127.0.0.1:5335`.
+  Clés WireGuard dans vault : `vault_wireguard_<host>_private_key` + `vault_wg_<host>_pubkey`.
+  Exemple client dans `host_vars/wireguard_client_example.yml`.
+
 - [ ] **Mise en place VPS**
-  Remplacer `x.x.x.x` dans `inventory/hosts.yml` par l'IP réelle.
-  Le hardening (niveau 3) sera appliqué automatiquement par `hardening.yml` — fail2ban strict, SSH AllowUsers, ufw.
-  Créer `playbooks/vps.yml` si des services spécifiques doivent y tourner (Traefik edge, etc.)
+  Remplacer `x.x.x.x` dans `inventory/hosts.yml` par l'IP réelle du VPS.
+  Renseigner `ansible_host` dans `host_vars/debian_vps.yml`.
+  Générer clés WireGuard (`wg genkey | tee priv | wg pubkey`) pour VPS et chaque client, remplir le vault.
+  Déployer : `hardening.yml --limit vps` puis `vps.yml`.
+  Après déploiement : configurer les clients WireGuard (Proxmox, LXC, laptop) avec leur host_vars.
 
 ---
 

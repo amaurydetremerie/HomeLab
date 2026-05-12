@@ -1,0 +1,5 @@
+[Service]
+Environment="TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_RSA2048_ACME_EMAIL={{ traefik_acme_email }}"
+Environment="TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ECDSA_ACME_EMAIL={{ traefik_acme_email }}"
+Environment="MY_AUTH={{ vault_traefik_my_auth }}"
+Environment="BASIC_AUTH={{ vault_traefik_basic_auth }}"

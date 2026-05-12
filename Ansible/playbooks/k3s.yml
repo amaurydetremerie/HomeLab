@@ -343,8 +343,8 @@
       changed_when: false
 
     - name: Deploy Traefik HelmChartConfig (géré par K3S Helm controller, hors ArgoCD)
-      ansible.builtin.copy:
-        src: "{{ playbook_dir }}/../../K3S/infrastructure/traefik/traefik-config.yaml"
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../../K3S/infrastructure/traefik/traefik-config.yaml.j2"
         dest: /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
         owner: root
         group: root

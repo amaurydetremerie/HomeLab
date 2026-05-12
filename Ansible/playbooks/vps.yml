@@ -1,0 +1,50 @@
+---
+# Bootstrap VPS — stack complète idempotente
+#
+# Services déployés (dans l'ordre de dépendances) :
+#   1. WireGuard  — serveur VPN
+#   2. Unbound    — résolveur récursif sur 127.0.0.1:5335
+#   3. AdGuard    — DNS filtré (upstream = Unbound), admin sur :3000
+#   4. Traefik    — reverse proxy HTTPS
+#   5. Gatus      — monitoring uptime
+#
+# Prérequis :
+#   - hardening appliqué en amont (site.yml ou hardening.yml --limit vps)
+#   - VPS dans inventory/hosts.yml groupe [vps]
+#   - IP dans host_vars/debian_vps.yml (ansible_host)
+#   - Vault rempli (voir group_vars/all/vault.example.yml section WireGuard)
+#
+# Utilisation :
+#   ansible-playbook playbooks/vps.yml
+#   ansible-playbook playbooks/vps.yml --tags wireguard
+#   ansible-playbook playbooks/vps.yml --tags traefik,gatus
+
+- name: VPS — WireGuard
+  ansible.builtin.import_playbook: wireguard.yml
+  vars:
+    target: vps
+  tags: wireguard
+
+- name: VPS — Unbound
+  ansible.builtin.import_playbook: unbound.yml
+  vars:
+    target: vps
+  tags: unbound
+
+- name: VPS — AdGuard
+  ansible.builtin.import_playbook: adguard.yml
+  vars:
+    target: vps
+  tags: adguard
+
+- name: VPS — Traefik
+  ansible.builtin.import_playbook: traefik.yml
+  vars:
+    target: vps
+  tags: traefik
+
+- name: VPS — Gatus
+  ansible.builtin.import_playbook: gatus.yml
+  vars:
+    target: vps
+  tags: gatus

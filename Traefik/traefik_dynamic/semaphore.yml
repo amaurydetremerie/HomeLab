@@ -1,0 +1,35 @@
+http:
+  services:
+    semaphore:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.106:3000"
+
+  routers:
+    semaphore:
+      rule: "Host(`semaphore.wiserisk.be`) || Host(`semaphore.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
+    semaphore-secure:
+      rule: "Host(`semaphore.wiserisk.be`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "semaphore@file"
+      tls:
+        certResolver: letsencrypt-ecdsa
+        options: mintls13
+    semaphore-local-secure:
+      rule: "Host(`semaphore.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "semaphore@file"
+      tls: {}

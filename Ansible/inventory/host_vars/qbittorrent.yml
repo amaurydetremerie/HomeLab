@@ -1,0 +1,16 @@
+---
+# qBittorrent — LXC 1105 (10.100.0.105) sur Flash
+# NFS SeedBox : /mnt/pve/SeedBox → /media/seedbox
+
+qbittorrent_webui_port: 8090
+
+hardening_ufw_rules:
+  - port: "8090"
+    proto: tcp
+    rule: allow
+  - port: "6881"
+    proto: tcp
+    rule: allow
+  - port: "6881"
+    proto: udp
+    rule: allow

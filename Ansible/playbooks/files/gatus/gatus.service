@@ -1,0 +1,15 @@
+[Unit]
+Description=Gatus — uptime monitoring
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=gatus
+Group=gatus
+ExecStart=/usr/local/bin/gatus --config /etc/gatus/config.yaml
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

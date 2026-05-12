@@ -1,0 +1,17 @@
+---
+# Ollama LLM server — LXC 1104 (10.100.0.104) sur Flash
+# GPU Quadro P2200 passthrough via lxc_raw (défini dans proxmox_flash.yml)
+
+# Liste des modèles à maintenir installés
+# Format : nom du modèle tel qu'accepté par `ollama pull`
+# Ansible vérifie lesquels sont absents et télécharge uniquement les manquants
+ollama_models: 
+  - gemma3:4b
+  - llama2-uncensored:7b
+  - qwen2.5-coder:7b
+  - qwen3.5:4b
+
+hardening_ufw_rules:
+  - port: "11434"
+    proto: tcp
+    rule: allow

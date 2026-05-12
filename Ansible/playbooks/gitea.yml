@@ -1,0 +1,120 @@
+---
+# Gitea — LXC 1107 (10.100.0.107) sur Wasp
+# Toutes les données sur NFS Git : /mnt/pve/Git → /opt/gitea (monté par Proxmox)
+# Logs en local : /var/log/gitea
+#
+# Prérequis vault :
+#   vault_gitea_smtp_password
+#   vault_gitea_secret_key, vault_gitea_internal_token  (générer : openssl rand -hex 32)
+#
+# Config : host_vars/gitea.yml
+# Template : playbooks/templates/gitea/app.ini.j2
+#
+# Utilisation :
+#   ansible-playbook playbooks/gitea.yml
+
+- name: Install and configure Gitea
+  hosts: gitea
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name: [git, curl]
+        state: present
+        update_cache: true
+
+    - name: Create git group
+      ansible.builtin.group:
+        name: git
+        system: true
+
+    - name: Create git user
+      ansible.builtin.user:
+        name: git
+        group: git
+        system: true
+        shell: /bin/bash
+        home: /opt/gitea
+        create_home: false
+
+    - name: Create data directories on NFS mount
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: git
+        group: git
+        mode: '0750'
+      loop:
+        - /opt/gitea/data
+        - /opt/gitea/indexers
+        - /opt/gitea/sessions
+        - /opt/gitea/avatars
+        - /opt/gitea/repo-avatars
+        - /opt/gitea/attachments
+        - /opt/gitea/repositories
+        - /opt/gitea/lfs
+        - /opt/gitea/.ssh
+
+    - name: Create local log directory
+      ansible.builtin.file:
+        path: /var/log/gitea
+        state: directory
+        owner: git
+        group: git
+        mode: '0750'
+
+    - name: Create config directory
+      ansible.builtin.file:
+        path: /etc/gitea
+        state: directory
+        owner: root
+        group: git
+        mode: '0750'
+
+    - name: Download Gitea binary
+      ansible.builtin.get_url:
+        url: "{{ gitea_download_url }}"
+        dest: /usr/local/bin/gitea
+        owner: root
+        group: root
+        mode: '0755'
+        force: false
+      notify: Restart gitea
+
+    - name: Deploy Gitea config
+      ansible.builtin.template:
+        src: templates/gitea/app.ini.j2
+        dest: /etc/gitea/app.ini
+        owner: root
+        group: git
+        mode: '0640'
+      notify: Restart gitea
+
+    - name: Deploy Gitea systemd service
+      ansible.builtin.copy:
+        src: files/gitea/gitea.service
+        dest: /etc/systemd/system/gitea.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - Reload systemd
+        - Restart gitea
+
+    - name: Enable and start Gitea
+      ansible.builtin.systemd:
+        name: gitea
+        enabled: true
+        state: started
+        daemon_reload: true
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart gitea
+      ansible.builtin.systemd:
+        name: gitea
+        state: restarted

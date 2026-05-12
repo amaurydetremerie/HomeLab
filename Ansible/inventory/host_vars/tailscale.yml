@@ -1,0 +1,40 @@
+---
+# LXC Tailscale — (10.100.0.220) sur Wasp
+# Rôle : exit node + subnet router homelab + port forwarding socat vers Hades (via routes acceptées de tailscale_hades)
+
+# Subnets annoncés au réseau Tailscale
+tailscale_advertise_routes:
+  - "10.0.0.0/24"       # Réseau principal homelab (vmbr0 — Proxmox, iLO, AdGuard…)
+  - "10.100.0.0/24"     # Réseau interne homelab (vmbr1 — LXC, VMs, K3S…)
+
+tailscale_exit_node: true     # Expose comme exit node
+tailscale_accept_routes: true # Accepte les routes des autres nœuds — notamment 192.168.1.0/24 de tailscale_hades
+
+# Port forwarding socat — chaque entrée crée un service systemd socat-<name>
+# Les IPs 192.168.1.x sont accessibles via les routes acceptées depuis tailscale_hades
+tailscale_port_forwards:
+  - name: hades-truenas
+    listen_port: 8080
+    target_ip: "192.168.1.119"
+    target_port: 80      # TrueNAS Hades UI
+
+  - name: hades-syncthing
+    listen_port: 8081
+    target_ip: "192.168.1.119"
+    target_port: 8384    # Syncthing sur TrueNAS Hades (vérifier le port)
+
+  - name: hades-ilo
+    listen_port: 8082
+    target_ip: "192.168.1.117"
+    target_port: 443     # iLO Hades HTTPS
+
+hardening_ufw_rules:
+  - port: "8080"
+    proto: tcp
+    rule: allow
+  - port: "8081"
+    proto: tcp
+    rule: allow
+  - port: "8082"
+    proto: tcp
+    rule: allow

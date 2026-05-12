@@ -1,0 +1,65 @@
+---
+# VPS Debian — stack DNS + VPN + monitoring + reverse proxy
+# Renseigner ansible_host avant déploiement (Bloc 8 → NEXT_STEPS.md)
+
+# ── WireGuard (serveur) ────────────────────────────────────────────────────
+wireguard_role: server
+wireguard_interface: wg0
+wireguard_address: 10.8.0.1/24
+wireguard_port: 51820
+wireguard_outbound_interface: eth0     # adapter selon l'iface publique du VPS
+wireguard_private_key: "{{ vault_wireguard_vps_private_key }}"
+
+# Peers = clients qui se connectent au VPS
+# Clés publiques à générer côté client : wg pubkey < wg0.conf
+wireguard_peers:
+  - name: traefik-flash
+    public_key: "{{ vault_wg_traefik_flash_pubkey }}"
+    allowed_ips: 10.8.0.3/32
+  - name: traefik-wasp
+    public_key: "{{ vault_wg_traefik_wasp_pubkey }}"
+    allowed_ips: 10.8.0.2/32
+
+# ── Unbound (loopback — upstream d'AdGuard) ────────────────────────────────
+unbound_config_src: files/unbound/unbound_loopback.conf   # port 5335, 127.0.0.1 uniquement
+
+# ── AdGuard (DNS filtré pour les clients WireGuard) ───────────────────────
+adguard_port: 3000                                         # port 80 occupé par Traefik
+adguard_upstream_dns: "127.0.0.1:5335"
+adguard_dns_rewrites: []
+
+# ── Traefik ────────────────────────────────────────────────────────────────
+traefik_acme_email: "{{ vault_admin_email }}"
+
+# ── Gatus ──────────────────────────────────────────────────────────────────
+# https://github.com/TwiN/gatus/releases
+gatus_version: "5.12.1"
+gatus_port: 8080
+gatus_endpoints:
+  - name: Traefik homelab
+    url: https://traefik.wiserisk.be
+    interval: 5m
+    expected_status: 200
+  - name: Gitea
+    url: https://gitea.wiserisk.be
+    interval: 5m
+    expected_status: 200
+  - name: Semaphore
+    url: https://semaphore.wiserisk.be
+    interval: 5m
+    expected_status: 200
+
+# ── UFW ────────────────────────────────────────────────────────────────────
+hardening_ufw_rules:
+  - port: "51820"
+    proto: udp
+    rule: allow
+  - port: "80"
+    proto: tcp
+    rule: allow
+  - port: "443"
+    proto: tcp
+    rule: allow
+  - port: "8080"
+    proto: tcp
+    rule: allow

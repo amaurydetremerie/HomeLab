@@ -1,0 +1,15 @@
+{
+  "bolt": {
+    "path": "/var/lib/semaphore/semaphore.db"
+  },
+  "tmp_path": "/tmp/semaphore",
+  "port": ":{{ semaphore_port }}",
+  "interface": "",
+  "cookie_hash": "{{ vault_semaphore_cookie_hash }}",
+  "cookie_encryption": "{{ vault_semaphore_cookie_encryption }}",
+  "access_key_encryption": "{{ vault_semaphore_access_key_encryption }}",
+  "email_sender": "{{ semaphore_admin_email }}",
+  "email_host": "smtp.gmail.com",
+  "email_port": "587",
+  "web_host": "https://{{ semaphore_domain }}"
+}

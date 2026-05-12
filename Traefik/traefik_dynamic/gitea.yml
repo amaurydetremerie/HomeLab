@@ -1,0 +1,35 @@
+http:
+  services:
+    gitea:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.107:3000"
+
+  routers:
+    gitea:
+      rule: "Host(`gitea.wiserisk.be`) || Host(`gitea.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
+    gitea-secure:
+      rule: "Host(`gitea.wiserisk.be`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "gitea@file"
+      tls:
+        certResolver: letsencrypt-ecdsa
+        options: mintls13
+    gitea-local-secure:
+      rule: "Host(`gitea.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "gitea@file"
+      tls: {}

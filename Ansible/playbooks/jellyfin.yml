@@ -1,0 +1,54 @@
+---
+# Jellyfin media server — LXC 1202 (10.100.0.202) sur Flash
+# GPU Nvidia Quadro P2200 passthrough + /dev/dri (défini dans proxmox_flash.yml)
+# Médias : NFS Plex monté à /mnt/media/seedbox par Proxmox
+#
+# Utilisation :
+#   ansible-playbook playbooks/jellyfin.yml
+
+- name: Install and configure Jellyfin
+  hosts: jellyfin
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Install prerequisites
+      ansible.builtin.apt:
+        name: [curl, gnupg, apt-transport-https]
+        state: present
+        update_cache: true
+
+    - name: Add Jellyfin apt key
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://repo.jellyfin.org/jellyfin_team.gpg.key | gpg --dearmor -o /etc/apt/keyrings/jellyfin.gpg
+        creates: /etc/apt/keyrings/jellyfin.gpg
+
+    - name: Add Jellyfin apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/jellyfin.gpg] https://repo.jellyfin.org/debian bookworm main"
+        state: present
+        filename: jellyfin
+
+    - name: Install Jellyfin
+      ansible.builtin.apt:
+        name: jellyfin
+        state: present
+        update_cache: true
+
+    - name: Add jellyfin user to video and render groups (accès GPU)
+      ansible.builtin.user:
+        name: jellyfin
+        groups: [video, render]
+        append: true
+      notify: Restart jellyfin
+
+    - name: Enable and start Jellyfin
+      ansible.builtin.systemd:
+        name: jellyfin
+        enabled: true
+        state: started
+
+  handlers:
+    - name: Restart jellyfin
+      ansible.builtin.systemd:
+        name: jellyfin
+        state: restarted

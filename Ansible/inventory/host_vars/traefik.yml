@@ -7,6 +7,11 @@ traefik_internal_ip: 10.100.0.1
 # Passerelle DMZ — hardening level 3 (exposé internet via VPS)
 hardening_level: 3
 
+traefik_acme_email: "{{ proxmox_backup_mailto }}"
+# Décommenter pour mettre à jour le binaire :
+# traefik_download_url: "https://github.com/traefik/traefik/releases/download/vX.X.X/traefik_vX.X.X_linux_amd64.tar.gz"
+# traefik_checksum: "sha256:..."
+
 hardening_ufw_rules:
   - port: "80"
     proto: tcp

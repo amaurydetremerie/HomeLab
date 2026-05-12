@@ -1,0 +1,19 @@
+web:
+  port: {{ gatus_port | default(8080) }}
+
+storage:
+  type: sqlite
+  path: /var/lib/gatus/data.db
+
+endpoints:
+{% for ep in gatus_endpoints | default([]) %}
+  - name: {{ ep.name }}
+    url: {{ ep.url }}
+    interval: {{ ep.interval | default('5m') }}
+    conditions:
+      - "[STATUS] == {{ ep.expected_status | default(200) }}"
+{% if ep.ssl_skip_verify is defined and ep.ssl_skip_verify %}
+    client:
+      insecure: true
+{% endif %}
+{% endfor %}

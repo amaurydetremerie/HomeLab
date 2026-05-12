@@ -1,0 +1,47 @@
+---
+# Résolveur DNS récursif Unbound — LXC 9087 (10.0.0.87) sur Wasp
+# Architecture : AdGuard (10.0.0.86) → Unbound → root hints (DNSSEC)
+#
+# Config : playbooks/files/unbound/unbound.conf
+#
+# Utilisation :
+#   ansible-playbook playbooks/unbound.yml
+
+- name: Install and configure Unbound
+  hosts: "{{ target | default('unbound') }}"
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Install unbound
+      ansible.builtin.apt:
+        name: unbound
+        state: present
+        update_cache: true
+
+    - name: Disable systemd-resolved (libère le port 53)
+      ansible.builtin.systemd:
+        name: systemd-resolved
+        enabled: false
+        state: stopped
+      failed_when: false
+
+    - name: Deploy Unbound config
+      ansible.builtin.copy:
+        src: "{{ unbound_config_src | default('files/unbound/unbound.conf') }}"
+        dest: /etc/unbound/unbound.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart unbound
+
+    - name: Enable and start Unbound
+      ansible.builtin.systemd:
+        name: unbound
+        enabled: true
+        state: started
+
+  handlers:
+    - name: Restart unbound
+      ansible.builtin.systemd:
+        name: unbound
+        state: restarted

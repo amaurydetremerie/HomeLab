@@ -1,0 +1,84 @@
+---
+# Ollama LLM server — LXC 1104 (10.100.0.104) sur Flash
+# GPU Quadro P2200 passthrough (défini dans proxmox_flash.yml)
+# Modèles stockés sur ZFS : local-zfs:80 → /mnt/ollama
+#
+# Config : host_vars/ollama.yml  (ollama_models)
+# Template : playbooks/templates/ollama/override.conf.j2
+#
+# Utilisation :
+#   ansible-playbook playbooks/ollama.yml
+
+- name: Install and configure Ollama
+  hosts: ollama
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Install curl
+      ansible.builtin.apt:
+        name: curl
+        state: present
+        update_cache: true
+
+    - name: Check if Ollama is installed
+      ansible.builtin.command:
+        cmd: ollama --version
+      register: ollama_installed
+      failed_when: false
+      changed_when: false
+
+    - name: Install Ollama (script officiel)
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://ollama.com/install.sh | sh
+      when: ollama_installed.rc != 0
+      notify: Restart ollama
+
+    - name: Create systemd override directory
+      ansible.builtin.file:
+        path: /etc/systemd/system/ollama.service.d
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Deploy service override (OLLAMA_HOST + OLLAMA_MODELS)
+      ansible.builtin.template:
+        src: templates/ollama/override.conf.j2
+        dest: /etc/systemd/system/ollama.service.d/override.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - Reload systemd
+        - Restart ollama
+
+    - name: Enable and start Ollama
+      ansible.builtin.systemd:
+        name: ollama
+        enabled: true
+        state: started
+        daemon_reload: true
+
+    # ── Modèles (idempotent) ─────────────────────────────────────────────────
+    - name: Get installed models
+      ansible.builtin.command:
+        cmd: ollama list
+      register: ollama_list
+      changed_when: false
+
+    - name: Pull missing models
+      ansible.builtin.command:
+        cmd: "ollama pull {{ item }}"
+      loop: "{{ ollama_models | default([]) }}"
+      when: item not in ollama_list.stdout
+      changed_when: true
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart ollama
+      ansible.builtin.systemd:
+        name: ollama
+        state: restarted
