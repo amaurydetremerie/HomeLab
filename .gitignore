@@ -2,10 +2,6 @@
 /Config/keys.json
 /K3S/config/k3s.yaml
 
-# Ansible Vault — ne jamais commiter le vault déchiffré
-/Ansible/inventory/group_vars/all/vault.yml
-/Ansible/**/*.vault.yml
-
 # Fichier mot de passe vault local
 .vault_pass
 **/.vault_pass
