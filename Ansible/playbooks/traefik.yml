@@ -38,6 +38,15 @@
         home: /var/lib/traefik
         create_home: false
 
+    - name: Enable IPv4 forwarding (gateway uniquement)
+      ansible.posix.sysctl:
+        name: net.ipv4.ip_forward
+        value: "1"
+        sysctl_set: true
+        state: present
+        reload: true
+      when: gateway | default('false')
+
     - name: Create directories
       ansible.builtin.file:
         path: "{{ item.path }}"

@@ -3,7 +3,7 @@ http:
     gitea:
       loadBalancer:
         servers:
-          - url: "http://10.100.0.107:3000"
+          - url: "http://10.100.0.100:3000"
 
   routers:
     gitea:

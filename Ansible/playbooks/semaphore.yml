@@ -1,5 +1,5 @@
 ---
-# Semaphore UI Ansible — LXC 1106 (10.100.0.106) sur Wasp
+# Semaphore UI Ansible — LXC 1101 (10.100.0.101) sur Wasp
 #
 # Prérequis vault :
 #   vault_semaphore_cookie_hash, vault_semaphore_cookie_encryption
@@ -19,7 +19,14 @@
   tasks:
     - name: Install dependencies
       ansible.builtin.apt:
-        name: [curl, git, ansible]
+        name:
+          - curl
+          - git
+          - ansible
+          - python3-proxmoxer
+          - python3-requests
+          - python3-passlib
+          - python3-bcrypt
         state: present
         update_cache: true
 

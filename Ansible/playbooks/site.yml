@@ -13,19 +13,21 @@
 #   [1]  hardening         → AUTO  : user ansible + wiserisk sur hyperviseurs (root SSH désactivé)
 #   [2]  proxmox_bootstrap → AUTO  : ansible@pam + token API + driver GPU
 #                            PAUSE : stocker le token dans vault
-#   [3]  proxmox           → AUTO  : réseau, template/ISO, LXC, VMs (coques vides), clés SSH LXC
+#   [3]  proxmox_storage   → AUTO  : storages Proxmox (local-zfs, NFS) — PBS skippé si pas de fingerprint
+#                            → crée les mount points NFS requis avant le démarrage des LXC
+#   [4]  proxmox           → AUTO  : réseau, template/ISO, LXC, VMs (coques vides), clés SSH LXC
 #                            PAUSE : installer OS sur les VMs + token TrueNAS + clés K3S + MDP PBS
-#   [3b] hardening         → AUTO  : user ansible + wiserisk sur PBS + linux_managed (root SSH désactivé)
-#   [4]  truenas_pool      → AUTO  : datasets + zvols
+#   [4b] hardening         → AUTO  : user ansible + wiserisk sur PBS + linux_managed (root SSH désactivé)
+#   [5]  truenas_pool      → AUTO  : datasets + zvols
 #                            PAUSE*: créer/importer le pool si absent (conditionnel)
-#   [5]  truenas_shares    → AUTO  : shares NFS / SMB / iSCSI (crée le target iSCSI pour PBS)
-#   [6]  proxmox_pbs       → AUTO  : iSCSI sur PBS, datastore "pve", extraction fingerprint
+#   [6]  truenas_shares    → AUTO  : shares NFS / SMB / iSCSI (crée le target iSCSI pour PBS)
+#   [7]  proxmox_pbs       → AUTO  : iSCSI sur PBS, datastore "pve", extraction fingerprint
 #                            PAUSE : stocker le fingerprint PBS dans vault
-#   [7]  proxmox_storage   → AUTO  : storages Proxmox (local-zfs, NFS, PBS) — vault rechargé
-#   [8]  k3s               → AUTO  : K3S master + workers, ArgoCD, apps via sync waves
+#   [8]  proxmox_storage   → AUTO  : second passage — ajout du storage PBS (vault rechargé)
+#   [9]  k3s               → AUTO  : K3S master + workers, ArgoCD, apps via sync waves
 #                            PAUSE*: init Vault si premier déploiement (conditionnel)
-#   [9]  backup            → AUTO  : jobs Proxmox (idempotent)
-#   [10] apps LXC/VM + VPS → AUTO  : services dans l'ordre de dépendance (install_services.yml)
+#   [10] backup            → AUTO  : jobs Proxmox (idempotent)
+#   [11] apps LXC/VM + VPS → AUTO  : services dans l'ordre de dépendance (install_services.yml)
 #
 # Usage ciblé :
 #   ansible-playbook playbooks/proxmox.yml -e target=proxmox_flash
@@ -45,9 +47,14 @@
 # PAUSE : stocker le token dans vault avant de continuer
 - import_playbook: proxmox_bootstrap.yml
 
-# ── [3] Provision Proxmox ─────────────────────────────────────────────────
+# ── [3] Proxmox — storages (1er passage) ─────────────────────────────────
+# AUTO  : local-zfs + NFS — PBS skippé si vault_pbs_fingerprint absent
+#         Crée les mount points NFS (/mnt/pve/Git, /mnt/pve/Plex…) nécessaires
+#         pour démarrer les LXC avec bind mounts à l'étape suivante
+- import_playbook: proxmox_storage.yml
+
+# ── [4] Provision Proxmox ─────────────────────────────────────────────────
 # AUTO  : réseau, template LXC, ISOs, LXC (OS Debian inclus), VMs (coques vides), clés SSH LXC
-# Storage géré séparément par proxmox_storage.yml (étape [7])
 - import_playbook: proxmox.yml
 
 # PAUSE : installation OS sur les VMs et initialisation des services
@@ -89,7 +96,7 @@
           ║  → Appuyer sur Entrée une fois tous les OS installés                ║
           ╚══════════════════════════════════════════════════════════════════════╝
 
-# ── [3b] Hardening PBS + linux_managed ────────────────────────────────────
+# ── [4b] Hardening PBS + linux_managed ────────────────────────────────────
 # AUTO  : user wiserisk + ansible, SSH key-only, root SSH désactivé, fail2ban
 #         Tourne le plus tôt possible — toutes les VMs/LXC/PBS viennent d'être initialisées
 #         Pré-requis : clé SSH root copiée sur PBS (ssh-copy-id root@10.0.0.80)
@@ -99,35 +106,36 @@
   vars:
     target: "proxmox_pbs:linux_managed"
 
-# ── [4] TrueNAS — pool + datasets + zvols ─────────────────────────────────
+# ── [5] TrueNAS — pool + datasets + zvols ─────────────────────────────────
 # AUTO  : datasets + zvols (idempotent)
 # PAUSE*: créer/importer le pool si absent (conditionnel)
 - import_playbook: truenas_pool.yml
 
-# ── [5] TrueNAS — shares ──────────────────────────────────────────────────
+# ── [6] TrueNAS — shares ──────────────────────────────────────────────────
 # AUTO  : shares NFS / SMB / iSCSI (crée le target iSCSI "pbs" pour PBS)
 - import_playbook: truenas_shares.yml
 
-# ── [6] PBS — iSCSI + datastore + fingerprint ─────────────────────────────
+# ── [7] PBS — iSCSI + datastore + fingerprint ─────────────────────────────
 # AUTO  : connexion iSCSI, format disque, mount, création datastore "pve", fingerprint
 # PAUSE : stocker vault_pbs_fingerprint dans vault
 - import_playbook: proxmox_pbs.yml
 
-# ── [7] Proxmox — storages ────────────────────────────────────────────────
-# AUTO  : local-zfs, NFS, PBS — vault rechargé pour avoir le fingerprint à jour
+# ── [8] Proxmox — storages (2ème passage) ────────────────────────────────
+# AUTO  : ajout du storage PBS (vault_pbs_fingerprint maintenant disponible)
+#         Les storages NFS/ZFS du 1er passage sont idempotents (state: present)
 - import_playbook: proxmox_storage.yml
 
-# ── [8] K3S + ArgoCD ──────────────────────────────────────────────────────
+# ── [9] K3S + ArgoCD ──────────────────────────────────────────────────────
 # AUTO  : K3S master + workers, Helm, ArgoCD, toutes les apps via sync waves
 # PAUSE*: init Vault si premier déploiement (conditionnel)
 - import_playbook: k3s.yml
 
-# ── [9] Backup jobs Proxmox ───────────────────────────────────────────────
+# ── [10] Backup jobs Proxmox ──────────────────────────────────────────────
 # AUTO  : 3 jobs max par host (ansible-local / ansible-critical / ansible-non_critical)
 #         Idempotent — crée, met à jour ou supprime selon backup: <type> sur chaque LXC/VM
 - import_playbook: proxmox_backup.yml
 
-# ── [10] Applications LXC/VM + VPS ───────────────────────────────────────
+# ── [11] Applications LXC/VM + VPS ───────────────────────────────────────
 # AUTO  : VPS (WG serveur + DNS + Traefik + Gatus), WG clients, DNS interne,
 #         Traefik interne, Gitea, Semaphore, Tailscale, Gatus LXC,
 #         Jellyfin, qBittorrent, Seedbox, Ollama

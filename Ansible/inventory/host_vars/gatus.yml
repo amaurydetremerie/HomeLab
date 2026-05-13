@@ -1,5 +1,5 @@
 ---
-# Gatus — monitoring uptime interne — LXC 1108 (10.100.0.108) sur Wasp
+# Gatus — monitoring uptime interne — LXC 1102 (10.100.0.102) sur Wasp
 
 # https://github.com/TwiN/gatus/releases
 gatus_version: "5.35.0"

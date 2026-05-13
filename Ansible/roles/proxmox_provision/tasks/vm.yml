@@ -34,3 +34,5 @@
   loop: "{{ proxmox_vms }}"
   loop_control:
     label: "{{ item.name }} (vmid={{ item.vmid }})"
+  delegate_to: localhost
+  become: false

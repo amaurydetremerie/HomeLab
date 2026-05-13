@@ -44,9 +44,15 @@
     exclusive: true
     state: present
 
+- name: Installer sudo
+  ansible.builtin.apt:
+    name: sudo
+    state: present
+    update_cache: false
+
 - name: "Configurer sudo NOPASSWD pour {{ hardening_ansible_user }}"
   ansible.builtin.copy:
     dest: "/etc/sudoers.d/{{ hardening_ansible_user }}"
     content: "{{ hardening_ansible_user }} ALL=(ALL) NOPASSWD:ALL\n"
     mode: "0440"
-    validate: "visudo -cf %s"
+    validate: "/usr/sbin/visudo -cf %s"

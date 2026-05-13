@@ -29,7 +29,7 @@ Fichier group_vars supprimé de l'index (plus de raison d'exister).
 Fichier supprimé.
 
 ### ~~B6 — Gatus absent de l'inventaire Wasp~~ ✅ corrigé
-LXC `gatus` ajouté dans `hosts.yml` (10.100.0.108), `host_vars/proxmox_wasp.yml` (vmid 1108) et `host_vars/gatus.yml` créé. Rôle : monitoring de secours (K3S down), pas monitoring interne.
+LXC `gatus` ajouté dans `hosts.yml` (10.100.0.102), `host_vars/proxmox_wasp.yml` (vmid 1102) et `host_vars/gatus.yml` créé. Rôle : monitoring de secours (K3S down), pas monitoring interne.
 
 ### ~~B7 — `hardening.yml` : première exécution impossible depuis `site.yml`~~ ✅ corrigé
 
@@ -168,7 +168,7 @@ créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fo
   6. Adapter `playbooks/traefik.yml` — déployer la bonne config selon le host (VPS vs interne)
 
 - [x] **Gatus sur Wasp** *(monitoring de secours K3S)*
-  LXC 1108 (10.100.0.108) ajouté dans `hosts.yml`, `host_vars/proxmox_wasp.yml` et `host_vars/gatus.yml`.
+  LXC 1102 (10.100.0.102) ajouté dans `hosts.yml`, `host_vars/proxmox_wasp.yml` et `host_vars/gatus.yml`.
   Checks : K3S API (401 expected), Traefik Flash (tcp://10.100.0.2:80), VPS (public).
   Indépendant du monitoring K3S principal — actif même si K3S est down.
 
@@ -176,12 +176,12 @@ créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fo
   `playbooks/gitea.yml` — binaire v1.26.1, user `git`, toutes les données sur NFS `/opt/gitea`.
   Config `app.ini` dans `playbooks/templates/gitea/app.ini.j2`, service dans `playbooks/files/gitea/gitea.service`.
   Secrets : `vault_gitea_smtp_password`, `vault_gitea_secret_key`, `vault_gitea_internal_token`.
-  LXC 1107 (10.100.0.107). Migration des repos existants à faire manuellement après premier démarrage.
+  LXC 1100 (10.100.0.100). Migration des repos existants à faire manuellement après premier démarrage.
 
 - [x] **Semaphore** *(UI Ansible)*
   `playbooks/semaphore.yml` — binaire v2.18.2, DB bolt, config JSON dans `playbooks/templates/semaphore/config.json.j2`.
   Secrets : `vault_semaphore_cookie_hash/encryption/access_key_encryption`, `vault_semaphore_admin_password`.
-  LXC 1106 (10.100.0.106). Connexion à l'inventaire Git et templates de playbooks à configurer dans l'UI après démarrage.
+  LXC 1101 (10.100.0.101). Connexion à l'inventaire Git et templates de playbooks à configurer dans l'UI après démarrage.
 
 - [x] **Tailscale** *(accès distant + subnet router)*
   `playbooks/tailscale.yml` — exit node + subnet router (`10.0.0.0/24`, `10.100.0.0/24`) + port forwarding socat vers Hades.

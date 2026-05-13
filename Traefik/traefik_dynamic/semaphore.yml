@@ -3,7 +3,7 @@ http:
     semaphore:
       loadBalancer:
         servers:
-          - url: "http://10.100.0.106:3000"
+          - url: "http://10.100.0.101:3000"
 
   routers:
     semaphore:

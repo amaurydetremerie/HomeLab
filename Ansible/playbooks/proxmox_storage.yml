@@ -1,6 +1,7 @@
 ---
 # Configuration des storages Proxmox — à lancer après proxmox_pbs.yml
-# Contenu déplacé depuis roles/proxmox_provision/tasks/storage.yml
+# Premier passage (avant PBS) : NFS + ZFS créés, PBS skippé si fingerprint absent
+# Second passage (après PBS)  : PBS ajouté, autres idempotents
 #
 # ansible-playbook playbooks/proxmox_storage.yml
 # ansible-playbook playbooks/proxmox_storage.yml --limit proxmox_flash
@@ -16,26 +17,33 @@
       failed_when: false
   tasks:
     - name: Configure storage {{ item.name }} ({{ item.type }})
-      community.general.proxmox_storage:
+      community.proxmox.proxmox_storage:
         api_host: "{{ ansible_host }}"
         api_user: "ansible@pam"
         api_token_id: "ansible"
         api_token_secret: "{{ proxmox_api_token_secret }}"
-        storage: "{{ item.name }}"
+        name: "{{ item.name }}"
         type: "{{ item.type }}"
         content: "{{ item.content }}"
-        nodes: "{{ item.nodes | default(omit) }}"
-        sparse: "{{ item.sparse | default(omit) }}"
-        pool: "{{ item.pool | default(omit) }}"
-        thinpool: "{{ item.thinpool | default(omit) }}"
-        vgname: "{{ item.vgname | default(omit) }}"
-        server: "{{ item.server | default(omit) }}"
-        export: "{{ item.export | default(omit) }}"
-        path: "{{ item.path | default(omit) }}"
-        datastore: "{{ item.datastore | default(omit) }}"
-        username: "{{ item.username | default(omit) }}"
-        fingerprint: "{{ item.fingerprint | default(omit) }}"
+        nodes: "{{ item.nodes | default([proxmox_pve_node]) }}"
+        nfs_options: >-
+          {{ {'server': item.server, 'export': item.export}
+             if item.type == 'nfs' else omit }}
+        pbs_options: >-
+          {{ {'server': item.server, 'username': item.username,
+              'password': item.password, 'datastore': item.datastore,
+              'fingerprint': item.fingerprint}
+             if item.type == 'pbs' else omit }}
+        zfspool_options: >-
+          {{ {'pool': item.pool}
+             if item.type == 'zfspool' else omit }}
         state: present
       loop: "{{ proxmox_storages }}"
       loop_control:
         label: "{{ item.name }} ({{ item.type }})"
+      when: >
+        item.type != 'pbs' or
+        (vault_pbs_fingerprint | default('') | length > 0 and
+         item.password is defined and item.password | length > 0)
+      delegate_to: localhost
+      become: false

@@ -12,11 +12,12 @@
     cores: "{{ item.cores | default(1) }}"
     memory: "{{ item.memory | default(512) }}"
     swap: "{{ item.swap | default(0) }}"
-    storage: "{{ proxmox_storage }}"
-    disk: "{{ item.disk | default(8) }}"
+    disk_volume:
+      storage: "{{ proxmox_storage }}"
+      size: "{{ item.disk | default(8) | int }}"
     ostemplate: "{{ item.ostemplate | default(proxmox_lxc_ostemplate) }}"
     netif: "{{ item.netif }}"
-    mounts: "{{ item.mounts | default(omit) }}"
+    mounts: "{{ (item.mounts | default({}) | dict2items | rejectattr('value', 'match', '^/') | items2dict) or omit }}"
     unprivileged: "{{ item.unprivileged | default(true) }}"
     features: "{{ item.features | default([]) }}"
     startup: "{{ item.startup | default(omit) }}"
@@ -26,3 +27,5 @@
   loop: "{{ proxmox_lxc }}"
   loop_control:
     label: "{{ item.hostname }} (vmid={{ item.vmid }})"
+  delegate_to: localhost
+  become: false

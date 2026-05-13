@@ -14,4 +14,6 @@
     template: "{{ proxmox_lxc_ostemplate | split(':') | last | split('/') | last }}"
     content_type: vztmpl
     state: present
+  delegate_to: localhost
+  become: false
   when: proxmox_lxc | length > 0

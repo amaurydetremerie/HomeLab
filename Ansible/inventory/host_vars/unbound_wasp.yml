@@ -1,5 +1,5 @@
 ---
-# Unbound DNS récursif — LXC 9087 (10.0.0.87) sur Wasp
+# Unbound DNS récursif — LXC 9087 (10.0.0.180) sur Wasp
 
 hardening_ufw_rules:
   - port: "53"

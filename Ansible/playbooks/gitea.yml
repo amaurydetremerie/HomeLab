@@ -1,5 +1,5 @@
 ---
-# Gitea — LXC 1107 (10.100.0.107) sur Wasp
+# Gitea — LXC 1100 (10.100.0.100) sur Wasp
 # Toutes les données sur NFS Git : /mnt/pve/Git → /opt/gitea (monté par Proxmox)
 # Logs en local : /var/log/gitea
 #

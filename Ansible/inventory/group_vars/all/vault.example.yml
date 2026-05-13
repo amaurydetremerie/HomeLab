@@ -31,7 +31,9 @@ vault_truenas_hermes_smb_password: ""
 
 # ── PBS ───────────────────────────────────────────────────────────────────
 # Token API PBS — généré par proxmox_pbs.yml (proxmox-backup-manager user token create ansible@pbs ansible)
+# Mot de passe root du serveur PBS — utilisé pour l'authentification du storage Proxmox → PBS
 vault_pbs_api_token_secret: ""
+vault_pbs_root_password: ""
 
 # Fingerprint TLS du serveur PBS — extrait automatiquement par proxmox_pbs.yml
 # Commande manuelle : openssl x509 -fingerprint -sha256 -noout -in /etc/proxmox-backup/proxy.pem

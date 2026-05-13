@@ -1,3 +1,0 @@
----
-ansible_host: 10.100.0.220
-tailscale_ip: 100.79.23.36

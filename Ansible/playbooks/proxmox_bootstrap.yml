@@ -13,6 +13,14 @@
   become: true
   tasks:
 
+    - name: Installer proxmoxer (requis par les modules Ansible Proxmox)
+      ansible.builtin.apt:
+        name:
+          - python3-proxmoxer
+          - python3-requests
+        state: present
+        update_cache: false
+
     - name: Créer l'utilisateur ansible@pam
       ansible.builtin.command: pveum user add ansible@pam --comment "Ansible automation"
       register: user_add
