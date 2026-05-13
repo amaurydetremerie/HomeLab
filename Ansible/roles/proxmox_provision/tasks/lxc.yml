@@ -21,7 +21,7 @@
     features: "{{ item.features | default([]) }}"
     startup: "{{ item.startup | default(omit) }}"
     onboot: "{{ item.onboot | default(true) }}"
-    password: "{{ vault_lxc_root_password }}"
+    password: "{{ vault_root_password }}"
     state: present
   loop: "{{ proxmox_lxc }}"
   loop_control:

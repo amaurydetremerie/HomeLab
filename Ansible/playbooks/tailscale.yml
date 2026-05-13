@@ -81,6 +81,13 @@
           {{ ts_status_raw.rc == 0 and
              (ts_status_raw.stdout | from_json).get('BackendState', '') == 'Running' }}
 
+    - name: Vérifier vault_tailscale_auth_key avant authentification
+      ansible.builtin.assert:
+        that:
+          - vault_tailscale_auth_key | default('') | length > 0
+        fail_msg: "vault_tailscale_auth_key est vide — remplir le vault avant de lancer tailscale.yml"
+      when: not ts_connected
+
     - name: Authenticate Tailscale (première connexion)
       ansible.builtin.command:
         cmd: "tailscale up --auth-key={{ vault_tailscale_auth_key }} {{ ts_routes_flag }} {{ ts_exit_flag }} {{ ts_accept_flag }}"

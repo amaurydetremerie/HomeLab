@@ -39,7 +39,7 @@ vault_pbs_fingerprint: ""
 
 # ── LXC ───────────────────────────────────────────────────────────────────
 # Mot de passe root des LXC pour accès console d'urgence (Proxmox UI)
-vault_lxc_root_password: ""
+vault_root_password: ""
 
 # ── Utilisateurs Linux ─────────────────────────────────────────────────────
 # Mot de passe commun pour l'utilisateur wiserisk sur LXC/VMs/VPS/Pi

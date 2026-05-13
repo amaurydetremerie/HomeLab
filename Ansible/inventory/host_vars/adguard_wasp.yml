@@ -1,13 +1,13 @@
 ---
 # AdGuard Home — LXC 9086 (10.0.0.86) sur Wasp
-# Interface admin sur port 80
+# Architecture : AdGuard → Unbound (10.0.0.87) → root hints
 
 adguard_port: 80
-adguard_upstream_dns: "10.0.0.87"  # Unbound
+adguard_upstream_dns: "10.0.0.87"  # unbound_wasp
 
 adguard_dns_rewrites:
   - domain: "*.wiserisk.home"
-    answer: "10.0.0.85"
+    answer: "10.0.0.84"            # traefik_wasp
 
 hardening_ufw_rules:
   - port: "80"

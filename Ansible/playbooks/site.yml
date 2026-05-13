@@ -25,7 +25,7 @@
 #   [8]  k3s               → AUTO  : K3S master + workers, ArgoCD, apps via sync waves
 #                            PAUSE*: init Vault si premier déploiement (conditionnel)
 #   [9]  backup            → AUTO  : jobs Proxmox (idempotent)
-#   [10] apps LXC/VM       → AUTO  : à venir
+#   [10] apps LXC/VM + VPS → AUTO  : services dans l'ordre de dépendance (install_services.yml)
 #
 # Usage ciblé :
 #   ansible-playbook playbooks/proxmox.yml -e target=proxmox_flash
@@ -127,8 +127,9 @@
 #         Idempotent — crée, met à jour ou supprime selon backup: <type> sur chaque LXC/VM
 - import_playbook: proxmox_backup.yml
 
-# ── [10] Applications LXC/VM ──────────────────────────────────────────────
-# AUTO (à venir) — ajouter les playbooks ici dans l'ordre de dépendance :
-# - import_playbook: traefik.yml
-# - import_playbook: jellyfin.yml
-# - import_playbook: ...
+# ── [10] Applications LXC/VM + VPS ───────────────────────────────────────
+# AUTO  : VPS (WG serveur + DNS + Traefik + Gatus), WG clients, DNS interne,
+#         Traefik interne, Gitea, Semaphore, Tailscale, Gatus LXC,
+#         Jellyfin, qBittorrent, Seedbox, Ollama
+# Ciblage précis : ansible-playbook playbooks/install_services.yml --tags gitea
+- import_playbook: install_services.yml

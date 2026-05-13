@@ -12,7 +12,7 @@
     groups: sudo
     shell: /bin/bash
     create_home: true
-    password: "{{ vault_linux_user_password | password_hash('sha512') }}"
+    password: "{{ vault_root_password | password_hash('sha512') }}"
     state: present
 
 - name: "Injecter la clé SSH personnelle dans {{ hardening_wiserisk_user }}"

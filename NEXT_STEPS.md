@@ -4,6 +4,35 @@
 
 ---
 
+## ⚠️ Bugs et incohérences à corriger (priorité haute)
+
+Ces problèmes empêchent ou faussent l'exécution des playbooks. À corriger avant de lancer site.yml.
+
+### ~~B1 — Syntax error `hosts.yml` : groupe lxc~~ ✅ corrigé
+`children:` était imbriqué sous `hosts:` pour le groupe `lxc`. Restructuré avec la syntaxe correcte.
+
+### ~~B2 — host_vars adguard/unbound ne correspondent à aucun host~~ ✅ corrigé
+`adguard.yml` et `unbound.yml` supprimés. Remplacés par 4 fichiers avec les bonnes IPs :
+- `adguard_wasp.yml` — upstream `10.0.0.87`, rewrite → `10.0.0.84` (traefik_wasp)
+- `adguard_flash.yml` — upstream `10.0.0.89`, rewrite → `10.0.0.85` (traefik_flash)
+- `unbound_wasp.yml` / `unbound_flash.yml` — UFW port 53
+
+Les playbooks ciblent désormais le groupe (`adguard` / `unbound`) qui contient les deux instances grâce au fix B1.
+
+### ~~B3 — Fichiers stagés mais supprimés du disque~~ ✅ corrigé
+Index nettoyé (`git restore --staged`). Les playbooks par nœud (`proxmox_flash.yml`, `proxmox_wasp.yml`) et les group_vars redondants (`lxc`, `vms`, `k3s_masters`, `k3s_workers`) ont été fusionnés dans `proxmox.yml` (avec `-e target=`) et dans `linux_managed/vars.yml`.
+
+### ~~B4 — Groupe `vms` absent de hosts.yml~~ ✅ corrigé
+Fichier group_vars supprimé de l'index (plus de raison d'exister).
+
+### ~~B5 — Artefact legacy `Ansible/group_vars/all.yml`~~ ✅ corrigé
+Fichier supprimé.
+
+### ~~B6 — Gatus absent de l'inventaire Wasp~~ ✅ corrigé
+LXC `gatus` ajouté dans `hosts.yml` (10.100.0.108), `host_vars/proxmox_wasp.yml` (vmid 1108) et `host_vars/gatus.yml` créé. Rôle : monitoring de secours (K3S down), pas monitoring interne.
+
+---
+
 ## Bloc 1 — Infrastructure Proxmox
 
 - [x] **Interfaces réseau Proxmox**
@@ -17,8 +46,8 @@
   Driver Nvidia automatisé dans `playbooks/proxmox_gpu.yml` (jouable seul) + importé par le bootstrap.
   `proxmox_gpus` dans host_vars : dict keyed par vendor (nvidia/amd/intel), extensible sans modifier les playbooks.
 
-- [ ] **Cloud-init pour K3S master/worker** *(optionnel — élimine la pause OS install)*
-  Créer un template Debian cloud image sur Flash, modifier les VMs K3S dans host_vars pour cloner depuis template au lieu de booter sur ISO
+- [x] **Ciblage par nœud**
+  `playbooks/proxmox.yml` supporte `-e target=proxmox_flash` ou `-e target=proxmox_wasp` pour cibler un seul nœud.
 
 ---
 
@@ -48,104 +77,125 @@
   (avant toute config). Root n'est utilisé qu'au premier hardening — jamais ailleurs.
 
 - [x] **Mot de passe root LXC pour accès console d'urgence**
-  `vault_lxc_root_password` défini dans le vault, injecté via paramètre `password` du module
+  `vault_root_password` défini dans le vault, injecté via paramètre `password` du module
   `community.general.proxmox` à la création. Accès console Proxmox UI garanti même sans SSH.
+
+- [x] **Pré-requis clés SSH** — remplies dans `inventory/group_vars/all/vars.yml`.
+  `assert` ajouté en tête de `roles/hardening/tasks/main.yml` — message explicite si vide.
+
+- [x] **Mot de passe user wiserisk** — `vault_linux_user_password` renseigné dans le vault.
+
+- [ ] **Endpoint WireGuard VPS** — à remplir dans `host_vars/traefik_flash.yml` et `traefik_wasp.yml` :
+  ```yaml
+  endpoint: "x.x.x.x:51820"   # remplacer vps.example.com
+  ```
+  Bloquera `wireguard.yml` (step [10] → `install_services.yml --tags wireguard`).
+
+- [x] **Remplir le vault** — Variables restantes à renseigner :
+  - ❌ `vault_proxmox_flash_api_token_secret`, `vault_proxmox_wasp_api_token_secret` (généré par bootstrap)
+  - ❌ `vault_truenas_hermes_api_key` (généré manuellement dans UI TrueNAS)
+  - ❌ `vault_tailscale_auth_key` (généré manuellement au besoin -> validité 90 jours)
+  - ✅ `vault_gitea_smtp_password`
+  - ✅ `vault_lxc_root_password`, `vault_pbs_fingerprint`, `vault_adguard_*`, `vault_traefik_*`
+  - ✅ `vault_gitea_secret_key`, `vault_gitea_internal_token`, `vault_semaphore_*`
+  - ✅ `vault_wireguard_*` + `vault_wg_*` (clés WireGuard générées)
+  - ✅ `vault_ilo_flash_password`, `vault_ilo_hades_password`
 
 ---
 
 ## Bloc 4 — Services LXC (dans l'ordre de dépendances)
 
+> **Pré-requis Bloc 4** : vault rempli (Bloc 3).
+> `site.yml` step `[10]` → `install_services.yml` (tous les services dans l'ordre). Ciblage : `--tags <service>` ou `--limit <host>`.
+
 - [x] **Unbound** *(DNS récursif upstream d'AdGuard)*
-  `playbooks/unbound.yml` — Unbound récursif (root hints + DNSSEC) sur LXC 9087 (10.0.0.87, Wasp).
+  `playbooks/unbound.yml` — Unbound récursif (root hints + DNSSEC).
   Config dans `playbooks/files/unbound/unbound.conf`.
-  **À faire** : créer le LXC (via `proxmox_wasp.yml`), lancer le playbook, pointer AdGuard vers 10.0.0.87.
+  Deux instances : `unbound_wasp` (10.0.0.87) sur Wasp + `unbound_flash` (10.0.0.89) sur Flash.
+  VPS : config `unbound_loopback.conf` (127.0.0.1:5335 uniquement — AdGuard est sur le même hôte).
 
 - [x] **AdGuard** *(DNS filtrage pub)*
-  `playbooks/adguard.yml` — configure via API AdGuard : upstream = Unbound (10.0.0.87), rewrite `*.wiserisk.home → 10.0.0.85`.
-  Config dans `host_vars/adguard.yml`. Secrets : `vault_adguard_user`, `vault_adguard_password`.
-  **À faire** : remplir le vault, lancer le playbook sur le LXC existant (9086, 10.0.0.86).
+  `playbooks/adguard.yml` — configure via API AdGuard : upstream = Unbound, rewrite `*.wiserisk.home → traefik`.
+  - Wasp : upstream `10.0.0.87`, rewrite vers `10.0.0.84` (traefik_wasp)
+  - Flash : upstream `10.0.0.89`, rewrite vers `10.0.0.85` (traefik_flash)
+  Secrets : `vault_adguard_user`, `vault_adguard_password`.
 
-- [x] **Traefik** *(reverse proxy)*
+- [x] **Traefik** *(reverse proxy — interne)*
   `playbooks/traefik.yml` — déploie binaire (optionnel), `Traefik/` → `/etc/Homelab/Traefik/`, overrides systemd avec secrets vault.
-  Configs dynamiques Gitea et Semaphore ajoutées dans `Traefik/traefik_dynamic/`.
   Tag `--tags config` pour ne pousser que les configs sans toucher au binaire.
   Secrets : `vault_traefik_my_auth`, `vault_traefik_basic_auth`, `vault_traefik_vault_token`, `vault_traefik_vault_addr`.
-  **À faire** : remplir le vault, lancer sur le LXC existant (1001, 10.0.0.85).
+  Deux instances : `traefik_wasp` (10.0.0.84) + `traefik_flash` (10.0.0.85).
+
+- [ ] **Traefik — architecture cible : certs OVH sur VPS + LB interne** ⚠️ non implémenté
+
+  **Architecture voulue :**
+  - VPS Traefik : terminaison TLS wildcard `*.wiserisk.be` via OVH DNS-01, load balance vers `10.8.0.2:80` + `10.8.0.3:80` (WireGuard → traefik_wasp/flash)
+  - Internal Traefik : reçoit HTTP depuis VPS, route vers les services, **sans** gérer de certs
+  - K3S Traefik : idem, plus de gestion de certs
+
+  **État actuel :**
+  - `traefik.toml` utilise `httpChallenge` / `tlsChallenge` — pas OVH, pas wildcard
+  - `Traefik/` contient uniquement les configs internes — aucune config VPS (LB, route wildcard, resolver OVH)
+  - Les dynamic configs (`gitea.yml`, `semaphore.yml`, etc.) ont `certResolver: letsencrypt-ecdsa` → le Traefik interne gère les certs lui-même
+  - `k3s.yml` : `passthrough: true` → K3S Traefik gère ses propres certs
+
+  **Ce qu'il faut faire :**
+  1. Créer `Traefik/traefik_vps.toml` — resolver OVH DNS-01 + credentials OVH dans le vault
+  2. Créer `Traefik/traefik_dynamic_vps/` — wildcard cert + router `*.wiserisk.be` + LB vers WG IPs
+  3. Modifier `traefik.toml` (interne) — supprimer les `certificatesResolvers`
+  4. Modifier les dynamic configs — supprimer `tls: certResolver:` sur les routers publics (TLS terminé au VPS), garder `tls: {}` uniquement pour les routes `.wiserisk.home`
+  5. `k3s.yml` — supprimer `passthrough: true`, passer K3S sur HTTP interne
+  6. Adapter `playbooks/traefik.yml` — déployer la bonne config selon le host (VPS vs interne)
+
+- [x] **Gatus sur Wasp** *(monitoring de secours K3S)*
+  LXC 1108 (10.100.0.108) ajouté dans `hosts.yml`, `host_vars/proxmox_wasp.yml` et `host_vars/gatus.yml`.
+  Checks : K3S API (401 expected), Traefik Flash (tcp://10.100.0.2:80), VPS (public).
+  Indépendant du monitoring K3S principal — actif même si K3S est down.
 
 - [x] **Gitea**
   `playbooks/gitea.yml` — binaire v1.26.1, user `git`, toutes les données sur NFS `/opt/gitea`.
   Config `app.ini` dans `playbooks/templates/gitea/app.ini.j2`, service dans `playbooks/files/gitea/gitea.service`.
   Secrets : `vault_gitea_smtp_password`, `vault_gitea_secret_key`, `vault_gitea_internal_token`.
-  **À faire** : créer le LXC (via `proxmox_wasp.yml`), remplir le vault, lancer le playbook.
-  Migration des repos existants à faire manuellement après premier démarrage.
+  LXC 1107 (10.100.0.107). Migration des repos existants à faire manuellement après premier démarrage.
 
 - [x] **Semaphore** *(UI Ansible)*
   `playbooks/semaphore.yml` — binaire v2.18.2, DB bolt, config JSON dans `playbooks/templates/semaphore/config.json.j2`.
   Secrets : `vault_semaphore_cookie_hash/encryption/access_key_encryption`, `vault_semaphore_admin_password`.
-  **À faire** : créer le LXC (via `proxmox_wasp.yml`), remplir le vault, lancer le playbook.
-  Connexion à l'inventaire Git et définition des templates de playbooks à faire dans l'UI après démarrage.
+  LXC 1106 (10.100.0.106). Connexion à l'inventaire Git et templates de playbooks à configurer dans l'UI après démarrage.
 
 - [x] **Tailscale** *(accès distant + subnet router)*
   `playbooks/tailscale.yml` — exit node + subnet router (`10.0.0.0/24`, `10.100.0.0/24`) + port forwarding socat vers Hades.
   Config dans `host_vars/tailscale.yml`. Routes 192.168.1.x exposées via `tailscale_hades` (app TrueNAS, non géré).
-  Secrets : `vault_tailscale_auth_key`.
-  **À faire** : remplir le vault, lancer sur le LXC existant (1220, 10.100.0.220).
-  Après déploiement : approuver subnet routes + exit node dans l'admin Tailscale.
+  Secrets : `vault_tailscale_auth_key` ❌ (à remplir — validité 90j).
+  LXC 1220 (10.100.0.220). Après déploiement : approuver subnet routes + exit node dans l'admin Tailscale.
 
 - [x] **Jellyfin**
   `playbooks/jellyfin.yml` — apt repo officiel, user `jellyfin` ajouté aux groupes `video`+`render` pour GPU NVENC.
   GPU passthrough déjà configuré dans `proxmox_flash.yml`. Médias sur NFS `/mnt/media/seedbox`.
-  **À faire** : lancer sur le LXC existant (1202, 10.100.0.202).
-  Config initiale (librairies, users, NVENC) via web UI au premier lancement : http://10.100.0.202:8096.
+  LXC 1202 (10.100.0.202). Config initiale (librairies, users, NVENC) via web UI : http://10.100.0.202:8096.
 
 - [x] **qBittorrent**
   `playbooks/qbittorrent.yml` — qbittorrent-nox, user dédié, service sur port 8090.
-  **À faire** : lancer sur le LXC existant (1105, 10.100.0.105).
+  LXC 1105 (10.100.0.105).
 
 - [x] **Seedbox** *(suite \*arr)*
   `playbooks/seedbox.yml` — installe les services listés dans `host_vars/seedbox.yml` (`seedbox_services`).
   Actuellement : Radarr v6.1.1 + Sonarr v4.0.17. Extensible sans modifier le playbook.
-  **À faire** : supprimer Swizzin du LXC existant (1201, 10.100.0.201), puis lancer le playbook.
+  LXC 1201 (10.100.0.201) — supprimer Swizzin avant de lancer le playbook.
   Prowlarr et Flaresolverr restent dans K3S.
 
 - [x] **Ollama**
   `playbooks/ollama.yml` — install script officiel, override systemd (`OLLAMA_HOST=0.0.0.0`, `OLLAMA_MODELS=/mnt/ollama`).
   Modèles dans `host_vars/ollama.yml` (`ollama_models`) — le playbook pull les manquants à chaque run.
-  GPU passthrough déjà configuré dans `proxmox_flash.yml`.
-  **À faire** : lancer sur le LXC existant (1104, 10.100.0.104).
+  GPU passthrough déjà configuré dans `proxmox_flash.yml`. LXC 1104 (10.100.0.104).
+
+- [x] **site.yml step [10]**
+  Délègue à `install_services.yml` — tous les services dans l'ordre de dépendances.
+  Ciblage : `--tags <service>` (ex: `--tags gitea`) ou `--limit <host>`.
 
 ---
 
-## Bloc 5 — Migration CI/CD vers Gitea + dépréciation Webhook
-
-- [ ] **Migration pipelines GitHub Actions → Gitea**
-  Remplacer `.github/workflows/traefik.yml` et `webhook.yml` par des pipelines Gitea Actions.
-  Déclencheur : push sur la branche main → job Ansible via Semaphore (API) → `playbooks/traefik.yml`.
-
-- [ ] **Dépréciation du LXC Webhook**
-  Une fois les pipelines Gitea en place, le LXC webhook (vmid 1103) devient inutile.
-  Le retirer de `host_vars/proxmox_flash.yml`.
-
----
-
-## Bloc 6 — Raspberry Pi + UPS
-
-- [ ] **Ajout Raspberry Pi dans l'inventaire**
-  Ajouter un groupe `raspberry_pi` dans `inventory/hosts.yml`, créer `host_vars/raspberry_pi.yml`
-
-- [ ] **Serveur NUT (UPS)**
-  Créer `playbooks/nut.yml` — installation NUT server sur le Pi (connecté à l'UPS en USB), configuration des clients NUT sur Flash et Wasp pour shutdown propre en cas de coupure
-
----
-
-## Bloc 7 — Home Assistant
-
-- [ ] **Import backup / création**
-  Créer `playbooks/home_assistant.yml` — procédure d'import d'un backup HAOS existant via API HA (`/api/backup`) ou restauration depuis snapshot PBS, config des intégrations de base (réseau, Z-Wave via USB passthrough déjà défini)
-
----
-
-## Bloc 8 — VPS
+## Bloc 5 — VPS
 
 - [x] **Playbooks VPS**
   `playbooks/wireguard.yml` — serveur ou client selon `wireguard_role: server|client`.
@@ -158,21 +208,22 @@
   Exemple client dans `host_vars/wireguard_client_example.yml`.
 
 - [ ] **Mise en place VPS**
-  Remplacer `x.x.x.x` dans `inventory/hosts.yml` par l'IP réelle du VPS.
-  Renseigner `ansible_host` dans `host_vars/debian_vps.yml`.
-  Générer clés WireGuard (`wg genkey | tee priv | wg pubkey`) pour VPS et chaque client, remplir le vault.
-  Déployer : `hardening.yml --limit vps` puis `vps.yml`.
-  Après déploiement : configurer les clients WireGuard (Proxmox, LXC, laptop) avec leur host_vars.
+  1. Remplacer `x.x.x.x` dans `inventory/hosts.yml` par l'IP réelle du VPS.
+  2. Renseigner `ansible_host` dans `host_vars/debian_vps.yml`.
+  3. Générer clés WireGuard pour VPS et chaque client (traefik_wasp, traefik_flash, laptop, etc.) :
+     ```bash
+     wg genkey | tee priv | wg pubkey
+     ```
+     Remplir le vault : `vault_wireguard_<host>_private_key` + `vault_wg_<host>_pubkey`.
+  4. Déployer : `hardening.yml --limit vps` puis `vps.yml`.
+  5. Après déploiement : configurer les clients WireGuard (Proxmox, LXC Traefik) via `wireguard.yml`.
 
 ---
 
-## Bloc 9 — Améliorations transverses
+## Bloc 6 — Améliorations transverses
 
 - [ ] **Automatisation token TrueNAS**
   Ajouter dans `proxmox_bootstrap.yml` ou un playbook dédié la création du token API TrueNAS via API admin (POST `/api/v2.0/api_key`), pour éviter l'étape manuelle pendant la pause OS install
-
-- [ ] **iLO firmware update**
-  Renseigner `ilo_firmware_url` dans host_vars et planifier une mise à jour via `ilo.yml --tags firmware_update` (déjà implémenté, juste à orchestrer)
 
 - [ ] **Automatisation mises à jour**
   Planifier `update.yml` via Semaphore ou cron sur une fenêtre de maintenance (nuit du dimanche), avec notification en cas d'échec
@@ -184,17 +235,49 @@
   Open WebUI tourne dans K3S (10.100.0.151/152), Ollama dans un LXC (10.100.0.104).
   Vérifier que l'URL Ollama configurée dans Open WebUI est accessible depuis les pods K3S.
 
-- [ ] **Centralisation des logs avec Graylog**
-  Graylog stack (Graylog + Elasticsearch + MongoDB) est déployé via ArgoCD.
-  Configurer les sources : syslog des LXC/VMs, logs K3S, logs Proxmox → Graylog inputs.
-
 - [ ] **Vérification des apps ArgoCD après fresh bootstrap**
   Après un reinstall complet, valider que toutes les ArgoCD apps passent Healthy dans l'ordre des waves :
   argocd → kube-system → traefik → vault → registry → system-upgrade-controller → renovate → monitoring → tools (nextcloud, portainer, prowlarr, sonarqube, open-webui, flaresolverr, librespeed, graylog-stack)
 
+- [ ] **Centralisation des logs avec Graylog**
+  Graylog stack (Graylog + Elasticsearch + MongoDB) est déployé via ArgoCD.
+  Configurer les sources : syslog des LXC/VMs, logs K3S, logs Proxmox → Graylog inputs.
+
+- [ ] **Cloud-init pour K3S master/worker** *(optionnel — élimine la pause OS install)*
+  Créer un template Debian cloud image sur Flash, modifier les VMs K3S dans host_vars pour cloner depuis template au lieu de booter sur ISO
+
+---
+
+## Bloc 7 — Migration CI/CD vers Gitea + dépréciation Webhook
+
+- [ ] **Migration pipelines GitHub Actions → Gitea**
+  Remplacer `.github/workflows/traefik.yml` et `webhook.yml` par des pipelines Gitea Actions.
+  Déclencheur : push sur la branche main → job Ansible via Semaphore (API) → `playbooks/traefik.yml`.
+
+- [ ] **Dépréciation du LXC Webhook**
+  Une fois les pipelines Gitea en place, le LXC webhook (vmid 1103) devient inutile.
+  Le retirer de `host_vars/proxmox_flash.yml`.
+
 - [ ] **Pipelines Gitea pour les apps K3S**
   Même logique que Traefik : modifications des manifests K3S → push Gitea → pipeline → ArgoCD sync.
   À définir selon la maturité de ArgoCD auto-sync (peut-être déjà géré par ArgoCD webhook Gitea)
+
+---
+
+## Bloc 8 — Raspberry Pi + UPS
+
+- [ ] **Ajout Raspberry Pi dans l'inventaire**
+  Ajouter un groupe `raspberry_pi` dans `inventory/hosts.yml`, créer `host_vars/raspberry_pi.yml`
+
+- [ ] **Serveur NUT (UPS)**
+  Créer `playbooks/nut.yml` — installation NUT server sur le Pi (connecté à l'UPS en USB), configuration des clients NUT sur Flash et Wasp pour shutdown propre en cas de coupure
+
+---
+
+## Bloc 9 — Home Assistant
+
+- [ ] **Import backup / création**
+  Créer `playbooks/home_assistant.yml` — procédure d'import d'un backup HAOS existant via API HA (`/api/backup`) ou restauration depuis snapshot PBS, config des intégrations de base (réseau, Z-Wave via USB passthrough déjà défini)
 
 ---
 

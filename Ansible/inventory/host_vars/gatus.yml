@@ -1,0 +1,33 @@
+---
+# Gatus — monitoring uptime interne — LXC 1108 (10.100.0.108) sur Wasp
+
+# https://github.com/TwiN/gatus/releases
+gatus_version: "5.12.1"
+gatus_port: 8080
+
+gatus_endpoints:
+  # K3S — raison d'être de ce Gatus (monitoring de secours si K3S est down)
+  - name: K3S API
+    url: "https://10.100.0.151:6443"
+    interval: 1m
+    expected_status: 401
+  # Flash
+  - name: Traefik Flash
+    url: "tcp://10.100.0.2:80"
+    interval: 1m
+  - name: Traefik WG Flash
+    url: "tcp://10.8.0.3:80"
+    interval: 1m
+  # VPS
+  - name: VPS WG
+    url: "tcp://10.8.0.1:80"
+    interval: 1m
+  - name: VPS (public)
+    url: "https://wiserisk.be"
+    interval: 5m
+    expected_status: 200
+
+hardening_ufw_rules:
+  - port: "8080"
+    proto: tcp
+    rule: allow

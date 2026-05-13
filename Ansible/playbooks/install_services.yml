@@ -1,0 +1,64 @@
+---
+# Installation et configuration de tous les services LXC/VM + VPS
+#
+# Ordre : dépendances d'abord (VPS WG serveur → clients WG → DNS → Traefik → services)
+#
+# Utilisation :
+#   ansible-playbook playbooks/install_services.yml                      # tout
+#   ansible-playbook playbooks/install_services.yml --tags vps           # VPS uniquement
+#   ansible-playbook playbooks/install_services.yml --tags gitea,semaphore
+#   ansible-playbook playbooks/install_services.yml --tags dns           # unbound + adguard
+#   ansible-playbook playbooks/install_services.yml --limit traefik_flash
+
+# ── VPS — WireGuard serveur + Unbound + AdGuard + Traefik + Gatus ────────
+- import_playbook: vps.yml
+  tags: [vps]
+
+# ── WireGuard clients (traefik_wasp + traefik_flash → VPS) ───────────────
+- import_playbook: wireguard.yml
+  vars:
+    target: traefik
+  tags: [wireguard]
+
+# ── DNS ──────────────────────────────────────────────────────────────────
+- import_playbook: unbound.yml
+  tags: [unbound, dns]
+
+- import_playbook: adguard.yml
+  tags: [adguard, dns]
+
+# ── Traefik (interne) ────────────────────────────────────────────────────
+- import_playbook: traefik.yml
+  tags: [traefik]
+
+# ── Gitea ─────────────────────────────────────────────────────────────────
+- import_playbook: gitea.yml
+  tags: [gitea]
+
+# ── Semaphore ─────────────────────────────────────────────────────────────
+- import_playbook: semaphore.yml
+  tags: [semaphore]
+
+# ── Tailscale ─────────────────────────────────────────────────────────────
+- import_playbook: tailscale.yml
+  tags: [tailscale]
+
+# ── Gatus (monitoring de secours — LXC Wasp) ─────────────────────────────
+- import_playbook: gatus.yml
+  tags: [gatus]
+
+# ── Jellyfin ──────────────────────────────────────────────────────────────
+- import_playbook: jellyfin.yml
+  tags: [jellyfin]
+
+# ── qBittorrent ───────────────────────────────────────────────────────────
+- import_playbook: qbittorrent.yml
+  tags: [qbittorrent]
+
+# ── Seedbox (*arr) ────────────────────────────────────────────────────────
+- import_playbook: seedbox.yml
+  tags: [seedbox]
+
+# ── Ollama ────────────────────────────────────────────────────────────────
+- import_playbook: ollama.yml
+  tags: [ollama]

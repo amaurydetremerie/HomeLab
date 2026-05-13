@@ -1,0 +1,21 @@
+---
+# AdGuard Home — LXC 9088 (10.0.0.88) sur Flash
+# Architecture : AdGuard → Unbound (10.0.0.89) → root hints
+
+adguard_port: 80
+adguard_upstream_dns: "10.0.0.89"  # unbound_flash
+
+adguard_dns_rewrites:
+  - domain: "*.wiserisk.home"
+    answer: "10.0.0.85"            # traefik_flash
+
+hardening_ufw_rules:
+  - port: "80"
+    proto: tcp
+    rule: allow
+  - port: "53"
+    proto: udp
+    rule: allow
+  - port: "53"
+    proto: tcp
+    rule: allow

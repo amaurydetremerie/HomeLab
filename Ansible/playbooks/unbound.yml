@@ -1,11 +1,12 @@
 ---
-# Résolveur DNS récursif Unbound — LXC 9087 (10.0.0.87) sur Wasp
-# Architecture : AdGuard (10.0.0.86) → Unbound → root hints (DNSSEC)
+# Résolveur DNS récursif Unbound — groupe unbound (unbound_wasp + unbound_flash)
+# Architecture : AdGuard → Unbound → root hints (DNSSEC)
 #
 # Config : playbooks/files/unbound/unbound.conf
 #
 # Utilisation :
-#   ansible-playbook playbooks/unbound.yml
+#   ansible-playbook playbooks/unbound.yml                    # wasp + flash
+#   ansible-playbook playbooks/unbound.yml -e target=unbound_wasp
 
 - name: Install and configure Unbound
   hosts: "{{ target | default('unbound') }}"

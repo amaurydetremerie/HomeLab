@@ -1,13 +1,17 @@
 ---
-# Configuration AdGuard Home — LXC 9086 (10.0.0.86) sur Wasp
+# Configuration AdGuard Home — groupe adguard (adguard_wasp + adguard_flash)
 # Configure l'upstream DNS (Unbound) et les rewrites DNS locaux via l'API AdGuard.
 # L'installation initiale d'AdGuard est manuelle (binaire adguardhome).
+#
+# Variables par host (host_vars/adguard_wasp.yml + adguard_flash.yml) :
+#   adguard_port, adguard_upstream_dns, adguard_dns_rewrites
 #
 # Prérequis vault :
 #   vault_adguard_user, vault_adguard_password
 #
 # Utilisation :
-#   ansible-playbook playbooks/adguard.yml
+#   ansible-playbook playbooks/adguard.yml                    # wasp + flash
+#   ansible-playbook playbooks/adguard.yml -e target=adguard_wasp
 
 - name: Configure AdGuard Home
   hosts: "{{ target | default('adguard') }}"

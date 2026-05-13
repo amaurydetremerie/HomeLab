@@ -36,16 +36,26 @@ traefik_acme_email: "{{ vault_admin_email }}"
 gatus_version: "5.12.1"
 gatus_port: 8080
 gatus_endpoints:
-  - name: Traefik homelab
-    url: https://traefik.wiserisk.be
+  # Connectivité WireGuard — indépendant de la chaîne Traefik publique
+  # Si ces checks échouent : tunnel WG down ou Traefik interne down
+  - name: WireGuard → Traefik Wasp
+    url: "tcp://10.8.0.2:80"
+    interval: 1m
+  - name: WireGuard → Traefik Flash
+    url: "tcp://10.8.0.3:80"
+    interval: 1m
+  # Vérification chaîne complète : VPS Traefik → WG → interne → service
+  - name: Gitea (public)
+    url: "https://gitea.wiserisk.be"
     interval: 5m
     expected_status: 200
-  - name: Gitea
-    url: https://gitea.wiserisk.be
+  - name: Jellyfin (public)
+    url: "https://jellyfin.wiserisk.be"
     interval: 5m
     expected_status: 200
-  - name: Semaphore
-    url: https://semaphore.wiserisk.be
+  # Vérification chaîne complète K3S : VPS Traefik → WG → interne → K3S → service
+  - name: FlareSolverr (public)
+    url: "https://flaresolverr.k3s.wiserisk.be"
     interval: 5m
     expected_status: 200
 
