@@ -19,22 +19,31 @@ wireguard_peers:
   - name: traefik-wasp
     public_key: "{{ vault_wg_traefik_wasp_pubkey }}"
     allowed_ips: 10.8.0.2/32
+  - name: phone
+    public_key: "{{ vault_wg_phone_pubkey }}"
+    allowed_ips: 10.8.0.4/32
+  - name: router
+    public_key: "{{ vault_wg_router_pubkey }}"
+    allowed_ips: 10.8.0.5/32
 
 # ── Unbound (loopback — upstream d'AdGuard) ────────────────────────────────
 unbound_config_src: files/unbound/unbound_loopback.conf   # port 5335, 127.0.0.1 uniquement
 
 # ── AdGuard (DNS filtré pour les clients WireGuard) ───────────────────────
-adguard_port: 3000                                         # port 80 occupé par Traefik
+adguard_version: "0.107.74"
+adguard_port: 3001                                         # port 80 occupé par Traefik
 adguard_upstream_dns: "127.0.0.1:5335"
 adguard_dns_rewrites: []
 
 # ── Traefik ────────────────────────────────────────────────────────────────
 traefik_acme_email: "{{ vault_admin_email }}"
+traefik_download_url: "https://github.com/traefik/traefik/releases/download/v3.7.1/traefik_v3.7.1_linux_amd64.tar.gz"
 
 # ── Gatus ──────────────────────────────────────────────────────────────────
 # https://github.com/TwiN/gatus/releases
-gatus_version: "5.12.1"
+gatus_version: "5.35.0"
 gatus_port: 8080
+gatus_discord_webhook: "{{ vault_gatus_discord_webhook }}"
 gatus_endpoints:
   # Connectivité WireGuard — indépendant de la chaîne Traefik publique
   # Si ces checks échouent : tunnel WG down ou Traefik interne down
@@ -68,8 +77,5 @@ hardening_ufw_rules:
     proto: tcp
     rule: allow
   - port: "443"
-    proto: tcp
-    rule: allow
-  - port: "8080"
     proto: tcp
     rule: allow

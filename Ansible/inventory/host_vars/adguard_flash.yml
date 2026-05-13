@@ -2,6 +2,7 @@
 # AdGuard Home — LXC 9088 (10.0.0.88) sur Flash
 # Architecture : AdGuard → Unbound (10.0.0.89) → root hints
 
+adguard_version: "0.107.74"
 adguard_port: 80
 adguard_upstream_dns: "10.0.0.89"  # unbound_flash
 

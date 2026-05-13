@@ -4,7 +4,7 @@ proxmox_api_token_secret: "{{ vault_proxmox_wasp_api_token_secret }}"
 
 # Réseau — adapter proxmox_phys_iface au nom réel : `ip link` ou `lshw -class network`
 proxmox_phys_ifaces:
-  - enp1s0f0
+  - enp1s0
 proxmox_vmbr0_addr: 10.0.0.82/24
 proxmox_vmbr0_gw: 10.0.0.1
 proxmox_vmbr1_addr: 10.100.0.254/24  # IP optionnelle du host sur le bridge interne

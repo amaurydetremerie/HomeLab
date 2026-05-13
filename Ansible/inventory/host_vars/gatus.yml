@@ -2,8 +2,9 @@
 # Gatus — monitoring uptime interne — LXC 1108 (10.100.0.108) sur Wasp
 
 # https://github.com/TwiN/gatus/releases
-gatus_version: "5.12.1"
+gatus_version: "5.35.0"
 gatus_port: 8080
+gatus_discord_webhook: "{{ vault_gatus_discord_webhook }}"
 
 gatus_endpoints:
   # K3S — raison d'être de ce Gatus (monitoring de secours si K3S est down)

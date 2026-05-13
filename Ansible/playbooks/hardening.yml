@@ -6,7 +6,7 @@
 #   2 : interne   — niveau 1 + ufw (deny inbound, SSH + ports définis dans hardening_ufw_rules)
 #   3 : exposé    — niveau 2 + fail2ban strict (bantime=24h, maxretry=3) + SSH AllowUsers
 #
-# Première exécution (root SSH encore actif) :
+# Première exécution (root SSH encore actif) — défaut, aucun paramètre requis :
 #   ansible-playbook playbooks/hardening.yml -e target=<host_ou_groupe>
 #
 # Ré-exécution après hardening (root SSH désactivé, connexion via ansible user) :
@@ -19,7 +19,11 @@
 
 - name: Apply security hardening
   hosts: "{{ target | default('linux_managed') }}"
-  remote_user: "{{ hardening_connect_as | default('root') }}"
+  vars:
+    # ansible_user en play vars (priorité > group_vars) pour ne pas hériter de
+    # ansible_user:ansible défini dans linux_managed/proxmox/proxmox_pbs.
+    # Par défaut root (première exécution), surchargeable via -e hardening_connect_as=ansible.
+    ansible_user: "{{ hardening_connect_as | default('root') }}"
   gather_facts: true
   become: true
   roles:

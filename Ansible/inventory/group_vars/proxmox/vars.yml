@@ -1,6 +1,5 @@
 ---
-# Connexion via ansible user (NOPASSWD sudo)
-# hardening.yml tourne en [1] dans site.yml — ansible user existe avant tout autre playbook
+# Connexion via ansible user (NOPASSWD sudo) — après hardening.yml step [1] de site.yml
 ansible_user: ansible
 ansible_become: true
 ansible_become_method: sudo

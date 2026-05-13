@@ -17,8 +17,7 @@
     gatus_config_dir: /etc/gatus
     gatus_data_dir: /var/lib/gatus
     gatus_user: gatus
-    gatus_download_url: >-
-      https://github.com/TwiN/gatus/releases/download/v{{ gatus_version }}/gatus_{{ gatus_version }}_linux_amd64.tar.gz
+    gatus_binary_src: "{{ playbook_dir }}/../../binaries/gatus-{{ gatus_version }}"
   handlers:
     - name: Restart gatus
       ansible.builtin.systemd:
@@ -51,24 +50,13 @@
         - "{{ gatus_config_dir }}"
         - "{{ gatus_data_dir }}"
 
-    - name: Check current Gatus version
-      ansible.builtin.command: "{{ gatus_bin }} --version"
-      register: gatus_current_version
-      changed_when: false
-      failed_when: false
-
-    - name: Download and install Gatus binary
-      ansible.builtin.unarchive:
-        src: "{{ gatus_download_url }}"
-        dest: /usr/local/bin/
-        remote_src: true
-        include: [gatus]
+    - name: Deploy Gatus binary
+      ansible.builtin.copy:
+        src: "{{ gatus_binary_src }}"
+        dest: "{{ gatus_bin }}"
         owner: root
         group: root
         mode: '0755'
-      when: >
-        gatus_current_version.rc != 0
-        or gatus_version not in (gatus_current_version.stdout | default(''))
       notify: Restart gatus
 
     - name: Deploy Gatus config

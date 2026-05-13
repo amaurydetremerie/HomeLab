@@ -7,7 +7,7 @@ wireguard_private_key: "{{ vault_wireguard_traefik_wasp_private_key }}"  # adapt
 wireguard_peers:
   - name: vps-server
     public_key: "{{ vault_wg_vps_pubkey }}"
-    endpoint: "vps.example.com:51820"   # domaine ou IP publique du VPS
+    endpoint: "77.90.52.180:51820"   # domaine ou IP publique du VPS
     allowed_ips:
       - 10.8.0.0/24                     # accès au subnet WireGuard uniquement
       # - 0.0.0.0/0                     # route tout le trafic via VPS (exit node)

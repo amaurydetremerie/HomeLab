@@ -55,6 +55,10 @@ vault_ilo_hades_password: ""
 vault_adguard_user: ""
 vault_adguard_password: ""
 
+# ── Gatus ─────────────────────────────────────────────────────────────────────
+# Webhook Discord : Paramètres serveur → Intégrations → Webhooks → Nouveau webhook
+vault_gatus_discord_webhook: ""
+
 # ── Tailscale ─────────────────────────────────────────────────────────────────
 # Clé réutilisable : https://login.tailscale.com/admin/settings/keys
 vault_tailscale_auth_key: ""

@@ -31,6 +31,26 @@ Fichier supprimé.
 ### ~~B6 — Gatus absent de l'inventaire Wasp~~ ✅ corrigé
 LXC `gatus` ajouté dans `hosts.yml` (10.100.0.108), `host_vars/proxmox_wasp.yml` (vmid 1108) et `host_vars/gatus.yml` créé. Rôle : monitoring de secours (K3S down), pas monitoring interne.
 
+### ~~B7 — `hardening.yml` : première exécution impossible depuis `site.yml`~~ ✅ corrigé
+
+`ansible_user: ansible` est défini dans les group_vars des trois groupes concernés (`proxmox`, `proxmox_pbs`, `linux_managed`). Cette variable d'inventaire a une priorité supérieure à `remote_user` dans le play — le `hardening_connect_as` documenté dans le header de `hardening.yml` est donc sans effet.
+
+**Impact :**
+- `site.yml` step [1] (`proxmox_hypervisors`) → tente `ansible@<host>`, user inexistant → ÉCHEC
+- `site.yml` step [3b] (`proxmox_pbs:linux_managed`) → idem → ÉCHEC
+- Le commentaire dans `group_vars/proxmox/vars.yml` ("ansible user existe avant tout autre playbook") est contradictoire — c'est le hardening qui le crée
+- Passer `-e ansible_user=root` sur la CLI pour site.yml s'appliquerait à **tous** les plays, y compris ceux post-hardening qui ont besoin de `ansible`
+
+**Workaround immédiat** (lancer le hardening séparément avant site.yml) :
+```bash
+ansible-playbook playbooks/hardening.yml -e target=proxmox_hypervisors -e ansible_user=root
+ansible-playbook playbooks/hardening.yml -e target="proxmox_pbs:linux_managed" -e ansible_user=root
+# Ensuite site.yml à partir du step [2] (commenter les deux include_playbook hardening)
+```
+
+**Fix à implémenter :** Remplacer `remote_user` dans `hardening.yml` par un mécanisme d'inventaire dédié :
+créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fois) avec `ansible_user: root`, distinct du groupe `linux_managed`. Une fois hardenisé, déplacer le host dans `linux_managed`. Alternativement, split `site.yml` en deux phases avec des instructions de connexion différentes.
+
 ---
 
 ## Bloc 1 — Infrastructure Proxmox

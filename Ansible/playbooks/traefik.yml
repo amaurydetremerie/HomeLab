@@ -18,7 +18,7 @@
   gather_facts: false
   become: true
   vars:
-    traefik_src:        "{{ playbook_dir }}/../Traefik"
+    traefik_src:        "{{ playbook_dir }}/../../Traefik"
     traefik_config_dir: /etc/Homelab/Traefik
     traefik_acme_dir:   /etc/traefik
     traefik_log_dir:    /var/log/traefik
