@@ -5,6 +5,9 @@
 gatus_version: "5.35.0"
 gatus_port: 8080
 gatus_discord_webhook: "{{ vault_gatus_discord_webhook }}"
+gatus_basic_auth:
+  user: monitoring
+  password: "{{ vault_gatus_monitor_password }}"
 
 gatus_endpoints:
   # K3S — raison d'être de ce Gatus (monitoring de secours si K3S est down)
@@ -17,7 +20,7 @@ gatus_endpoints:
     interval: 1m
   # VPS
   - name: VPS (public)
-    url: "https://wiserisk.be"
+    url: "https://gatus.vps.wiserisk.be"
     interval: 5m
     expected_status: 200
 

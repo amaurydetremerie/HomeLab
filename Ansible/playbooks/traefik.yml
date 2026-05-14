@@ -62,15 +62,6 @@
         - { path: "{{ traefik_config_dir }}/traefik_dynamic" }
         - { path: "{{ traefik_config_dir }}/scripts", owner: root }
 
-    - name: Create acme.json (permissions strictes)
-      ansible.builtin.file:
-        path: "{{ traefik_acme_dir }}/acme.json"
-        state: touch
-        owner: traefik
-        group: traefik
-        mode: '0600'
-        modification_time: preserve
-        access_time: preserve
 
     # ── Binaire (conditionnel) ───────────────────────────────────────────────
     - name: Download Traefik binary
@@ -96,10 +87,10 @@
       notify: Restart traefik
 
     # ── Configs ──────────────────────────────────────────────────────────────
-    - name: Deploy traefik.toml
+    - name: Deploy traefik.yaml
       ansible.builtin.copy:
-        src: "{{ traefik_src }}/traefik.toml"
-        dest: "{{ traefik_config_dir }}/traefik.toml"
+        src: "{{ traefik_src }}/traefik.yaml"
+        dest: "{{ traefik_config_dir }}/traefik.yaml"
         owner: traefik
         group: traefik
         mode: '0640'

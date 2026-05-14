@@ -44,13 +44,6 @@ stringData:
           target_label: instance
         - target_label: __address__
           replacement: blackbox-exporter.monitoring.svc.cluster.local:9115
-    - job_name: 'blackbox-basic-auth'
-      metrics_path: /probe
-      params:
-        module: [http_2xx_basic_auth]
-      static_configs:
-        - targets:
-          - https://webhook.wiserisk.be
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
@@ -94,7 +87,6 @@ stringData:
           - https://hades.wiserisk.home
           - https://hermes.syncthing.wiserisk.home
           - https://hades.syncthing.wiserisk.home
-          - https://webhook.wiserisk.home
           - https://ollama.wiserisk.home
           - https://registry-ui.k3s.wiserisk.home
           - https://traefik.k3s.wiserisk.home
@@ -129,7 +121,6 @@ stringData:
           - 10.0.0.185
           - 10.100.0.1
           - 10.100.0.10
-          - 10.100.0.103
           - 10.100.0.104
           - 10.100.0.105
           - 10.100.0.151

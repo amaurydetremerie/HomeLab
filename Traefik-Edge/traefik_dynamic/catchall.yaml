@@ -7,7 +7,7 @@
 
 http:
   services:
-    traefik-wasp:
+    traefik-internal:
       loadBalancer:
         servers:
           - url: "http://10.8.0.2"
@@ -21,11 +21,27 @@ http:
         - redirect-to-https@file
       service: noop@internal
 
+    # Services incompatibles avec Authelia (apps mobiles, API, K3S à gérer plus tard)
+    bypass-auth:
+      rule: >-
+        Host(`ha.wiserisk.be`) ||
+        Host(`jellyfin.wiserisk.be`) ||
+        Host(`ollama.wiserisk.be`) ||
+        Host(`k3s.wiserisk.be`) ||
+        HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.be`)
+      entryPoints:
+        - websecure
+      service: traefik-internal@file
+      tls:
+        certResolver: letsencrypt-ovh
+
     catchall-secure:
       rule: "HostRegexp(`.+`)"
       entryPoints:
         - websecure
-      service: traefik-wasp@file
+      middlewares:
+        - authelia@file
+      service: traefik-internal@file
       priority: 1
       tls:
         certResolver: letsencrypt-ovh

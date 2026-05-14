@@ -6,7 +6,7 @@
 wireguard_role: server
 wireguard_interface: wg0
 wireguard_address: 10.8.0.1/24
-wireguard_port: 51821           # Traefik Edge prend le :51820 public et forward ici
+wireguard_port: 51820
 wireguard_outbound_interface: eth0     # adapter selon l'iface publique du VPS
 wireguard_private_key: "{{ vault_wireguard_vps_private_key }}"
 
@@ -43,7 +43,7 @@ traefik_download_url: "https://github.com/traefik/traefik/releases/download/v3.7
 # ── WireGuard UI ────────────────────────────────────────────────────────────
 # Vérifier la dernière version : https://github.com/ngoduykhanh/wireguard-ui/releases
 wireguard_ui_version: "0.6.2"
-wireguard_ui_endpoint: "wiserisk.be:51820"   # Cible du SRV vpn.wiserisk.be — port public Traefik Edge
+wireguard_ui_endpoint: "{{ vps_wg_endpoint }}"   # Cible du SRV vpn.wiserisk.be — port public Traefik Edge
 
 # ── Lldap ───────────────────────────────────────────────────────────────────
 # Vérifier la dernière version : https://github.com/lldap/lldap/releases
@@ -60,14 +60,14 @@ authelia_version: "4.39.19"
 gatus_version: "5.35.0"
 gatus_port: 8080
 gatus_discord_webhook: "{{ vault_gatus_discord_webhook }}"
+gatus_basic_auth:
+  user: monitoring
+  password: "{{ vault_gatus_monitor_password }}"
 gatus_endpoints:
   # Connectivité WireGuard — indépendant de la chaîne Traefik publique
   # Si ces checks échouent : tunnel WG down ou Traefik interne down
   - name: WireGuard → Traefik Wasp
     url: "tcp://10.8.0.2:80"
-    interval: 1m
-  - name: WireGuard → Traefik Flash
-    url: "tcp://10.8.0.3:80"
     interval: 1m
   # Vérification chaîne complète : VPS Traefik → WG → interne → service
   - name: Gitea (public)

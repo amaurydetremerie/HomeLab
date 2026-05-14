@@ -9,6 +9,8 @@ tls:
           sans:
             - "*.wiserisk.be"
             - "*.vps.wiserisk.be"
+            - "*.k3s.wiserisk.be"
+            - "*.syncthing.wiserisk.be"
 
   options:
     default:

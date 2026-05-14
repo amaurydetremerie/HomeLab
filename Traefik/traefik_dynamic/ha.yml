@@ -7,28 +7,26 @@ http:
 
   routers:
     ha:
-      rule: "Host(`ha.wiserisk.be`) || Host(`ha.wiserisk.home`)"
+      rule: "Host(`ha.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "ha@file"
+    ha-home:
+      rule: "Host(`ha.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
-    ha-secure:
-      rule: "Host(`ha.wiserisk.be`)"
-      entryPoints:
-        - "websecure"
-      middlewares:
-        - "security@file"
-        - "compression@file"
-      service: "ha@file"
-      tls:
-        certResolver: letsencrypt-ecdsa
-        options: mintls13
     ha-local-secure:
       rule: "Host(`ha.wiserisk.home`)"
       entryPoints:
         - "websecure"
       middlewares:
         - "security@file"
+        - "compression@file"
       service: "ha@file"
       tls: {}

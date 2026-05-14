@@ -92,12 +92,42 @@
         - Reload systemd
         - Restart semaphore
 
-    - name: Enable and start Semaphore
+    - name: Enable Semaphore
       ansible.builtin.systemd:
         name: semaphore
         enabled: true
-        state: started
         daemon_reload: true
+
+    - name: Check if Semaphore admin user exists
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/semaphore
+          - user
+          - list
+          - --config
+          - /etc/semaphore/config.json
+      register: semaphore_user_list
+      changed_when: false
+
+    - name: Create Semaphore admin user
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/semaphore
+          - user
+          - add
+          - --admin
+          - --login
+          - "{{ semaphore_admin_user }}"
+          - --name
+          - "{{ semaphore_admin_user }}"
+          - --email
+          - "{{ semaphore_admin_email }}"
+          - --password
+          - "{{ vault_semaphore_admin_password }}"
+          - --config
+          - /etc/semaphore/config.json
+      when: semaphore_admin_user not in semaphore_user_list.stdout
+      no_log: true
 
   handlers:
     - name: Reload systemd

@@ -21,6 +21,10 @@ endpoints:
   - name: {{ ep.name }}
     url: {{ ep.url }}
     interval: {{ ep.interval | default('5m') }}
+{% if not ep.url.startswith('tcp://') and gatus_basic_auth is defined %}
+    headers:
+      Authorization: "Basic {{ (gatus_basic_auth.user + ':' + gatus_basic_auth.password) | b64encode }}"
+{% endif %}
     conditions:
 {% if ep.url.startswith('tcp://') %}
       - "[CONNECTED] == true"

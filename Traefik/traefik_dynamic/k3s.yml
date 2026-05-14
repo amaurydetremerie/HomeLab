@@ -5,21 +5,23 @@ http:
         servers:
           - url: "http://10.100.0.151"
   routers:
-    k3s-wildcard:
-      rule: "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.be`) || Host(`k3s.wiserisk.be`) || HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.home`) || Host(`k3s.wiserisk.home`)"
+    # Trafic .be reçu en plain HTTP depuis Edge (TLS terminé au VPS)
+    k3s-wildcard-be:
+      rule: "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.be`) || Host(`k3s.wiserisk.be`)"
       entryPoints:
         - "web"
       service: "k3s-wildcard@file"
       priority: 2
-    k3s-wildcard-acme:
-      rule: "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.be`) && PathPrefix(`/.well-known/acme-challenge/`) || Host(`k3s.wiserisk.be`) && PathPrefix(`/.well-known/acme-challenge/`)"
+    k3s-wildcard-home:
+      rule: "HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.home`) || Host(`k3s.wiserisk.home`)"
       entryPoints:
         - "web"
       service: "k3s-wildcard@file"
-      priority: 1001
+      priority: 2
 
 tcp:
   services:
+    # TLS passthrough uniquement pour .home (K3S gère son propre TLS localement)
     k3s-secure-wildcard-tcp:
       loadBalancer:
         servers:
@@ -31,7 +33,7 @@ tcp:
 
   routers:
     k3s-secure-wildcard-tcp:
-      rule: "HostSNIRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.be`) || HostSNI(`k3s.wiserisk.be`) || HostSNIRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.home`) || HostSNI(`k3s.wiserisk.home`)"
+      rule: "HostSNIRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.home`) || HostSNI(`k3s.wiserisk.home`)"
       entryPoints:
         - "websecure"
       service: "k3s-secure-wildcard-tcp@file"

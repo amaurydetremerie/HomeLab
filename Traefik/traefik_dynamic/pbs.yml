@@ -1,9 +1,4 @@
 http:
-  services:
-    pbs:
-      loadBalancer:
-        servers:
-          - url: "http://10.0.0.80:8007"
   routers:
     pbs-local:
       rule: "Host(`pbs.wiserisk.home`)"

@@ -10,15 +10,23 @@ http:
           - url: "http://10.8.0.1:3001"
 
   routers:
+    adguard:
+      rule: "Host(`adguard.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "adguard-local@file"
     adguard-local:
-      rule: "Host(`adguard.local.wiserisk.home`)"
+      rule: "Host(`adguard.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
     adguard-local-secure:
-      rule: "Host(`adguard.local.wiserisk.home`)"
+      rule: "Host(`adguard.wiserisk.home`)"
       entryPoints:
         - "websecure"
       middlewares:
@@ -26,14 +34,14 @@ http:
         - "compression@file"
       service: "adguard-local@file"
       tls: {}
-    adguard-vps:
+    adguard-vps-local:
       rule: "Host(`adguard.vps.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
-    adguard-vps-secure:
+    adguard-vps-local-secure:
       rule: "Host(`adguard.vps.wiserisk.home`)"
       entryPoints:
         - "websecure"

@@ -60,6 +60,8 @@ vault_adguard_password: ""
 # ── Gatus ─────────────────────────────────────────────────────────────────────
 # Webhook Discord : Paramètres serveur → Intégrations → Webhooks → Nouveau webhook
 vault_gatus_discord_webhook: ""
+# Mot de passe du compte de monitoring LLDAP utilisé par Gatus pour s'authentifier auprès d'Authelia
+vault_gatus_monitor_password: ""
 
 # ── Tailscale ─────────────────────────────────────────────────────────────────
 # Clé réutilisable : https://login.tailscale.com/admin/settings/keys

@@ -1,0 +1,38 @@
+global:
+  checkNewVersion: true
+  sendAnonymousUsage: false
+
+api:
+  dashboard: true
+
+log:
+  filePath: /var/log/traefik/traefik.log
+  level: ERROR
+
+accessLog:
+  filePath: /var/log/traefik/access.log
+
+providers:
+  file:
+    directory: /etc/Homelab/Traefik/traefik_dynamic
+    watch: true
+
+entryPoints:
+  web:
+    address: ":80"
+    # Traefik Edge (VPS, WireGuard 10.8.0.1) forward le trafic .wiserisk.be en plain HTTP
+    forwardedHeaders:
+      trustedIPs:
+        - "10.8.0.0/24"
+  websecure:
+    address: ":443"
+  k3s:
+    address: ":6443"
+  graylog:
+    address: ":12201/udp"
+
+experimental:
+  plugins:
+    traefik-api-token-middleware:
+      moduleName: "github.com/Aetherinox/traefik-api-token-middleware"
+      version: "v0.1.4"

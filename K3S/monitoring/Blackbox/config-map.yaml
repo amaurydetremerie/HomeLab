@@ -29,6 +29,19 @@ data:
           basic_auth:
             username: <path:k3s/data/global#basic_username>
             password: <path:k3s/data/global#basic_password>
+      http_2xx_authelia:
+        prober: http
+        timeout: 5s
+        http:
+          valid_status_codes: [200]
+          preferred_ip_protocol: ip4
+          fail_if_ssl: false
+          fail_if_not_ssl: true
+          tls_config:
+            insecure_skip_verify: false
+          basic_auth:
+            username: <path:k3s/data/authelia#monitoring_username>
+            password: <path:k3s/data/authelia#monitoring_password>
       http_2xx_bearer:
         prober: http
         timeout: 5s

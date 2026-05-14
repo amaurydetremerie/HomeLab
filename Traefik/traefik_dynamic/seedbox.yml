@@ -1,22 +1,35 @@
 http:
+  serversTransports:
+    # Swizzin utilise un certificat self-signed
+    seedbox-skip-verify:
+      insecureSkipVerify: true
+
   services:
     seedbox:
       loadBalancer:
         servers:
-          - url: "http://10.100.0.201:80"
+          - url: "https://10.100.0.201:443"
+        serversTransport: seedbox-skip-verify
+
   routers:
+    # Trafic .be reçu en plain HTTP depuis Edge → re-encrypt vers Swizzin HTTPS
     seedbox:
-      rule: "Host(`seedbox.wiserisk.be`) || Host(`seedbox.wiserisk.home`)"
+      rule: "Host(`seedbox.wiserisk.be`)"
       entryPoints:
         - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "seedbox@file"
+      priority: 2
+    seedbox-home:
+      rule: "Host(`seedbox.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
       service: "noop@internal"
       priority: 2
-    seedbox-acme:
-      rule: "Host(`seedbox.wiserisk.be`) && PathPrefix(`/.well-known/acme-challenge/`)"
-      entryPoints:
-        - "web"
-      service: "seedbox@file"
-      priority: 1001
 
 tcp:
   services:
@@ -25,8 +38,9 @@ tcp:
         servers:
           - address: "10.100.0.201:443"
   routers:
+    # TLS passthrough pour .home (accès local direct, Swizzin gère son cert)
     seedbox-secure-tcp:
-      rule: "HostSNI(`seedbox.wiserisk.be`) || HostSNI(`seedbox.wiserisk.home`)"
+      rule: "HostSNI(`seedbox.wiserisk.home`)"
       entryPoints:
         - "websecure"
       service: "seedbox-secure-tcp@file"

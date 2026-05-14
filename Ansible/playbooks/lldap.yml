@@ -113,6 +113,50 @@
         state: started
         daemon_reload: true
 
+    - name: Flush handlers to ensure lldap is running before user provisioning
+      ansible.builtin.meta: flush_handlers
+
+    - name: Wait for lldap LDAP port to be ready
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 3890
+        timeout: 30
+
+    - name: Install ldap-utils for LLDAP user management
+      ansible.builtin.apt:
+        name: ldap-utils
+        state: present
+
+    - name: Create monitoring user in LLDAP
+      ansible.builtin.shell:
+        cmd: ldapadd -H ldap://127.0.0.1:3890 -D "uid=admin,ou=people,dc=wiserisk,dc=be" -w "{{ vault_lldap_admin_password }}"
+        stdin: |
+          dn: uid=monitoring,ou=people,dc=wiserisk,dc=be
+          objectClass: person
+          objectClass: inetOrgPerson
+          cn: Monitoring
+          sn: Monitoring
+          uid: monitoring
+      register: lldap_create_monitoring
+      changed_when: lldap_create_monitoring.rc == 0
+      failed_when: lldap_create_monitoring.rc != 0 and 'UNIQUE constraint failed' not in lldap_create_monitoring.stderr
+
+    - name: Set monitoring user password via LDAP
+      ansible.builtin.command:
+        argv:
+          - ldappasswd
+          - -H
+          - ldap://127.0.0.1:3890
+          - -D
+          - uid=admin,ou=people,dc=wiserisk,dc=be
+          - -w
+          - "{{ vault_lldap_admin_password }}"
+          - -s
+          - "{{ vault_gatus_monitor_password }}"
+          - uid=monitoring,ou=people,dc=wiserisk,dc=be
+      no_log: true
+      changed_when: false
+
   handlers:
     - name: Reload systemd
       ansible.builtin.systemd:

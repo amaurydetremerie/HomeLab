@@ -20,8 +20,11 @@ access_control:
   default_policy: 'deny'
   rules:
     - domain:
+        - 'wiserisk.be'
+        - '*.wiserisk.be'
         - '*.vps.wiserisk.be'
-        - 'traefik-edge.wiserisk.be'
+        - '*.syncthing.wiserisk.be'
+        - '*.k3s.wiserisk.be'
       policy: 'one_factor'
 
 session:

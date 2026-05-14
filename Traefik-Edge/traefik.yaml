@@ -24,9 +24,6 @@ entryPoints:
     address: ":443"
   graylog:
     address: ":12201/udp"
-  # WireGuard : Traefik prend le :51820, wg écoute sur 127.0.0.1:51821
-  vpn:
-    address: ":51820/udp"
   # DNS : Traefik prend le :53, AdGuard DNS écoute sur 127.0.0.1:5353
   dns-udp:
     address: ":53/udp"

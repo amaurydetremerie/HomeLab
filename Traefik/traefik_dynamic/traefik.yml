@@ -1,5 +1,13 @@
 http:
   routers:
+    traefik:
+      rule: "Host(`traefik.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "api@internal"
     traefik-local:
       rule: "Host(`traefik.wiserisk.home`)"
       entryPoints:
