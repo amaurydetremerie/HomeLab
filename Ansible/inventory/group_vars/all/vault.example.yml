@@ -71,15 +71,35 @@ vault_traefik_basic_auth: ""        # Format : user:$2y$hash (bcrypt)
 vault_traefik_vault_token: ""       # Token Vault pour sync-ollama-bearer
 vault_traefik_vault_addr: ""        # Ex : https://vault.k3s.wiserisk.be/v1/k3s/data
 
+# ── Traefik Edge — OVH DNS challenge (wildcard *.wiserisk.be) ─────────────────
+# Créer l'application OVH : https://eu.api.ovh.com/createApp/
+# Droits nécessaires : GET/POST/PUT/DELETE sur /domain/zone/*
+vault_ovh_application_key: ""
+vault_ovh_application_secret: ""
+vault_ovh_consumer_key: ""
+
+# ── WireGuard UI ──────────────────────────────────────────────────────────────
+vault_wireguard_ui_username: ""
+vault_wireguard_ui_password: ""
+vault_wireguard_ui_session_secret: ""  # openssl rand -hex 32
+
+# ── Lldap ─────────────────────────────────────────────────────────────────────
+vault_lldap_jwt_secret: ""        # openssl rand -hex 32
+vault_lldap_admin_password: ""    # mot de passe du compte admin Lldap (et bind Authelia)
+
+# ── Authelia ──────────────────────────────────────────────────────────────────
+vault_authelia_session_secret: "" # openssl rand -hex 32
+vault_authelia_storage_key: ""    # openssl rand -hex 32 (min 20 chars)
+
 # ── Gitea ─────────────────────────────────────────────────────────────────────
 vault_gitea_smtp_password: ""
 vault_gitea_secret_key: ""          # openssl rand -hex 32
 vault_gitea_internal_token: ""      # openssl rand -hex 32
 
 # ── Semaphore ─────────────────────────────────────────────────────────────────
-vault_semaphore_cookie_hash: ""           # openssl rand -hex 32
-vault_semaphore_cookie_encryption: ""     # openssl rand -hex 32
-vault_semaphore_access_key_encryption: "" # openssl rand -hex 32
+vault_semaphore_cookie_hash: ""           # openssl rand -base64 32
+vault_semaphore_cookie_encryption: ""     # openssl rand -base64 32
+vault_semaphore_access_key_encryption: "" # openssl rand -base64 32
 vault_semaphore_admin_password: ""
 
 # ── WireGuard ─────────────────────────────────────────────────────────────────

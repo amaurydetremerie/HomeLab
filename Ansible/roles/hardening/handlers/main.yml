@@ -8,3 +8,7 @@
   ansible.builtin.systemd:
     name: fail2ban
     state: restarted
+
+- name: reload ufw
+  community.general.ufw:
+    state: reloaded

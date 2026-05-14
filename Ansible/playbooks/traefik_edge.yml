@@ -1,25 +1,30 @@
 ---
-# Déploiement Traefik — LXC traefik (10.0.0.85 / 10.100.0.1)
-# Configs source : Traefik/ à la racine du repo → /etc/Homelab/Traefik/ sur le LXC
+# Déploiement Traefik Edge (VPS) — terminaison TLS OVH wildcard, routage vers traefik_wasp via WireGuard
 #
 # Prérequis vault :
+#   vault_admin_email
+#   vault_ovh_application_key, vault_ovh_application_secret, vault_ovh_consumer_key
 #   vault_traefik_my_auth, vault_traefik_basic_auth
-#   vault_traefik_vault_addr, vault_traefik_vault_token (pour sync-ollama-bearer)
 #
-# Config : host_vars/traefik.yml
-# Templates : playbooks/templates/traefik/
+# Prérequis infrastructure :
+#   - WireGuard VPS en écoute sur 127.0.0.1:51821 (wireguard_port: 51821 dans debian_vps.yml)
+#   - AdGuard DNS en écoute sur 127.0.0.1:5353 (adguard_dns_port: 5353 dans debian_vps.yml)
+#   - traefik_wasp configuré pour servir en HTTP uniquement (sans TLS ni redirect-to-https)
+#
+# Config : host_vars/debian_vps.yml
+# Templates : playbooks/templates/traefik_edge/
 #
 # Utilisation :
-#   ansible-playbook playbooks/traefik.yml
-#   ansible-playbook playbooks/traefik.yml --tags config    # configs uniquement, sans toucher au binaire
+#   ansible-playbook playbooks/traefik_edge.yml
+#   ansible-playbook playbooks/traefik_edge.yml --tags config    # configs uniquement
 
-- name: Deploy Traefik
-  hosts: "{{ target | default('traefik') }}"
+- name: Deploy Traefik Edge (VPS)
+  hosts: "{{ target | default('debian_vps') }}"
   gather_facts: false
   become: true
   vars:
-    traefik_src:        "{{ playbook_dir }}/../../Traefik"
-    traefik_config_dir: /etc/Homelab/Traefik
+    traefik_src:        "{{ playbook_dir }}/../../Traefik-Edge"
+    traefik_config_dir: /etc/Homelab/Traefik-Edge
     traefik_acme_dir:   /etc/traefik
     traefik_log_dir:    /var/log/traefik
   tasks:
@@ -38,31 +43,21 @@
         home: /var/lib/traefik
         create_home: false
 
-    - name: Enable IPv4 forwarding (gateway uniquement)
-      ansible.posix.sysctl:
-        name: net.ipv4.ip_forward
-        value: "1"
-        sysctl_set: true
-        state: present
-        reload: true
-      when: gateway | default(false) | bool
-
     - name: Create directories
       ansible.builtin.file:
-        path: "{{ item.path }}"
+        path: "{{ item }}"
         state: directory
-        owner: "{{ item.owner | default('traefik') }}"
+        owner: traefik
         group: traefik
-        mode: "{{ item.mode | default('0750') }}"
+        mode: '0750'
       loop:
-        - { path: "{{ traefik_acme_dir }}" }
-        - { path: "{{ traefik_acme_dir }}/plugins-storage" }
-        - { path: "{{ traefik_log_dir }}" }
-        - { path: "{{ traefik_config_dir }}" }
-        - { path: "{{ traefik_config_dir }}/traefik_dynamic" }
-        - { path: "{{ traefik_config_dir }}/scripts", owner: root }
+        - "{{ traefik_acme_dir }}"
+        - "{{ traefik_acme_dir }}/plugins-storage"
+        - "{{ traefik_log_dir }}"
+        - "{{ traefik_config_dir }}"
+        - "{{ traefik_config_dir }}/traefik_dynamic"
 
-    - name: Create acme.json (permissions strictes)
+    - name: Create acme.json
       ansible.builtin.file:
         path: "{{ traefik_acme_dir }}/acme.json"
         state: touch
@@ -96,10 +91,10 @@
       notify: Restart traefik
 
     # ── Configs ──────────────────────────────────────────────────────────────
-    - name: Deploy traefik.toml
+    - name: Deploy traefik.yaml
       ansible.builtin.copy:
-        src: "{{ traefik_src }}/traefik.toml"
-        dest: "{{ traefik_config_dir }}/traefik.toml"
+        src: "{{ traefik_src }}/traefik.yaml"
+        dest: "{{ traefik_config_dir }}/traefik.yaml"
         owner: traefik
         group: traefik
         mode: '0640'
@@ -116,16 +111,7 @@
       tags: config
       notify: Restart traefik
 
-    - name: Deploy scripts
-      ansible.builtin.copy:
-        src: "{{ traefik_src }}/scripts/"
-        dest: "{{ traefik_config_dir }}/scripts/"
-        owner: root
-        group: traefik
-        mode: '0750'
-      tags: config
-
-    # ── Systemd units ────────────────────────────────────────────────────────
+    # ── Systemd unit ─────────────────────────────────────────────────────────
     - name: Deploy traefik.service
       ansible.builtin.copy:
         src: "{{ traefik_src }}/traefik.service"
@@ -137,25 +123,6 @@
         - Reload systemd
         - Restart traefik
 
-    - name: Deploy sync-ollama-bearer.service
-      ansible.builtin.copy:
-        src: "{{ traefik_src }}/sync-ollama-bearer.service"
-        dest: /etc/systemd/system/sync-ollama-bearer.service
-        owner: root
-        group: root
-        mode: '0644'
-      notify: Reload systemd
-
-    - name: Deploy sync-ollama-bearer.timer
-      ansible.builtin.copy:
-        src: "{{ traefik_src }}/sync-ollama-bearer.timer"
-        dest: /etc/systemd/system/sync-ollama-bearer.timer
-        owner: root
-        group: root
-        mode: '0644'
-      notify: Reload systemd
-
-    # ── Overrides (secrets) ──────────────────────────────────────────────────
     - name: Create traefik override directory
       ansible.builtin.file:
         path: /etc/systemd/system/traefik.service.d
@@ -164,9 +131,9 @@
         group: root
         mode: '0755'
 
-    - name: Deploy traefik service override
+    - name: Deploy traefik service override (secrets OVH)
       ansible.builtin.template:
-        src: templates/traefik/service_override.conf.j2
+        src: templates/traefik_edge/service_override.conf.j2
         dest: /etc/systemd/system/traefik.service.d/override.conf
         owner: root
         group: root
@@ -175,34 +142,10 @@
         - Reload systemd
         - Restart traefik
 
-    - name: Create sync-ollama-bearer override directory
-      ansible.builtin.file:
-        path: /etc/systemd/system/sync-ollama-bearer.service.d
-        state: directory
-        owner: root
-        group: root
-        mode: '0755'
-
-    - name: Deploy sync-ollama-bearer service override
-      ansible.builtin.template:
-        src: templates/traefik/sync_ollama_override.conf.j2
-        dest: /etc/systemd/system/sync-ollama-bearer.service.d/override.conf
-        owner: root
-        group: root
-        mode: '0600'
-      notify: Reload systemd
-
     # ── Démarrage ────────────────────────────────────────────────────────────
-    - name: Enable and start Traefik
+    - name: Enable and start Traefik Edge
       ansible.builtin.systemd:
         name: traefik
-        enabled: true
-        state: started
-        daemon_reload: true
-
-    - name: Enable and start sync-ollama-bearer timer
-      ansible.builtin.systemd:
-        name: sync-ollama-bearer.timer
         enabled: true
         state: started
         daemon_reload: true

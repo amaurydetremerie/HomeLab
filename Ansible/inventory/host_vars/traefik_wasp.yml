@@ -26,6 +26,7 @@ wireguard_peers:
 traefik_acme_email: "{{ vault_admin_email }}"
 traefik_download_url: "https://github.com/traefik/traefik/releases/download/v3.7.1/traefik_v3.7.1_linux_amd64.tar.gz"
 gateway: true
+hardening_ufw_forward_policy: "ACCEPT"
 
 hardening_ufw_rules:
   - port: "80"

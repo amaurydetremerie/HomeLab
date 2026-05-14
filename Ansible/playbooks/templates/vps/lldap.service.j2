@@ -1,0 +1,14 @@
+[Unit]
+Description=Lldap — lightweight LDAP server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+EnvironmentFile=/etc/systemd/system/lldap.service.d/override.conf
+ExecStart={{ lldap_bin }} run --config-file {{ lldap_config }}
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

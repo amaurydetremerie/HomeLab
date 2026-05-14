@@ -1,44 +1,44 @@
 http:
   services:
-    adguard-local:
+    gatus-vps:
       loadBalancer:
         servers:
-          - url: "http://10.0.0.181:80"
-    adguard-vps:
+          - url: "http://10.8.0.1:8080"
+    gatus-local:
       loadBalancer:
         servers:
-          - url: "http://10.8.0.1:3001"
+          - url: "http://10.100.0.102:8080"
 
   routers:
-    adguard-local:
-      rule: "Host(`adguard.local.wiserisk.home`)"
+    gatus-vps:
+      rule: "Host(`gatus.vps.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
-    adguard-local-secure:
-      rule: "Host(`adguard.local.wiserisk.home`)"
+    gatus-vps-secure-local:
+      rule: "Host(`gatus.vps.wiserisk.home`)"
       entryPoints:
         - "websecure"
       middlewares:
         - "security@file"
         - "compression@file"
-      service: "adguard-local@file"
+      service: "gatus-vps@file"
       tls: {}
-    adguard-vps:
-      rule: "Host(`adguard.vps.wiserisk.home`)"
+    gatus-local:
+      rule: "Host(`gatus.local.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
-    adguard-vps-secure:
-      rule: "Host(`adguard.vps.wiserisk.home`)"
+    gatus-local-secure-local:
+      rule: "Host(`gatus.local.wiserisk.home`)"
       entryPoints:
         - "websecure"
       middlewares:
         - "security@file"
         - "compression@file"
-      service: "adguard-vps@file"
+      service: "gatus-local@file"
       tls: { }

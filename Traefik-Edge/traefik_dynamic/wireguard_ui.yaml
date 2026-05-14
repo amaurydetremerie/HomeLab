@@ -1,0 +1,19 @@
+http:
+  services:
+    wireguard-ui:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:5000"
+
+  routers:
+    wireguard-ui-secure:
+      rule: "Host(`wireguard.vps.wiserisk.be`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - authelia@file
+        - security@file
+        - compression@file
+      service: wireguard-ui@file
+      tls:
+        certResolver: letsencrypt-ovh

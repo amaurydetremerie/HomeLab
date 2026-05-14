@@ -1,0 +1,19 @@
+http:
+  services:
+    adguard-vps:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:3001"
+
+  routers:
+    adguard-vps-secure:
+      rule: "Host(`adguard.vps.wiserisk.be`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - authelia@file
+        - security@file
+        - compression@file
+      service: adguard-vps@file
+      tls:
+        certResolver: letsencrypt-ovh

@@ -1,0 +1,30 @@
+[Unit]
+Description=Traefik Edge
+Documentation=https://docs.traefik.io
+After=network-online.target
+AssertFileIsExecutable=/usr/local/bin/traefik
+AssertPathExists=/etc/Homelab/Traefik-Edge
+AssertPathExists=/etc/traefik
+
+[Service]
+Restart=always
+User=traefik
+Group=traefik
+ExecStart=/usr/local/bin/traefik --configfile=/etc/Homelab/Traefik-Edge/traefik.yaml
+LimitNOFILE=1048576
+PrivateTmp=true
+PrivateDevices=false
+ProtectHome=true
+ProtectSystem=full
+WorkingDirectory=/etc/traefik
+ReadWritePaths=/etc/traefik/acme.json
+ReadWritePaths=/var/log/traefik
+ReadWritePaths=/etc/traefik/plugins-storage
+ReadOnlyPaths=/etc/Homelab/Traefik-Edge/traefik.yaml
+ReadOnlyPaths=/etc/Homelab/Traefik-Edge/traefik_dynamic
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

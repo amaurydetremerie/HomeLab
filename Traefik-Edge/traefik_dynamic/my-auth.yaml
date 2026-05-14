@@ -1,0 +1,11 @@
+http:
+  middlewares:
+    my-auth:
+      digestAuth:
+        users:
+          - "{{ env `MY_AUTH` }}"
+
+    basic-auth:
+      basicAuth:
+        users:
+          - "{{ env `BASIC_AUTH` }}"

@@ -12,7 +12,7 @@ proxmox_bridge_mgmt: "vmbr0"
 proxmox_bridge_services: "vmbr1"
 proxmox_gateway_mgmt: "10.0.0.1"
 proxmox_gateway_services: "10.100.0.1"
-proxmox_lxc_ostemplate: "local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst"
+proxmox_lxc_package: "debian-12-standard"
 
 # --- Listes vides par défaut — à définir dans host_vars de chaque hyperviseur ---
 proxmox_storages: []

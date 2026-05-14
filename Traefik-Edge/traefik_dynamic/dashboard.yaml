@@ -1,0 +1,12 @@
+http:
+  routers:
+    traefik-edge-secure:
+      rule: "Host(`traefik.vps.wiserisk.be`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - authelia@file
+        - security@file
+      service: api@internal
+      tls:
+        certResolver: letsencrypt-ovh

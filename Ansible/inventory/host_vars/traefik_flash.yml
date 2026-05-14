@@ -1,3 +1,5 @@
+gateway: true
+
 # ── WireGuard (client) ─────────────────────────────────────────────────────
 wireguard_role: client
 wireguard_interface: wg0

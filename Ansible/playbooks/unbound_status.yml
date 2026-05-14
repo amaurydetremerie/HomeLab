@@ -1,0 +1,64 @@
+---
+# Déploiement du service de statut Unbound (VPS)
+# Expose un endpoint HTTP local sur :9091 → Traefik route unbound.vps.wiserisk.be
+#
+# Utilisation :
+#   ansible-playbook playbooks/unbound_status.yml
+#   ansible-playbook playbooks/vps.yml --tags unbound_status
+
+- name: VPS — Unbound status service
+  hosts: "{{ target | default('debian_vps') }}"
+  gather_facts: false
+  become: true
+  vars:
+    unbound_status_dir: /opt/unbound-status
+  tasks:
+    - name: Create unbound-status directory
+      ansible.builtin.file:
+        path: "{{ unbound_status_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Deploy status script and HTML template
+      ansible.builtin.copy:
+        src: files/unbound_status/
+        dest: "{{ unbound_status_dir }}/"
+        owner: root
+        group: root
+        mode: '0750'
+      notify: Restart unbound-status
+
+    - name: Deploy systemd unit
+      ansible.builtin.template:
+        src: templates/vps/unbound_status.service.j2
+        dest: /etc/systemd/system/unbound-status.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - Reload systemd
+        - Restart unbound-status
+
+    - name: Ensure dnsutils is installed (dig)
+      ansible.builtin.apt:
+        name: dnsutils
+        state: present
+
+    - name: Enable and start unbound-status
+      ansible.builtin.systemd:
+        name: unbound-status
+        enabled: true
+        state: started
+        daemon_reload: true
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart unbound-status
+      ansible.builtin.systemd:
+        name: unbound-status
+        state: restarted

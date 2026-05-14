@@ -54,18 +54,18 @@ proxmox_storages:
 proxmox_lxc:
   - vmid: 9180                                              # 9 + 087 (10.0.0.180)
     backup: none                                            # Config gérée par Ansible, recréable
-    hostname: unbound_wasp
+    hostname: unbound-wasp
     description: "Unbound DNS"
     cores: 1
     memory: 256
     disk: 2
     unprivileged: true
     netif:
-      net0: "name=eth0,bridge=vmbr0,ip=10.0.0.87/24,gw=10.0.0.1"
+      net0: "name=eth0,bridge=vmbr0,ip=10.0.0.180/24,gw=10.0.0.1"
 
   - vmid: 9181                                              # 9 + 086 (10.0.0.181)
     backup: none                                            # Config gérée par Ansible, recréable
-    hostname: adguard_wasp
+    hostname: adguard-wasp
     description: "AdGuard Home — DNS"
     cores: 1
     memory: 1024
@@ -76,7 +76,7 @@ proxmox_lxc:
       - nesting=1
     startup: "order=1"
     netif:
-      net0: "name=eth0,bridge=vmbr0,ip=10.0.0.88/24,gw=10.0.0.1"
+      net0: "name=eth0,bridge=vmbr0,ip=10.0.0.181/24,gw=10.0.0.1"
 
   - vmid: 1001                                              # 1 + 001 (10.100.0.1)
     backup: none                                            # Config dans Ansible, recréable
@@ -112,7 +112,7 @@ proxmox_lxc:
     hostname: semaphore
     description: "Semaphore — UI Ansible"
     cores: 2
-    memory: 512
+    memory: 1024
     disk: 8
     unprivileged: true
     netif:
@@ -123,7 +123,7 @@ proxmox_lxc:
     hostname: gatus
     description: "Gatus — monitoring uptime interne"
     cores: 1
-    memory: 256
+    memory: 1024
     disk: 4
     unprivileged: true
     netif:

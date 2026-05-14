@@ -17,7 +17,9 @@
 #                            → crée les mount points NFS requis avant le démarrage des LXC
 #   [4]  proxmox           → AUTO  : réseau, template/ISO, LXC, VMs (coques vides), clés SSH LXC
 #                            PAUSE : installer OS sur les VMs + token TrueNAS + clés K3S + MDP PBS
-#   [4b] hardening         → AUTO  : user ansible + wiserisk sur PBS + linux_managed (root SSH désactivé)
+#   [4b] hardening         → AUTO  : user ansible + wiserisk sur PBS + LXC vmbr0 (traefik/unbound/adguard) + VPS
+#   [4c] traefik           → AUTO  : IP forwarding actif → LXC vmbr1 ont accès internet
+#   [4d] hardening         → AUTO  : user ansible + wiserisk sur LXC vmbr1 + K3S (nécessite traefik)
 #   [5]  truenas_pool      → AUTO  : datasets + zvols
 #                            PAUSE*: créer/importer le pool si absent (conditionnel)
 #   [6]  truenas_shares    → AUTO  : shares NFS / SMB / iSCSI (crée le target iSCSI pour PBS)
@@ -96,15 +98,27 @@
           ║  → Appuyer sur Entrée une fois tous les OS installés                ║
           ╚══════════════════════════════════════════════════════════════════════╝
 
-# ── [4b] Hardening PBS + linux_managed ────────────────────────────────────
+# ── [4b] Hardening PBS + LXC vmbr0 + VPS ────────────────────────────────
 # AUTO  : user wiserisk + ansible, SSH key-only, root SSH désactivé, fail2ban
-#         Tourne le plus tôt possible — toutes les VMs/LXC/PBS viennent d'être initialisées
+#         Hosts avec accès internet direct (pas de dépendance traefik)
 #         Pré-requis : clé SSH root copiée sur PBS (ssh-copy-id root@10.0.0.80)
-#                      et sur K3S VMs (ssh-copy-id root@10.100.0.151 + .152)
-#         Après ce play : ansible_user=ansible partout (proxmox_pbs + linux_managed)
+#         Après ce play : ansible_user=ansible sur proxmox_pbs + traefik + unbound + adguard + vps
 - ansible.builtin.include_playbook: hardening.yml
   vars:
-    target: "proxmox_pbs:linux_managed"
+    target: "proxmox_pbs:traefik:unbound:adguard:vps"
+
+# ── [4c] Déploiement Traefik — gateway vmbr0 ↔ vmbr1 ────────────────────
+# AUTO  : active l'IP forwarding sur les LXC traefik → les LXC vmbr1 obtiennent l'accès internet
+- import_playbook: traefik.yml
+
+# ── [4d] Hardening LXC vmbr1 + K3S ──────────────────────────────────────
+# AUTO  : user wiserisk + ansible, SSH key-only, root SSH désactivé, fail2ban
+#         Nécessite traefik actif (IP forwarding) pour apt
+#         Pré-requis : clé SSH root copiée sur K3S VMs (ssh-copy-id root@10.100.0.151 + .152)
+#         Après ce play : ansible_user=ansible sur tous les linux_managed
+- ansible.builtin.include_playbook: hardening.yml
+  vars:
+    target: "linux_managed:!traefik:!unbound:!adguard:!vps"
 
 # ── [5] TrueNAS — pool + datasets + zvols ─────────────────────────────────
 # AUTO  : datasets + zvols (idempotent)

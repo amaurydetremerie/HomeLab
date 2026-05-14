@@ -3,6 +3,29 @@
 # Ce storage existe sur toute installation Proxmox, avec ou sans ZFS.
 # Attention : les rootfs LXC dans host_vars utilisent "local-zfs" — nécessite
 # une installation Proxmox avec ZFS (si non-ZFS : remplacer par "local-lvm").
+- name: Get available LXC templates from Proxmox repository
+  uri:
+    url: "https://{{ proxmox_api_host }}:8006/api2/json/nodes/{{ proxmox_node }}/aplinfo"
+    headers:
+      Authorization: "PVEAPIToken={{ proxmox_api_user }}!{{ proxmox_api_token_id }}={{ proxmox_api_token_secret }}"
+    validate_certs: false
+    method: GET
+  delegate_to: localhost
+  become: false
+  register: _aplinfo
+  when: proxmox_lxc | length > 0
+
+- name: Resolve latest template for {{ proxmox_lxc_package }}
+  set_fact:
+    proxmox_lxc_ostemplate: >-
+      local:vztmpl/{{
+        _aplinfo.json.data
+        | selectattr('package', 'equalto', proxmox_lxc_package)
+        | map(attribute='template')
+        | list | last
+      }}
+  when: proxmox_lxc | length > 0
+
 - name: Download LXC OS template
   community.general.proxmox_template:
     api_host: "{{ proxmox_api_host }}"

@@ -1,0 +1,29 @@
+# Prérequis : AdGuard DNS écoute sur 127.0.0.1:5353 (Traefik possède le :53 public)
+# Clients DNS utilisent dns.wiserisk.be comme serveur DNS
+
+udp:
+  services:
+    adguard-dns-udp:
+      loadbalancer:
+        servers:
+          - address: "127.0.0.1:5353"
+
+  routers:
+    adguard-dns-udp:
+      entrypoints:
+        - dns-udp
+      service: adguard-dns-udp@file
+
+tcp:
+  services:
+    adguard-dns-tcp:
+      loadBalancer:
+        servers:
+          - address: "127.0.0.1:5353"
+
+  routers:
+    adguard-dns-tcp:
+      rule: "HostSNI(`*`)"
+      entrypoints:
+        - dns-tcp
+      service: adguard-dns-tcp@file

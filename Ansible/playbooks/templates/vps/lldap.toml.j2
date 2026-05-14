@@ -1,0 +1,20 @@
+verbose = false
+
+ldap_host = "127.0.0.1"
+ldap_port = 3890
+
+http_host = "127.0.0.1"
+http_port = 17170
+
+database_url = "sqlite:///var/lib/lldap/users.db?mode=rwc"
+
+# Répertoire parent du dossier app/ (UI web)
+assets_path = "/var/lib/lldap/app"
+
+ldap_base_dn = "dc={{ lldap_base_domain }},dc={{ lldap_base_tld }}"
+
+ldap_user_dn = "admin"
+ldap_user_email = "{{ vault_admin_email }}"
+ldap_user_display_name = "Admin"
+
+# LLDAP_JWT_SECRET et LLDAP_LDAP_USER_PASS injectés via override.conf

@@ -1,0 +1,14 @@
+[Unit]
+Description=Authelia — SSO et ForwardAuth
+After=network.target lldap.service
+
+[Service]
+Type=simple
+User=root
+EnvironmentFile=/etc/systemd/system/authelia.service.d/override.conf
+ExecStart={{ authelia_bin }} --config {{ authelia_config_dir }}/configuration.yml
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

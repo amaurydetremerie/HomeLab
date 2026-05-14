@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Unbound</title>
+  <style>
+    body  { font-family: monospace; background: #1e1e2e; color: #cdd6f4;
+            padding: 2em; max-width: 860px; margin: 0 auto }
+    h1    { margin: 0 0 .4em }
+    .badge { display: inline-block; padding: .2em .7em; border-radius: 4px;
+             background: ${badge_color}; color: #fff; font-size: 1em }
+    h2    { color: #89b4fa; border-bottom: 1px solid #313244;
+            padding-bottom: .2em; margin-top: 1.8em }
+    pre   { background: #313244; padding: 1em; border-radius: 4px;
+            overflow: auto; white-space: pre-wrap; word-break: break-word }
+    .ok   { color: #22c55e }
+    .ko   { color: #ef4444 }
+  </style>
+</head>
+<body>
+  <h1>Unbound <span class="badge">${badge_text}</span></h1>
+  <p>Résolveur récursif &mdash; <code>127.0.0.1:5335</code> &mdash; upstream AdGuard</p>
+
+  <h2>Test de résolution</h2>
+  <pre>$$ dig @127.0.0.1 -p 5335 +short wiserisk.be
+<span class="${test_class}">${test_output}</span></pre>
+
+  <h2>Statistiques (unbound-control)</h2>
+  <pre>${stats_output}</pre>
+</body>
+</html>

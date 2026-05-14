@@ -1,0 +1,44 @@
+---
+server:
+  address: 'tcp://127.0.0.1:9092'
+
+log:
+  level: 'warn'
+  file_path: '/var/log/authelia/authelia.log'
+
+authentication_backend:
+  password_reset:
+    disable: true
+  ldap:
+    address: 'ldap://127.0.0.1:3890'
+    implementation: 'lldap'
+    base_dn: 'dc=wiserisk,dc=be'
+    user: 'uid=admin,ou=people,dc=wiserisk,dc=be'
+    # password → AUTHELIA_AUTHENTICATION_BACKEND_LDAP_PASSWORD
+
+access_control:
+  default_policy: 'deny'
+  rules:
+    - domain:
+        - '*.vps.wiserisk.be'
+        - 'traefik-edge.wiserisk.be'
+      policy: 'one_factor'
+
+session:
+  # secret → AUTHELIA_SESSION_SECRET
+  cookies:
+    - name: 'authelia_session'
+      domain: 'wiserisk.be'
+      authelia_url: 'https://auth.vps.wiserisk.be'
+      expiration: '12h'
+      inactivity: '1h'
+
+storage:
+  # encryption_key → AUTHELIA_STORAGE_ENCRYPTION_KEY
+  local:
+    path: '/var/lib/authelia/db.sqlite3'
+
+notifier:
+  disable_startup_check: true
+  filesystem:
+    filename: '/var/log/authelia/notification.log'

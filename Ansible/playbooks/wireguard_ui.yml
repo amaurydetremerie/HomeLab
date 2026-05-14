@@ -1,0 +1,191 @@
+---
+# Déploiement wireguard-ui (VPS)
+# Interface web de gestion des peers WireGuard — lecture/écriture de /etc/wireguard/wg0.conf
+#
+# ⚠️  Ansible reste la source de vérité : en cas de réinstall, wireguard.yml recrée
+#     la config de base, puis wireguard-ui reprend la main pour les peers du quotidien.
+#     Les peers ajoutés via l'UI et non présents dans host_vars/ seront perdus à la réinstall.
+#
+# Prérequis vault :
+#   vault_wireguard_ui_username, vault_wireguard_ui_password, vault_wireguard_ui_session_secret
+#
+# Config : host_vars/debian_vps.yml (wireguard_ui_version, wireguard_ui_port, wireguard_ui_endpoint)
+#
+# Utilisation :
+#   ansible-playbook playbooks/wireguard_ui.yml
+#   ansible-playbook playbooks/vps.yml --tags wireguard_ui
+
+- name: VPS — wireguard-ui
+  hosts: "{{ target | default('debian_vps') }}"
+  gather_facts: false
+  become: true
+  vars:
+    wgui_data_dir: /var/lib/wireguard-ui
+    wgui_bin: /usr/local/bin/wireguard-ui
+  tasks:
+    - name: Create wireguard-ui data directory
+      ansible.builtin.file:
+        path: "{{ wgui_data_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0700'
+
+    - name: Download wireguard-ui archive
+      ansible.builtin.get_url:
+        url: "https://github.com/ngoduykhanh/wireguard-ui/releases/download/v{{ wireguard_ui_version }}/wireguard-ui-v{{ wireguard_ui_version }}-linux-amd64.tar.gz"
+        dest: /tmp/wireguard-ui.tar.gz
+      tags: binary
+      notify: Restart wireguard-ui
+
+    - name: Extract wireguard-ui binary
+      ansible.builtin.unarchive:
+        src: /tmp/wireguard-ui.tar.gz
+        dest: /usr/local/bin/
+        remote_src: true
+        include: [wireguard-ui]
+        owner: root
+        group: root
+        mode: '0750'
+      tags: binary
+      notify: Restart wireguard-ui
+
+    - name: Deploy wireguard-ui systemd unit
+      ansible.builtin.template:
+        src: templates/vps/wireguard_ui.service.j2
+        dest: /etc/systemd/system/wireguard-ui.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - Reload systemd
+        - Restart wireguard-ui
+
+    - name: Create wireguard-ui override directory
+      ansible.builtin.file:
+        path: /etc/systemd/system/wireguard-ui.service.d
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Deploy wireguard-ui secrets override
+      ansible.builtin.template:
+        src: templates/vps/wireguard_ui_override.conf.j2
+        dest: /etc/systemd/system/wireguard-ui.service.d/override.conf
+        owner: root
+        group: root
+        mode: '0600'
+      notify:
+        - Reload systemd
+        - Restart wireguard-ui
+
+    - name: Create wireguard-ui db directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0700'
+      loop:
+        - "{{ wgui_data_dir }}/db/server"
+        - "{{ wgui_data_dir }}/db/clients"
+
+    - name: Seed wireguard-ui server keypair
+      ansible.builtin.copy:
+        content: |
+          {
+            "private_key": "{{ vault_wireguard_vps_private_key }}",
+            "public_key": "{{ vault_wg_vps_pubkey }}"
+          }
+        dest: "{{ wgui_data_dir }}/db/server/keypair.json"
+        owner: root
+        group: root
+        mode: '0600'
+      notify: Restart wireguard-ui
+
+    - name: Seed wireguard-ui server interfaces (PostUp/PostDown NAT)
+      ansible.builtin.template:
+        src: templates/vps/wireguard_ui_interfaces.json.j2
+        dest: "{{ wgui_data_dir }}/db/server/interfaces.json"
+        owner: root
+        group: root
+        mode: '0600'
+        force: true
+      notify: Restart wireguard-ui
+
+    - name: Seed wireguard-ui Ansible-managed peers
+      ansible.builtin.template:
+        src: templates/vps/wireguard_ui_client.json.j2
+        dest: "{{ wgui_data_dir }}/db/clients/{{ item.name }}.json"
+        owner: root
+        group: root
+        mode: '0600'
+        force: false
+      loop: "{{ wireguard_peers | default([]) }}"
+
+    - name: Deploy wg0-watch.path (auto-restart WireGuard quand wg0.conf change)
+      ansible.builtin.copy:
+        content: |
+          [Unit]
+          Description=Watch /etc/wireguard/wg0.conf for changes
+
+          [Path]
+          PathModified=/etc/wireguard/wg0.conf
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/wg0-watch.path
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - Reload systemd
+        - Enable wg0-watch
+
+    - name: Deploy wg0-watch.service
+      ansible.builtin.copy:
+        content: |
+          [Unit]
+          Description=Restart wg-quick@wg0 after config change
+
+          [Service]
+          Type=oneshot
+          ExecStart=/bin/systemctl restart wg-quick@wg0
+        dest: /etc/systemd/system/wg0-watch.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - Reload systemd
+        - Enable wg0-watch
+
+    - name: Enable and start wireguard-ui
+      ansible.builtin.systemd:
+        name: wireguard-ui
+        enabled: true
+        state: started
+        daemon_reload: true
+
+    - name: Enable wg0-watch.path
+      ansible.builtin.systemd:
+        name: wg0-watch.path
+        enabled: true
+        state: started
+        daemon_reload: true
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart wireguard-ui
+      ansible.builtin.systemd:
+        name: wireguard-ui
+        state: restarted
+
+    - name: Enable wg0-watch
+      ansible.builtin.systemd:
+        name: wg0-watch.path
+        enabled: true
+        state: started

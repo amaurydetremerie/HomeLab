@@ -1,0 +1,12 @@
+[Unit]
+Description=Unbound status page
+After=network.target unbound.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 {{ unbound_status_dir }}/server.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -7,14 +7,14 @@ http:
 
   routers:
     gitea:
-      rule: "Host(`gitea.wiserisk.be`) || Host(`gitea.wiserisk.home`)"
+      rule: "Host(`git.wiserisk.be`) || Host(`git.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
     gitea-secure:
-      rule: "Host(`gitea.wiserisk.be`)"
+      rule: "Host(`git.wiserisk.be`)"
       entryPoints:
         - "websecure"
       middlewares:
@@ -25,7 +25,7 @@ http:
         certResolver: letsencrypt-ecdsa
         options: mintls13
     gitea-local-secure:
-      rule: "Host(`gitea.wiserisk.home`)"
+      rule: "Host(`git.wiserisk.home`)"
       entryPoints:
         - "websecure"
       middlewares:

@@ -1,0 +1,124 @@
+---
+# Déploiement Lldap — serveur LDAP léger pour Authelia (et plus tard Gitea, Semaphore…)
+# Interface web locale uniquement : http://127.0.0.1:17170 (accès via SSH tunnel ou WireGuard)
+# Exposé publiquement via Traefik à lldap.vps.wiserisk.be (protégé par Authelia)
+#
+# Premier démarrage : l'utilisateur admin est créé automatiquement avec LLDAP_LDAP_USER_PASS
+#
+# Prérequis vault : vault_lldap_jwt_secret, vault_lldap_admin_password
+# Config : host_vars/debian_vps.yml (lldap_version, lldap_base_domain, lldap_base_tld)
+#
+# Utilisation :
+#   ansible-playbook playbooks/lldap.yml
+#   ansible-playbook playbooks/vps.yml --tags lldap
+
+- name: VPS — Lldap
+  hosts: "{{ target | default('debian_vps') }}"
+  gather_facts: false
+  become: true
+  vars:
+    lldap_data_dir: /var/lib/lldap
+    lldap_config:   /etc/lldap/lldap.toml
+    lldap_bin:      /usr/local/bin/lldap
+  tasks:
+    - name: Create lldap directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0700'
+      loop:
+        - "{{ lldap_data_dir }}"
+        - /etc/lldap
+
+    - name: Download lldap archive
+      ansible.builtin.get_url:
+        url: "https://github.com/lldap/lldap/releases/download/v{{ lldap_version }}/amd64-lldap.tar.gz"
+        dest: /tmp/lldap.tar.gz
+      tags: binary
+      notify: Restart lldap
+
+    - name: Extract lldap archive
+      ansible.builtin.unarchive:
+        src: /tmp/lldap.tar.gz
+        dest: /tmp/
+        remote_src: true
+      tags: binary
+
+    - name: Install lldap binary
+      ansible.builtin.copy:
+        src: /tmp/amd64-lldap/lldap
+        dest: "{{ lldap_bin }}"
+        remote_src: true
+        owner: root
+        group: root
+        mode: '0750'
+      tags: binary
+      notify: Restart lldap
+
+    - name: Install lldap web app
+      ansible.builtin.copy:
+        src: /tmp/amd64-lldap/app/
+        dest: "{{ lldap_data_dir }}/app/"
+        remote_src: true
+        owner: root
+        group: root
+      tags: binary
+      notify: Restart lldap
+
+    - name: Deploy lldap config
+      ansible.builtin.template:
+        src: templates/vps/lldap.toml.j2
+        dest: "{{ lldap_config }}"
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart lldap
+
+    - name: Deploy lldap systemd unit
+      ansible.builtin.template:
+        src: templates/vps/lldap.service.j2
+        dest: /etc/systemd/system/lldap.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - Reload systemd
+        - Restart lldap
+
+    - name: Create lldap override directory
+      ansible.builtin.file:
+        path: /etc/systemd/system/lldap.service.d
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Deploy lldap secrets override
+      ansible.builtin.template:
+        src: templates/vps/lldap_override.conf.j2
+        dest: /etc/systemd/system/lldap.service.d/override.conf
+        owner: root
+        group: root
+        mode: '0600'
+      notify:
+        - Reload systemd
+        - Restart lldap
+
+    - name: Enable and start lldap
+      ansible.builtin.systemd:
+        name: lldap
+        enabled: true
+        state: started
+        daemon_reload: true
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart lldap
+      ansible.builtin.systemd:
+        name: lldap
+        state: restarted

@@ -1,0 +1,19 @@
+http:
+  services:
+    gatus-vps:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8080"
+
+  routers:
+    gatus-vps-secure:
+      rule: "Host(`gatus.vps.wiserisk.be`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - authelia@file
+        - security@file
+        - compression@file
+      service: gatus-vps@file
+      tls:
+        certResolver: letsencrypt-ovh

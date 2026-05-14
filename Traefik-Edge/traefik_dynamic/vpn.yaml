@@ -1,0 +1,15 @@
+# Prérequis : wireguard_port = 51821 dans debian_vps.yml (Traefik possède le :51820 public)
+# Les peers continuent de se connecter sur vpn.wiserisk.be:51820
+
+udp:
+  services:
+    wireguard:
+      loadbalancer:
+        servers:
+          - address: "127.0.0.1:51821"
+
+  routers:
+    wireguard:
+      entrypoints:
+        - vpn
+      service: wireguard@file

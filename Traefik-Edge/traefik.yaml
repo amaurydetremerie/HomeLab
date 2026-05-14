@@ -1,0 +1,47 @@
+global:
+  checkNewVersion: true
+  sendAnonymousUsage: false
+
+api:
+  dashboard: true
+
+log:
+  filePath: /var/log/traefik/traefik.log
+  level: ERROR
+
+accessLog:
+  filePath: /var/log/traefik/access.log
+
+providers:
+  file:
+    directory: /etc/Homelab/Traefik-Edge/traefik_dynamic
+    watch: true
+
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+  graylog:
+    address: ":12201/udp"
+  # WireGuard : Traefik prend le :51820, wg écoute sur 127.0.0.1:51821
+  vpn:
+    address: ":51820/udp"
+  # DNS : Traefik prend le :53, AdGuard DNS écoute sur 127.0.0.1:5353
+  dns-udp:
+    address: ":53/udp"
+  dns-tcp:
+    address: ":53"
+
+# Email injecté via TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_OVH_ACME_EMAIL dans l'override systemd
+# Credentials OVH injectés via OVH_ENDPOINT, OVH_APPLICATION_KEY, OVH_APPLICATION_SECRET, OVH_CONSUMER_KEY
+certificatesResolvers:
+  letsencrypt-ovh:
+    acme:
+      storage: /etc/traefik/acme.json
+      keyType: EC384
+      dnsChallenge:
+        provider: ovh
+        resolvers:
+          - "1.1.1.1:53"
+          - "8.8.8.8:53"

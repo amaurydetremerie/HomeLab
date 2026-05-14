@@ -1,0 +1,109 @@
+---
+# Déploiement Authelia — SSO + ForwardAuth pour Traefik Edge
+# Protège toutes les URLs *.vps.wiserisk.be et traefik-edge.wiserisk.be
+# Backend LDAP : Lldap (doit être déployé en premier)
+#
+# Prérequis vault : vault_authelia_session_secret, vault_authelia_storage_key,
+#                   vault_lldap_admin_password
+# Config : host_vars/debian_vps.yml (authelia_version)
+#
+# Utilisation :
+#   ansible-playbook playbooks/authelia.yml
+#   ansible-playbook playbooks/vps.yml --tags authelia
+
+- name: VPS — Authelia
+  hosts: "{{ target | default('debian_vps') }}"
+  gather_facts: false
+  become: true
+  vars:
+    authelia_config_dir: /etc/authelia
+    authelia_data_dir:   /var/lib/authelia
+    authelia_log_dir:    /var/log/authelia
+    authelia_bin:        /usr/local/bin/authelia
+  tasks:
+    - name: Create authelia directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0700'
+      loop:
+        - "{{ authelia_config_dir }}"
+        - "{{ authelia_data_dir }}"
+        - "{{ authelia_log_dir }}"
+
+    - name: Download authelia archive
+      ansible.builtin.get_url:
+        url: "https://github.com/authelia/authelia/releases/download/v{{ authelia_version }}/authelia-v{{ authelia_version }}-linux-amd64.tar.gz"
+        dest: /tmp/authelia.tar.gz
+      tags: binary
+      notify: Restart authelia
+
+    - name: Extract authelia binary
+      ansible.builtin.unarchive:
+        src: /tmp/authelia.tar.gz
+        dest: /usr/local/bin/
+        remote_src: true
+        include: [authelia]
+        owner: root
+        group: root
+        mode: '0750'
+      tags: binary
+      notify: Restart authelia
+
+    - name: Deploy authelia configuration
+      ansible.builtin.copy:
+        src: files/authelia/configuration.yml
+        dest: "{{ authelia_config_dir }}/configuration.yml"
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart authelia
+
+    - name: Deploy authelia systemd unit
+      ansible.builtin.template:
+        src: templates/vps/authelia.service.j2
+        dest: /etc/systemd/system/authelia.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - Reload systemd
+        - Restart authelia
+
+    - name: Create authelia override directory
+      ansible.builtin.file:
+        path: /etc/systemd/system/authelia.service.d
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Deploy authelia secrets override
+      ansible.builtin.template:
+        src: templates/vps/authelia_override.conf.j2
+        dest: /etc/systemd/system/authelia.service.d/override.conf
+        owner: root
+        group: root
+        mode: '0600'
+      notify:
+        - Reload systemd
+        - Restart authelia
+
+    - name: Enable and start authelia
+      ansible.builtin.systemd:
+        name: authelia
+        enabled: true
+        state: started
+        daemon_reload: true
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart authelia
+      ansible.builtin.systemd:
+        name: authelia
+        state: restarted

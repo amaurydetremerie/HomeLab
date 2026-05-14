@@ -2,11 +2,15 @@
 # Bootstrap VPS — stack complète idempotente
 #
 # Services déployés (dans l'ordre de dépendances) :
-#   1. WireGuard  — serveur VPN
-#   2. Unbound    — résolveur récursif sur 127.0.0.1:5335
-#   3. AdGuard    — DNS filtré (upstream = Unbound), admin sur :3000
-#   4. Traefik    — reverse proxy HTTPS
-#   5. Gatus      — monitoring uptime
+#   1. WireGuard      — serveur VPN
+#   2. Unbound        — résolveur récursif sur 127.0.0.1:5335
+#   3. AdGuard        — DNS filtré (upstream = Unbound), admin sur :3001
+#   4. Traefik Edge   — reverse proxy HTTPS + wildcard OVH
+#   5. Gatus          — monitoring uptime
+#   6. Unbound status — page de statut sur 127.0.0.1:9091
+#   7. WireGuard UI   — gestion peers WireGuard sur 127.0.0.1:5000
+#   8. Lldap          — serveur LDAP sur 127.0.0.1:3890
+#   9. Authelia       — SSO ForwardAuth sur 127.0.0.1:9092 (dépend de Lldap)
 #
 # Prérequis :
 #   - hardening appliqué en amont (site.yml ou hardening.yml --limit vps)
@@ -37,10 +41,8 @@
     target: vps
   tags: adguard
 
-- name: VPS — Traefik
-  ansible.builtin.import_playbook: traefik.yml
-  vars:
-    target: vps
+- name: VPS — Traefik Edge
+  ansible.builtin.import_playbook: traefik_edge.yml
   tags: traefik
 
 - name: VPS — Gatus
@@ -48,3 +50,27 @@
   vars:
     target: vps
   tags: gatus
+
+- name: VPS — Unbound status
+  ansible.builtin.import_playbook: unbound_status.yml
+  vars:
+    target: vps
+  tags: unbound_status
+
+- name: VPS — WireGuard UI
+  ansible.builtin.import_playbook: wireguard_ui.yml
+  vars:
+    target: vps
+  tags: wireguard_ui
+
+- name: VPS — Lldap
+  ansible.builtin.import_playbook: lldap.yml
+  vars:
+    target: vps
+  tags: lldap
+
+- name: VPS — Authelia
+  ansible.builtin.import_playbook: authelia.yml
+  vars:
+    target: vps
+  tags: authelia

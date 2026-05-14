@@ -1,0 +1,31 @@
+# Port 80 : redirection globale HTTPS (le VPS Traefik Edge gère tout le TLS)
+# Port 443 : TLS terminé ici avec le wildcard OVH, forward HTTP vers traefik_wasp
+#
+# Note : traefik_wasp doit être mis à jour pour ne servir qu'en HTTP (port 80),
+# sans redirect-to-https ni ACME — le TLS est désormais entièrement géré par le VPS.
+# traefik_flash pareil quand il sera ajouté.
+
+http:
+  services:
+    traefik-wasp:
+      loadBalancer:
+        servers:
+          - url: "http://10.8.0.2"
+
+  routers:
+    redirect-all-http:
+      rule: "PathPrefix(`/`)"
+      entryPoints:
+        - web
+      middlewares:
+        - redirect-to-https@file
+      service: noop@internal
+
+    catchall-secure:
+      rule: "HostRegexp(`.+`)"
+      entryPoints:
+        - websecure
+      service: traefik-wasp@file
+      priority: 1
+      tls:
+        certResolver: letsencrypt-ovh

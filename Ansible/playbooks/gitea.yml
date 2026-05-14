@@ -88,7 +88,7 @@
         dest: /etc/gitea/app.ini
         owner: root
         group: git
-        mode: '0640'
+        mode: '0660'
       notify: Restart gitea
 
     - name: Deploy Gitea systemd service

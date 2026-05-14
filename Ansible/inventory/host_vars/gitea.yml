@@ -7,8 +7,8 @@
 gitea_version: "1.26.1"
 gitea_download_url: "https://dl.gitea.io/gitea/{{ gitea_version }}/gitea-{{ gitea_version }}-linux-amd64"
 
-gitea_domain: "gitea.wiserisk.home"
-gitea_public_domain: "gitea.wiserisk.be"
+gitea_domain: "git.wiserisk.be"
+gitea_public_domain: "git.wiserisk.be"
 gitea_port: 3000
 gitea_ssh_port: 2222
 

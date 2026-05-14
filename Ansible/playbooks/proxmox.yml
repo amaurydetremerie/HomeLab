@@ -13,7 +13,17 @@
         name: proxmox_provision
         tasks_from: network.yml
 
-# 2. Provision template / ISO / LXC / VM (API REST) — storage géré par proxmox_storage.yml
+# 2. Mise à jour de la liste des templates LXC (SSH)
+- name: Update Proxmox template list
+  hosts: "{{ target | default('proxmox_hypervisors') }}"
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Update Proxmox template list
+      command: pveam update
+      changed_when: false
+
+# 3. Provision template / ISO / LXC / VM (API REST) — storage géré par proxmox_storage.yml
 - name: Provision Proxmox infrastructure
   hosts: "{{ target | default('proxmox_hypervisors') }}"
   gather_facts: false
@@ -26,7 +36,7 @@
   roles:
     - proxmox_provision
 
-# 3. Directives LXC brutes (SSH — après création des containers)
+# 4. Directives LXC brutes (SSH — après création des containers)
 - name: Configure raw LXC directives on Proxmox hypervisors
   hosts: "{{ target | default('proxmox_hypervisors') }}"
   gather_facts: false
@@ -36,7 +46,7 @@
         name: proxmox_provision
         tasks_from: lxc_raw.yml
 
-# 4. Injection clé SSH dans les LXC (SSH sur Proxmox → pct exec)
+# 5. Injection clé SSH dans les LXC (SSH sur Proxmox → pct exec)
 # Utilise ansible_operator_ssh_public_key si défini,
 # sinon détecte automatiquement ~/.ssh/id_ed25519.pub ou id_rsa.pub
 - name: Inject SSH key into LXC containers
