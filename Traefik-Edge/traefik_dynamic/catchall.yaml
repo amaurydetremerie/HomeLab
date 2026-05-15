@@ -21,14 +21,20 @@ http:
         - redirect-to-https@file
       service: noop@internal
 
-    # Services incompatibles avec Authelia (apps mobiles, API, K3S à gérer plus tard)
+    # Services incompatibles avec Authelia (apps mobiles, API)
+    # K3S : seuls les services avec leur propre auth ou usage API externe bypasse Authelia
     bypass-auth:
       rule: >-
         Host(`ha.wiserisk.be`) ||
         Host(`jellyfin.wiserisk.be`) ||
         Host(`ollama.wiserisk.be`) ||
         Host(`k3s.wiserisk.be`) ||
-        HostRegexp(`.*\.k3s\.wiserisk\.be`)
+        Host(`registry.k3s.wiserisk.be`) ||
+        Host(`flaresolverr.k3s.wiserisk.be`) ||
+        Host(`graylog.k3s.wiserisk.be`) ||
+        Host(`librespeed.k3s.wiserisk.be`) ||
+        Host(`nextcloud.k3s.wiserisk.be`) ||
+        Host(`sonarqube.k3s.wiserisk.be`)
       entryPoints:
         - websecure
       service: traefik-internal@file
