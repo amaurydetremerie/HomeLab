@@ -4,10 +4,20 @@ metadata:
   name: hlabmonitor-http
   namespace: hlabmonitor
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
     - host: hlabmonitor.k3s.wiserisk.be
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: hlabmonitor-svc
+                port:
+                  number: 8080
+    - host: hlabmonitor.k3s.wiserisk.home
       http:
         paths:
           - path: /

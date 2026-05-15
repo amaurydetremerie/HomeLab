@@ -263,6 +263,52 @@ créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fo
   Graylog stack (Graylog + Elasticsearch + MongoDB) est déployé via ArgoCD.
   Configurer les sources : syslog des LXC/VMs, logs K3S, logs Proxmox → Graylog inputs.
 
+- [ ] **Migration `Ingress` → `IngressRoute` CRD (Traefik)**
+  Tous les manifests K3S utilisent encore le `Ingress` standard Kubernetes. Migrer vers l'`IngressRoute` CRD Traefik pour :
+  - Combiner `.be` et `.home` en une seule règle : `Host('x.k3s.wiserisk.be') || Host('x.k3s.wiserisk.home')`
+  - Déclarer `web` et `websecure` sur la même ressource sans duplication du bloc `host`
+  - Référencer les middlewares directement dans le manifest sans annotations
+  ```yaml
+  apiVersion: traefik.containo.us/v1alpha1
+  kind: IngressRoute
+  spec:
+    entryPoints: [web, websecure]
+    routes:
+      - match: Host(`x.k3s.wiserisk.be`) || Host(`x.k3s.wiserisk.home`)
+        services:
+          - name: x-svc
+            port: 8080
+  ```
+
+- [ ] **Routes TCP/UDP via IngressRoute pour Graylog**
+  Graylog expose des inputs UDP/TCP (GELF, syslog). L'`IngressRoute` Traefik supporte nativement les routes TCP et UDP — utiliser `IngressRouteTCP` / `IngressRouteUDP` dans K3S pour exposer les ports Graylog sans passer par un `NodePort` :
+  ```yaml
+  apiVersion: traefik.containo.us/v1alpha1
+  kind: IngressRouteUDP
+  metadata:
+    name: graylog-gelf-udp
+    namespace: graylog-stack
+  spec:
+    entryPoints:
+      - graylog-udp   # entrypoint UDP dédié à définir dans la config K3S Traefik
+    routes:
+      - services:
+          - name: graylog-svc
+            port: 12201
+  ```
+  Nécessite d'ajouter un entrypoint UDP dans `traefik-config.yaml.j2` (ex: `--entryPoints.graylog-udp.address=:12201/udp`).
+  **État actuel (`graylog/service.yaml`) :** deux services séparés :
+  - `graylog-svc` (ClusterIP) — port 9000 (web) + port 12201 TCP (GELF TCP)
+  - `graylog-udp-svc` (LoadBalancer) — port 12201 UDP, `externalTrafficPolicy: Local`
+
+  Le `LoadBalancer` K3S (klipper-lb) expose le port UDP sur les IPs des noeuds (`10.100.0.151:12201` + `10.100.0.152:12201`), ce qui explique pourquoi le Traefik interne pointe vers les deux noeuds directement.
+
+  **Après migration :**
+  - Supprimer `graylog-udp-svc` (LoadBalancer) — remplacé par `IngressRouteUDP` K3S Traefik
+  - Ajouter `IngressRouteTCP` pour GELF TCP 12201 (actuellement non routé depuis l'extérieur)
+  - `graylog-svc` reste ClusterIP, K3S Traefik route vers lui
+  - Le Traefik interne (`k3s.yml`) garde son entrypoint `graylog` mais pointe vers K3S Traefik (qui devient le seul point d'entrée UDP/TCP pour Graylog)
+
 - [ ] **Cloud-init pour K3S master/worker** *(optionnel — élimine la pause OS install)*
   Créer un template Debian cloud image sur Flash, modifier les VMs K3S dans host_vars pour cloner depuis template au lieu de booter sur ISO
 

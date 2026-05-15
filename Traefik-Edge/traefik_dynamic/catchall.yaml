@@ -28,7 +28,7 @@ http:
         Host(`jellyfin.wiserisk.be`) ||
         Host(`ollama.wiserisk.be`) ||
         Host(`k3s.wiserisk.be`) ||
-        HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.k3s.wiserisk.be`)
+        HostRegexp(`.*\.k3s\.wiserisk\.be`)
       entryPoints:
         - websecure
       service: traefik-internal@file

@@ -4,10 +4,20 @@ metadata:
   name: flaresolverr-http
   namespace: flaresolverr
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
     - host: flaresolverr.k3s.wiserisk.be
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: flaresolverr-svc
+                port:
+                  number: 8191
+    - host: flaresolverr.k3s.wiserisk.home
       http:
         paths:
           - path: /

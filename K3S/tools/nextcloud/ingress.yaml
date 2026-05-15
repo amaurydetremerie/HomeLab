@@ -4,12 +4,21 @@ metadata:
   name: nextcloud-http
   namespace: nextcloud
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.entrypoints: web
     traefik.ingress.kubernetes.io/router.middlewares: nextcloud-security-headers@kubernetescrd
 spec:
   rules:
     - host: nextcloud.k3s.wiserisk.be
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nextcloud-svc
+                port:
+                  number: 80
+    - host: nextcloud.k3s.wiserisk.home
       http:
         paths:
           - path: /
