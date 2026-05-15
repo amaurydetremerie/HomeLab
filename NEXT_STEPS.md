@@ -213,6 +213,35 @@ créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fo
   `playbooks/qbittorrent.yml` — qbittorrent-nox, user dédié, service sur port 8090.
   LXC 1105 (10.100.0.105).
 
+- [ ] **qBittorrent — trafic torrent via VPS (privacy)**
+  Objectif : l'IP du VPS apparaît dans les swarms, pas l'IP home. FAI ne voit pas les peers/trackers/contenu.
+
+  **Option A — WireGuard sur le LXC (recommandé, Ansible prêt)**
+  Config déjà en place dans `host_vars/qbittorrent.yml` (`Table = off`, source-based routing depuis `10.8.0.6`).
+  Peer `qbittorrent` déjà ajouté dans `host_vars/debian_vps.yml` (`10.8.0.6/32`).
+  Déploiement :
+  ```bash
+  # 1. Générer les clés sur le LXC qBittorrent
+  wg genkey | tee /etc/wireguard/private.key | wg pubkey
+  # Clé privée → vault_wireguard_qbittorrent_private_key
+  # Clé publique → vault_wg_qbittorrent_pubkey
+
+  # 2. Ajouter les deux clés dans le vault, puis :
+  ansible-playbook playbooks/wireguard.yml -e target=qbittorrent
+
+  # 3. Redéployer le VPS pour qu'il connaisse le nouveau peer
+  ansible-playbook playbooks/vps.yml --tags wireguard
+  ```
+  Étape manuelle finale : qBittorrent → Settings → Connection → **"Optional IP address to bind to"** → `10.8.0.6`.
+  Vérification : `curl --interface wg0 https://ifconfig.me` doit retourner l'IP du VPS.
+
+  **Option B — SOCKS5 via microsocks (plus simple, protection partielle)**
+  L'IP du VPS apparaît dans les swarms → copyright trolls ne voient pas l'IP home. ISP voit du trafic SOCKS5 non chiffré vers le VPS.
+  À faire côté VPS : ajouter `microsocks` au playbook VPS avec auth user/password + ouvrir le port UFW.
+  À faire côté qBittorrent : Settings → Connection → Proxy Server (SOCKS5, VPS:port, user/password).
+  **Impératif :** cocher **"Disable connections not supported by proxies"** → désactive DHT/UDP qui leakerait l'IP home.
+  ⚠️ SOCKS5 non chiffré : l'ISP peut lire les headers SOCKS5 (IPs destination). Ne protège pas contre un ISP actif.
+
 - [x] **Seedbox** *(suite \*arr)*
   `playbooks/seedbox.yml` — installe les services listés dans `host_vars/seedbox.yml` (`seedbox_services`).
   Actuellement : Radarr v6.1.1 + Sonarr v4.0.17. Extensible sans modifier le playbook.
