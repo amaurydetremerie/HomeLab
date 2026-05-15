@@ -26,6 +26,14 @@ http:
         - "compression@file"
       service: "gatus-vps@file"
       tls: {}
+    gatus:
+      rule: "Host(`gatus.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "gatus-local@file"
     gatus-local:
       rule: "Host(`gatus.local.wiserisk.home`)"
       entryPoints:
