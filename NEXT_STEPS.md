@@ -11,13 +11,15 @@ Ces problèmes empêchent ou faussent l'exécution des playbooks. À corriger av
 ### ~~B1 — Syntax error `hosts.yml` : groupe lxc~~ ✅ corrigé
 `children:` était imbriqué sous `hosts:` pour le groupe `lxc`. Restructuré avec la syntaxe correcte.
 
-### ~~B2 — host_vars adguard/unbound ne correspondent à aucun host~~ ✅ corrigé
-`adguard.yml` et `unbound.yml` supprimés. Remplacés par 4 fichiers avec les bonnes IPs :
-- `adguard_wasp.yml` — upstream `10.0.0.87`, rewrite → `10.0.0.84` (traefik_wasp)
-- `adguard_flash.yml` — upstream `10.0.0.89`, rewrite → `10.0.0.85` (traefik_flash)
-- `unbound_wasp.yml` / `unbound_flash.yml` — UFW port 53
+### ~~B2 — host_vars adguard/unbound ne correspondent à aucun host~~ ✅ corrigé (Wasp) / ⚠️ Flash en attente
+`adguard.yml` et `unbound.yml` supprimés. Remplacés par des fichiers avec les bonnes IPs :
+- `adguard_wasp.yml` ✅ — upstream `10.0.0.180` (unbound_wasp), rewrite → `10.0.0.182` (traefik_wasp)
+- `unbound_wasp.yml` ✅ — UFW port 53
+- `adguard_flash.yml` ❌ manquant — upstream `10.0.0.89` (unbound_flash), rewrite → `10.0.0.85` (traefik_flash)
+- `unbound_flash.yml` ✅ créé — UFW port 53 (déploiement Flash en attente)
 
-Les playbooks ciblent désormais le groupe (`adguard` / `unbound`) qui contient les deux instances grâce au fix B1.
+Les LXC Flash (vmid 9088/9089) sont à ajouter dans `host_vars/proxmox_flash.yml` avant déploiement.
+Les playbooks ciblent le groupe (`adguard` / `unbound`) qui contient les deux instances grâce au fix B1.
 
 ### ~~B3 — Fichiers stagés mais supprimés du disque~~ ✅ corrigé
 Index nettoyé (`git restore --staged`). Les playbooks par nœud (`proxmox_flash.yml`, `proxmox_wasp.yml`) et les group_vars redondants (`lxc`, `vms`, `k3s_masters`, `k3s_workers`) ont été fusionnés dans `proxmox.yml` (avec `-e target=`) et dans `linux_managed/vars.yml`.
@@ -30,6 +32,21 @@ Fichier supprimé.
 
 ### ~~B6 — Gatus absent de l'inventaire Wasp~~ ✅ corrigé
 LXC `gatus` ajouté dans `hosts.yml` (10.100.0.102), `host_vars/proxmox_wasp.yml` (vmid 1102) et `host_vars/gatus.yml` créé. Rôle : monitoring de secours (K3S down), pas monitoring interne.
+
+### B8 — Repos Proxmox enterprise désactivés trop tard dans `hardening.yml`
+`roles/hardening/tasks/main.yml` importe `users.yml` en premier. `users.yml` fait `apt install sudo` (ligne 47) avant que `packages.yml` désactive les repos enterprise. Sur un Proxmox fresh install, ces repos bloquent apt (pas d'abonnement) → échec au premier `apt`. Uniquement sur les hosts proxmox.
+
+**Fix à implémenter :** extraire les deux tâches de désactivation des repos de `packages.yml` dans un nouveau fichier `roles/hardening/tasks/proxmox_repos.yml`, et l'importer en tête de `main.yml` (avant `users.yml`).
+
+**Workaround actuel :** désactiver manuellement les repos enterprise avant le premier run hardening sur chaque Proxmox.
+
+### B9 — `host_vars/traefik.yml` fichier orphelin
+Le groupe `traefik` dans `hosts.yml` ne contient plus de host nommé `traefik` (remplacé par `traefik_wasp` et `traefik_flash`). Le fichier `host_vars/traefik.yml` n'est donc chargé par aucun host et peut être supprimé sans impact.
+
+### B10 — `host_vars/traefik_flash.yml` incomplet
+Manque les variables requises par `playbooks/traefik.yml` pour Flash :
+`traefik_internal_ip`, `hardening_level`, `traefik_acme_email`, `traefik_download_url`, `hardening_ufw_forward_policy`, `hardening_ufw_rules`.
+À compléter (en miroir de `traefik_wasp.yml`) avant le premier déploiement sur Flash.
 
 ### ~~B7 — `hardening.yml` : première exécution impossible depuis `site.yml`~~ ✅ corrigé
 
@@ -57,6 +74,7 @@ créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fo
 
 - [x] **Interfaces réseau Proxmox**
   Template `interfaces.j2` nettoyé (doublons supprimés). Interface Wasp corrigée : `enp1s0f0` (était `eno1`). Flash : bond0 sur eno1+eno2, vmbr1 VLAN 100 sur bond0.100.
+  ⚠️ **Divergence à vérifier** : `host_vars/proxmox_wasp.yml` a `enp1s0` mais la mémoire et ce doc disent `enp1s0f0`. Confirmer avec `ip link show` sur Wasp avant le prochain run.
 
 - [x] **GPU passthrough Flash**
   Directives `lxc_raw` décommentées et corrigées dans `host_vars/proxmox_flash.yml` :
@@ -105,11 +123,8 @@ créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fo
 
 - [x] **Mot de passe user wiserisk** — `vault_linux_user_password` renseigné dans le vault.
 
-- [ ] **Endpoint WireGuard VPS** — à remplir dans `host_vars/traefik_flash.yml` et `traefik_wasp.yml` :
-  ```yaml
-  endpoint: "x.x.x.x:51820"   # remplacer vps.example.com
-  ```
-  Bloquera `wireguard.yml` (step [10] → `install_services.yml --tags wireguard`).
+- [x] **Endpoint WireGuard VPS** — `vps_wg_endpoint: "vpn.wiserisk.be:51820"` défini dans `group_vars/all/vars.yml`.
+  `traefik_wasp.yml` et `traefik_flash.yml` référencent `{{ vps_wg_endpoint }}` — aucune valeur en dur à maintenir par host.
 
 - [x] **Remplir le vault** — Variables restantes à renseigner :
   - ❌ `vault_proxmox_flash_api_token_secret`, `vault_proxmox_wasp_api_token_secret` (généré par bootstrap)
@@ -136,8 +151,8 @@ créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fo
 
 - [x] **AdGuard** *(DNS filtrage pub)*
   `playbooks/adguard.yml` — configure via API AdGuard : upstream = Unbound, rewrite `*.wiserisk.home → traefik`.
-  - Wasp : upstream `10.0.0.87`, rewrite vers `10.0.0.84` (traefik_wasp)
-  - Flash : upstream `10.0.0.89`, rewrite vers `10.0.0.85` (traefik_flash)
+  - Wasp : upstream `10.0.0.180` (unbound_wasp), rewrite vers `10.0.0.182` (traefik_wasp) ✅ déployé
+  - Flash : upstream `10.0.0.89` (unbound_flash), rewrite vers `10.0.0.85` (traefik_flash) ❌ en attente
   Secrets : `vault_adguard_user`, `vault_adguard_password`.
 
 - [x] **Traefik** *(reverse proxy — interne)*
@@ -227,20 +242,60 @@ créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fo
   Clés WireGuard dans vault : `vault_wireguard_<host>_private_key` + `vault_wg_<host>_pubkey`.
   Exemple client dans `host_vars/wireguard_client_example.yml`.
 
-- [ ] **Mise en place VPS**
-  1. Remplacer `x.x.x.x` dans `inventory/hosts.yml` par l'IP réelle du VPS.
-  2. Renseigner `ansible_host` dans `host_vars/debian_vps.yml`.
-  3. Générer clés WireGuard pour VPS et chaque client (traefik_wasp, traefik_flash, laptop, etc.) :
-     ```bash
-     wg genkey | tee priv | wg pubkey
-     ```
-     Remplir le vault : `vault_wireguard_<host>_private_key` + `vault_wg_<host>_pubkey`.
-  4. Déployer : `hardening.yml --limit vps` puis `vps.yml`.
-  5. Après déploiement : configurer les clients WireGuard (Proxmox, LXC Traefik) via `wireguard.yml`.
+- [x] ~~**Mise en place VPS**~~ ✅ déployé (VPS + traefik_wasp fonctionnels)
+
+  **Ordre de déploiement testé et validé :**
+  ```bash
+  # Pré-requis : ssh-copy-id root sur les deux machines
+  ssh-copy-id -i ~/.ssh/ansibleWiseRiskHomelab.pub root@77.90.52.180   # VPS
+  ssh-copy-id -i ~/.ssh/ansibleWiseRiskHomelab.pub root@10.0.0.82      # Wasp
+
+  # Dans le dossier Ansible/
+
+  # VPS
+  ansible-playbook playbooks/hardening.yml -e target=debian_vps
+  ansible-playbook playbooks/hardening.yml -e target=debian_vps -e hardening_connect_as=ansible
+  ansible-playbook playbooks/vps.yml
+
+  # Proxmox Wasp
+  ansible-playbook playbooks/hardening.yml -e target=proxmox_wasp
+  ansible-playbook playbooks/hardening.yml -e target=proxmox_wasp -e hardening_connect_as=ansible
+  ansible-playbook playbooks/proxmox_bootstrap.yml --limit proxmox_wasp
+  ansible-playbook playbooks/proxmox_storage.yml --limit proxmox_wasp
+  ansible-playbook playbooks/proxmox.yml -e target=proxmox_wasp
+
+  # Traefik Wasp
+  ansible-playbook playbooks/hardening.yml -e target=traefik --limit traefik_wasp
+  ansible-playbook playbooks/hardening.yml -e target=traefik --limit traefik_wasp -e hardening_connect_as=ansible
+  ansible-playbook playbooks/wireguard.yml -e target=traefik --limit traefik_wasp
+  ansible-playbook playbooks/traefik.yml --limit traefik_wasp
+
+  # LXC Wasp (hardening phase 1 root → ansible, puis services)
+  ansible-playbook playbooks/hardening.yml -e target=unbound --limit unbound_wasp
+  ansible-playbook playbooks/hardening.yml -e target=adguard --limit adguard_wasp
+  ansible-playbook playbooks/hardening.yml -e target=semaphore
+  ansible-playbook playbooks/hardening.yml -e target=gitea
+  ansible-playbook playbooks/hardening.yml -e target=gatus
+  ansible-playbook playbooks/hardening.yml -e target=unbound --limit unbound_wasp -e hardening_connect_as=ansible
+  ansible-playbook playbooks/hardening.yml -e target=adguard --limit adguard_wasp -e hardening_connect_as=ansible
+  ansible-playbook playbooks/hardening.yml -e target=semaphore -e hardening_connect_as=ansible
+  ansible-playbook playbooks/hardening.yml -e target=gitea -e hardening_connect_as=ansible
+  ansible-playbook playbooks/hardening.yml -e target=gatus -e hardening_connect_as=ansible
+  ansible-playbook playbooks/unbound.yml --limit unbound_wasp
+  ansible-playbook playbooks/adguard.yml --limit adguard_wasp
+  ansible-playbook playbooks/semaphore.yml
+  ansible-playbook playbooks/gitea.yml
+  ansible-playbook playbooks/gatus.yml --limit gatus
+  ```
 
 ---
 
 ## Bloc 6 — Améliorations transverses
+
+- [ ] **Migration modules `community.proxmox`**
+  Les modules `community.general.proxmox*` sont dépréciés → déplacés dans `community.proxmox` (supprimé en v15.0.0).
+  Remplacer dans tous les playbooks : `community.general.proxmox` → `community.proxmox.proxmox`, idem pour `proxmox_kvm` et `proxmox_template`.
+  Ajouter `community.proxmox` dans `requirements.yml`.
 
 - [ ] **Automatisation token TrueNAS**
   Ajouter dans `proxmox_bootstrap.yml` ou un playbook dédié la création du token API TrueNAS via API admin (POST `/api/v2.0/api_key`), pour éviter l'étape manuelle pendant la pause OS install
