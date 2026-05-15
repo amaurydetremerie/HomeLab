@@ -1,0 +1,32 @@
+---
+# Seedbox (*arr suite) — LXC 1201 (10.100.0.201) sur Flash
+# NFS SeedBox : /mnt/pve/SeedBox → /media/seedbox
+#
+# AVANT de lancer ce playbook : s'assurer que Swizzin est supprimé
+# ou qu'il n'y a pas de conflit de ports avec les services ci-dessous.
+
+# Chaque service de la liste est installé automatiquement.
+# Pour ajouter un service (*arr ou autre), dupliquer un bloc ci-dessous.
+# Renseigner download_url avant déploiement (chercher sur les GitHub releases).
+seedbox_services:
+  - name: radarr
+    description: "Radarr — gestion des films"
+    binary: Radarr
+    args: -nobrowser -data=/var/lib/radarr
+    port: 7878
+    download_url: "https://github.com/Radarr/Radarr/releases/download/v6.1.1.10360/Radarr.master.6.1.1.10360.linux-core-x64.tar.gz"  # https://github.com/Radarr/Radarr/releases
+
+  - name: sonarr
+    description: "Sonarr — gestion des séries"
+    binary: Sonarr
+    args: -nobrowser -data=/var/lib/sonarr
+    port: 8989
+    download_url: "https://github.com/Sonarr/Sonarr/releases/download/v4.0.17.2952/Sonarr.main.4.0.17.2952.linux-x64.tar.gz"  # https://github.com/Sonarr/Sonarr/releases
+
+hardening_ufw_rules:
+  - port: "7878"
+    proto: tcp
+    rule: allow
+  - port: "8989"
+    proto: tcp
+    rule: allow

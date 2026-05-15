@@ -1,7 +1,0 @@
-http:
-  middlewares:
-    my-auth:
-      digestauth:
-        headerField: "X-WebAuth-User"
-        users:
-          - "{{env "MY_AUTH"}}"

@@ -1,0 +1,61 @@
+---
+# Bootstrap Proxmox — création de ansible@pam et du token API
+# Connexion via ansible user (NOPASSWD sudo) — hardening.yml doit avoir tourné avant
+#
+# Pré-requis : hardening.yml déjà exécuté sur les hyperviseurs (user ansible créé)
+#
+# ansible-playbook playbooks/proxmox_bootstrap.yml
+# ansible-playbook playbooks/proxmox_bootstrap.yml --limit proxmox_flash
+
+- name: Bootstrap Proxmox API credentials
+  hosts: proxmox_hypervisors
+  gather_facts: false
+  become: true
+  tasks:
+
+    - name: Installer proxmoxer (requis par les modules Ansible Proxmox)
+      ansible.builtin.apt:
+        name:
+          - python3-proxmoxer
+          - python3-requests
+        state: present
+        update_cache: false
+
+    - name: Créer l'utilisateur ansible@pam
+      ansible.builtin.command: pveum user add ansible@pam --comment "Ansible automation"
+      register: user_add
+      changed_when: user_add.rc == 0
+      failed_when: user_add.rc != 0 and 'already exists' not in user_add.stderr
+
+    - name: Attribuer le rôle Administrator à ansible@pam
+      ansible.builtin.command: pveum acl modify / --user ansible@pam --role Administrator
+      changed_when: true
+
+    - name: Créer le token API ansible
+      ansible.builtin.command: pveum user token add ansible@pam ansible --privsep=0 --output-format json
+      register: token_output
+      changed_when: token_output.rc == 0
+      failed_when: token_output.rc != 0 and 'already exists' not in token_output.stderr
+
+    - name: Afficher le token (valeur unique — ne sera plus visible après)
+      ansible.builtin.debug:
+        msg: "Token {{ inventory_hostname }} : {{ token_output.stdout | from_json }}"
+      when: token_output.rc == 0
+
+    - name: Pause — stocker le token dans vault avant de continuer
+      ansible.builtin.pause:
+        prompt: |
+
+          ╔══════════════════════════════════════════════════════════════════════╗
+          ║  Token API créé pour {{ inventory_hostname }} (affiché ci-dessus)
+          ║  Cette valeur ne sera plus accessible après — la stocker maintenant. ║
+          ║                                                                      ║
+          ║  Dans ansible-vault (inventory/group_vars/all/vault.yml) :          ║
+          ║    vault_proxmox_flash_api_token_secret: <value>  (si flash)       ║
+          ║    vault_proxmox_wasp_api_token_secret: <value>   (si wasp)        ║
+          ║                                                                      ║
+          ║  → Appuyer sur Entrée une fois le vault mis à jour                  ║
+          ╚══════════════════════════════════════════════════════════════════════╝
+      when: token_output.rc == 0
+
+- ansible.builtin.import_playbook: proxmox_gpu.yml

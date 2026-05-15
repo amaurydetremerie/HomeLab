@@ -1,0 +1,12 @@
+udp:
+  services:
+    graylog:
+      loadbalancer:
+        servers:
+          - address: "10.8.0.2:12201"
+
+  routers:
+    graylog:
+      entrypoints:
+        - graylog
+      service: graylog@file

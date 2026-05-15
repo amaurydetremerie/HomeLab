@@ -1,0 +1,157 @@
+---
+# Point d'entrée global — provision complète du HomeLab from scratch
+#
+# ┌─────────────────────────────────────────────────────────────────────────┐
+# │ PRÉ-REQUIS MANUELS (avant de lancer ce playbook)                        │
+# │   1. Installer Proxmox sur flash (10.0.0.81) et wasp (10.0.0.82)       │
+# │   2. Copier la clé SSH root (pour le hardening initial) :               │
+# │        ssh-copy-id root@10.0.0.81                                        │
+# │        ssh-copy-id root@10.0.0.82                                        │
+# └─────────────────────────────────────────────────────────────────────────┘
+#
+# Séquence :
+#   [1]  hardening         → AUTO  : user ansible + wiserisk sur hyperviseurs (root SSH désactivé)
+#   [2]  proxmox_bootstrap → AUTO  : ansible@pam + token API + driver GPU
+#                            PAUSE : stocker le token dans vault
+#   [3]  proxmox_storage   → AUTO  : storages Proxmox (local-zfs, NFS) — PBS skippé si pas de fingerprint
+#                            → crée les mount points NFS requis avant le démarrage des LXC
+#   [4]  proxmox           → AUTO  : réseau, template/ISO, LXC, VMs (coques vides), clés SSH LXC
+#                            PAUSE : installer OS sur les VMs + token TrueNAS + clés K3S + MDP PBS
+#   [4b] hardening         → AUTO  : user ansible + wiserisk sur PBS + LXC vmbr0 (traefik/unbound/adguard) + VPS
+#   [4c] traefik           → AUTO  : IP forwarding actif → LXC vmbr1 ont accès internet
+#   [4d] hardening         → AUTO  : user ansible + wiserisk sur LXC vmbr1 + K3S (nécessite traefik)
+#   [5]  truenas_pool      → AUTO  : datasets + zvols
+#                            PAUSE*: créer/importer le pool si absent (conditionnel)
+#   [6]  truenas_shares    → AUTO  : shares NFS / SMB / iSCSI (crée le target iSCSI pour PBS)
+#   [7]  proxmox_pbs       → AUTO  : iSCSI sur PBS, datastore "pve", extraction fingerprint
+#                            PAUSE : stocker le fingerprint PBS dans vault
+#   [8]  proxmox_storage   → AUTO  : second passage — ajout du storage PBS (vault rechargé)
+#   [9]  k3s               → AUTO  : K3S master + workers, ArgoCD, apps via sync waves
+#                            PAUSE*: init Vault si premier déploiement (conditionnel)
+#   [10] backup            → AUTO  : jobs Proxmox (idempotent)
+#   [11] apps LXC/VM + VPS → AUTO  : services dans l'ordre de dépendance (install_services.yml)
+#
+# Usage ciblé :
+#   ansible-playbook playbooks/proxmox.yml -e target=proxmox_flash
+#   ansible-playbook playbooks/proxmox_storage.yml --limit proxmox_flash
+#   ansible-playbook playbooks/proxmox_pbs.yml
+
+# ── [1] Hardening Proxmox hypervisors ─────────────────────────────────────
+# AUTO  : user wiserisk + ansible, SSH key-only, root SSH désactivé, fail2ban
+#         Pré-requis : clé SSH root copiée (ssh-copy-id root@10.0.0.81 + .82)
+#         Après ce play : ansible_user=ansible sur tous les hyperviseurs
+- ansible.builtin.include_playbook: hardening.yml
+  vars:
+    target: proxmox_hypervisors
+
+# ── [2] Bootstrap Proxmox ─────────────────────────────────────────────────
+# AUTO  : création ansible@pam + token API + driver GPU (via ansible user + sudo)
+# PAUSE : stocker le token dans vault avant de continuer
+- import_playbook: proxmox_bootstrap.yml
+
+# ── [3] Proxmox — storages (1er passage) ─────────────────────────────────
+# AUTO  : local-zfs + NFS — PBS skippé si vault_pbs_fingerprint absent
+#         Crée les mount points NFS (/mnt/pve/Git, /mnt/pve/Plex…) nécessaires
+#         pour démarrer les LXC avec bind mounts à l'étape suivante
+- import_playbook: proxmox_storage.yml
+
+# ── [4] Provision Proxmox ─────────────────────────────────────────────────
+# AUTO  : réseau, template LXC, ISOs, LXC (OS Debian inclus), VMs (coques vides), clés SSH LXC
+- import_playbook: proxmox.yml
+
+# PAUSE : installation OS sur les VMs et initialisation des services
+- name: Installation OS sur les VMs et initialisation des services
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Étapes manuelles avant de continuer
+      ansible.builtin.pause:
+        prompt: |
+
+          ╔══════════════════════════════════════════════════════════════════════╗
+          ║  ÉTAPE MANUELLE — Installation OS + initialisation des services     ║
+          ╠══════════════════════════════════════════════════════════════════════╣
+          ║                                                                      ║
+          ║  • Hermes (vmid 1010) — TrueNAS Scale                               ║
+          ║    1. Démarrer + installer depuis ISO TrueNAS-SCALE.iso             ║
+          ║    2. IP statique : 10.100.0.10 / GW 10.100.0.1                    ║
+          ║    3. Après install : retirer ide2, boot → order=scsi0              ║
+          ║    4. Créer le token API dans l'UI TrueNAS et le stocker dans vault ║
+          ║       vault_truenas_hermes_api_key: "<token>"                       ║
+          ║                                                                      ║
+          ║  • K3S-Master (vmid 1151) / K3S-Worker (vmid 1152) — Debian 12     ║
+          ║    1. Démarrer + installation minimale depuis ISO debian-12-netinst ║
+          ║    2. IP statique : 10.100.0.151 / .152 / GW 10.100.0.1            ║
+          ║    3. Après install : retirer ide2, boot → order=scsi0              ║
+          ║    4. Copier clé SSH : ssh-copy-id root@10.100.0.151 (et .152)      ║
+          ║    → Remplacer par cloud-init pour automatiser cette étape          ║
+          ║                                                                      ║
+          ║  • PBS (vmid 9080) — Proxmox Backup Server                          ║
+          ║    1. Démarrer + installer depuis ISO proxmox-backup-server.iso     ║
+          ║    2. IP statique : 10.0.0.80 / GW 10.0.0.1                        ║
+          ║    3. Après install : retirer ide2, boot → order=scsi0              ║
+          ║    4. Copier la clé SSH : ssh-copy-id root@10.0.0.80               ║
+          ║                                                                      ║
+          ║  • HomeAssistant (vmid 9095) — import qcow2                         ║
+          ║    Voir commentaire dans host_vars/proxmox_flash.yml                ║
+          ║                                                                      ║
+          ║  → Appuyer sur Entrée une fois tous les OS installés                ║
+          ╚══════════════════════════════════════════════════════════════════════╝
+
+# ── [4b] Hardening PBS + LXC vmbr0 + VPS ────────────────────────────────
+# AUTO  : user wiserisk + ansible, SSH key-only, root SSH désactivé, fail2ban
+#         Hosts avec accès internet direct (pas de dépendance traefik)
+#         Pré-requis : clé SSH root copiée sur PBS (ssh-copy-id root@10.0.0.80)
+#         Après ce play : ansible_user=ansible sur proxmox_pbs + traefik + unbound + adguard + vps
+- ansible.builtin.include_playbook: hardening.yml
+  vars:
+    target: "proxmox_pbs:traefik:unbound:adguard:vps"
+
+# ── [4c] Déploiement Traefik — gateway vmbr0 ↔ vmbr1 ────────────────────
+# AUTO  : active l'IP forwarding sur les LXC traefik → les LXC vmbr1 obtiennent l'accès internet
+- import_playbook: traefik.yml
+
+# ── [4d] Hardening LXC vmbr1 + K3S ──────────────────────────────────────
+# AUTO  : user wiserisk + ansible, SSH key-only, root SSH désactivé, fail2ban
+#         Nécessite traefik actif (IP forwarding) pour apt
+#         Pré-requis : clé SSH root copiée sur K3S VMs (ssh-copy-id root@10.100.0.151 + .152)
+#         Après ce play : ansible_user=ansible sur tous les linux_managed
+- ansible.builtin.include_playbook: hardening.yml
+  vars:
+    target: "linux_managed:!traefik:!unbound:!adguard:!vps"
+
+# ── [5] TrueNAS — pool + datasets + zvols ─────────────────────────────────
+# AUTO  : datasets + zvols (idempotent)
+# PAUSE*: créer/importer le pool si absent (conditionnel)
+- import_playbook: truenas_pool.yml
+
+# ── [6] TrueNAS — shares ──────────────────────────────────────────────────
+# AUTO  : shares NFS / SMB / iSCSI (crée le target iSCSI "pbs" pour PBS)
+- import_playbook: truenas_shares.yml
+
+# ── [7] PBS — iSCSI + datastore + fingerprint ─────────────────────────────
+# AUTO  : connexion iSCSI, format disque, mount, création datastore "pve", fingerprint
+# PAUSE : stocker vault_pbs_fingerprint dans vault
+- import_playbook: proxmox_pbs.yml
+
+# ── [8] Proxmox — storages (2ème passage) ────────────────────────────────
+# AUTO  : ajout du storage PBS (vault_pbs_fingerprint maintenant disponible)
+#         Les storages NFS/ZFS du 1er passage sont idempotents (state: present)
+- import_playbook: proxmox_storage.yml
+
+# ── [9] K3S + ArgoCD ──────────────────────────────────────────────────────
+# AUTO  : K3S master + workers, Helm, ArgoCD, toutes les apps via sync waves
+# PAUSE*: init Vault si premier déploiement (conditionnel)
+- import_playbook: k3s.yml
+
+# ── [10] Backup jobs Proxmox ──────────────────────────────────────────────
+# AUTO  : 3 jobs max par host (ansible-local / ansible-critical / ansible-non_critical)
+#         Idempotent — crée, met à jour ou supprime selon backup: <type> sur chaque LXC/VM
+- import_playbook: proxmox_backup.yml
+
+# ── [11] Applications LXC/VM + VPS ───────────────────────────────────────
+# AUTO  : VPS (WG serveur + DNS + Traefik + Gatus), WG clients, DNS interne,
+#         Traefik interne, Gitea, Semaphore, Tailscale, Gatus LXC,
+#         Jellyfin, qBittorrent, Seedbox, Ollama
+# Ciblage précis : ansible-playbook playbooks/install_services.yml --tags gitea
+- import_playbook: install_services.yml

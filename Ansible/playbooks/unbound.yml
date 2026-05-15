@@ -1,0 +1,57 @@
+---
+# Résolveur DNS récursif Unbound — groupe unbound (unbound_wasp + unbound_flash)
+# Architecture : AdGuard → Unbound → root hints (DNSSEC)
+#
+# Config : playbooks/files/unbound/unbound.conf
+#
+# Utilisation :
+#   ansible-playbook playbooks/unbound.yml                    # wasp + flash
+#   ansible-playbook playbooks/unbound.yml -e target=unbound_wasp
+
+- name: Install and configure Unbound
+  hosts: "{{ target | default('unbound') }}"
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Install unbound
+      ansible.builtin.apt:
+        name: unbound
+        state: present
+        update_cache: true
+
+    - name: Disable systemd-resolved (libère le port 53)
+      ansible.builtin.systemd:
+        name: systemd-resolved
+        enabled: false
+        state: stopped
+      failed_when: false
+
+    - name: Set static resolv.conf (systemd-resolved désactivé)
+      ansible.builtin.copy:
+        dest: /etc/resolv.conf
+        content: "nameserver 1.1.1.1\nnameserver 8.8.8.8\n"
+        owner: root
+        group: root
+        mode: "0644"
+        follow: false
+
+    - name: Deploy Unbound config
+      ansible.builtin.copy:
+        src: "{{ unbound_config_src | default('files/unbound/unbound.conf') }}"
+        dest: /etc/unbound/unbound.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart unbound
+
+    - name: Enable and start Unbound
+      ansible.builtin.systemd:
+        name: unbound
+        enabled: true
+        state: started
+
+  handlers:
+    - name: Restart unbound
+      ansible.builtin.systemd:
+        name: unbound
+        state: restarted

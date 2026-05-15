@@ -1,0 +1,8 @@
+[Service]
+Environment="TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_OVH_ACME_EMAIL={{ traefik_acme_email }}"
+Environment="OVH_ENDPOINT={{ vault_ovh_endpoint | default('ovh-eu') }}"
+Environment="OVH_APPLICATION_KEY={{ vault_ovh_application_key }}"
+Environment="OVH_APPLICATION_SECRET={{ vault_ovh_application_secret }}"
+Environment="OVH_CONSUMER_KEY={{ vault_ovh_consumer_key }}"
+Environment="MY_AUTH={{ vault_traefik_my_auth }}"
+Environment="BASIC_AUTH={{ vault_traefik_basic_auth }}"

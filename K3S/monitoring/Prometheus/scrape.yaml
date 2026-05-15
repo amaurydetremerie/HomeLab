@@ -25,18 +25,13 @@ stringData:
           - https://hades.wiserisk.be
           - https://hermes.syncthing.wiserisk.be
           - https://hades.syncthing.wiserisk.be
-          - https://argocd.k3s.wiserisk.be
           - https://registry.k3s.wiserisk.be
-          - https://vault.k3s.wiserisk.be
-          - https://grafana.k3s.wiserisk.be
           - https://flaresolverr.k3s.wiserisk.be
           - https://graylog.k3s.wiserisk.be
           - https://librespeed.k3s.wiserisk.be
           - https://nextcloud.k3s.wiserisk.be
-          - https://portainer.k3s.wiserisk.be
-          - https://hlabmonitor.k3s.wiserisk.be/actuator/health
-          - https://ai.k3s.wiserisk.be
           - https://sonarqube.k3s.wiserisk.be
+          - https://auth.vps.wiserisk.be
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
@@ -44,13 +39,26 @@ stringData:
           target_label: instance
         - target_label: __address__
           replacement: blackbox-exporter.monitoring.svc.cluster.local:9115
-    - job_name: 'blackbox-basic-auth'
+    - job_name: 'blackbox-authelia'
       metrics_path: /probe
       params:
-        module: [http_2xx_basic_auth]
+        module: [http_2xx_authelia]
       static_configs:
         - targets:
-          - https://webhook.wiserisk.be
+          - https://adguard.vps.wiserisk.be
+          - https://unbound.vps.wiserisk.be
+          - https://wireguard.vps.wiserisk.be
+          - https://traefik.vps.wiserisk.be
+          - https://lldap.vps.wiserisk.be
+          - https://git.wiserisk.be
+          - https://semaphore.wiserisk.be
+          - https://argocd.k3s.wiserisk.be
+          - https://vault.k3s.wiserisk.be
+          - https://grafana.k3s.wiserisk.be
+          - https://portainer.k3s.wiserisk.be
+          - https://hlabmonitor.k3s.wiserisk.be/actuator/health
+          - https://ai.k3s.wiserisk.be
+          - https://prowlarr.k3s.wiserisk.be
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
@@ -94,14 +102,18 @@ stringData:
           - https://hades.wiserisk.home
           - https://hermes.syncthing.wiserisk.home
           - https://hades.syncthing.wiserisk.home
-          - https://webhook.wiserisk.home
           - https://ollama.wiserisk.home
+          - https://git.wiserisk.home
+          - https://semaphore.wiserisk.home
+          - https://adguard.vps.wiserisk.home
           - https://registry-ui.k3s.wiserisk.home
           - https://traefik.k3s.wiserisk.home
           - https://alertmanager.k3s.wiserisk.home
           - https://blackbox.k3s.wiserisk.home
           - https://ksm.k3s.wiserisk.home
           - https://prometheus.k3s.wiserisk.home
+          - https://ai.k3s.wiserisk.home
+          - https://prowlarr.k3s.wiserisk.home
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
@@ -115,28 +127,50 @@ stringData:
         module: [icmp]
       static_configs:
         - targets:
-          - 10.0.0.1
-          - 10.0.0.45
+          # Network
+          - 10.0.0.1     # asuswrt_merlin
+          - 10.0.0.75    # zyxel_xgs1250
+          # iLO
+          - 10.0.0.45    # ilo_flash
+          # Proxmox / PBS
+          - 10.0.0.80    # pbs
+          - 10.0.0.81    # proxmox_flash
+          - 10.0.0.82    # proxmox_wasp
+          # Traefik LXC
+          - 10.0.0.85    # traefik_flash
+          - 10.0.0.182   # traefik_wasp
+          # AdGuard LXC
+          - 10.0.0.88    # adguard_flash
+          - 10.0.0.181   # adguard_wasp
+          # Unbound LXC
+          - 10.0.0.89    # unbound_flash
+          - 10.0.0.180   # unbound_wasp
+          # HAOS
+          - 10.0.0.95    # home_assistant
+          # TrueNAS
+          - 10.100.0.10  # truenas_hermes
+          # LXC tools
+          - 10.100.0.100 # gitea
+          - 10.100.0.101 # semaphore
+          - 10.100.0.102 # gatus
+          - 10.100.0.103 # webhook
+          - 10.100.0.104 # ollama
+          - 10.100.0.105 # qbittorrent
+          # K3S
+          - 10.100.0.151 # k3s_master
+          - 10.100.0.152 # k3s_worker
+          # VMs
+          - 10.100.0.201 # seedbox
+          - 10.100.0.202 # jellyfin
+          - 10.100.0.220 # tailscale
+          # VPS
+          - 77.90.52.180 # debian_vps
+          # Inconnus (à identifier)
           - 10.0.0.49
-          - 10.0.0.75
-          - 10.0.0.80
-          - 10.0.0.81
-          - 10.0.0.82
-          - 10.0.0.85
           - 10.0.0.86
-          - 10.0.0.95
           - 10.0.0.142
           - 10.0.0.185
           - 10.100.0.1
-          - 10.100.0.10
-          - 10.100.0.103
-          - 10.100.0.104
-          - 10.100.0.105
-          - 10.100.0.151
-          - 10.100.0.152
-          - 10.100.0.201
-          - 10.100.0.202
-          - 10.100.0.220
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target

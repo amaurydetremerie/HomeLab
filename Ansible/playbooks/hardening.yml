@@ -1,0 +1,30 @@
+---
+# Hardening de sécurité — LXC, VMs, VPS, Raspberry Pi, Proxmox (si besoin)
+#
+# Niveaux (hardening_level dans group_vars ou host_vars) :
+#   1 : baseline  — users wiserisk+ansible, SSH key-only, disable root SSH, fail2ban
+#   2 : interne   — niveau 1 + ufw (deny inbound, SSH + ports définis dans hardening_ufw_rules)
+#   3 : exposé    — niveau 2 + fail2ban strict (bantime=24h, maxretry=3) + SSH AllowUsers
+#
+# Première exécution (root SSH encore actif) — défaut, aucun paramètre requis :
+#   ansible-playbook playbooks/hardening.yml -e target=<host_ou_groupe>
+#
+# Ré-exécution après hardening (root SSH désactivé, connexion via ansible user) :
+#   ansible-playbook playbooks/hardening.yml -e target=<host> -e hardening_connect_as=ansible
+#
+# Exemples :
+#   ansible-playbook playbooks/hardening.yml -e target=lxc            # tous les LXC
+#   ansible-playbook playbooks/hardening.yml -e target=traefik        # un seul host
+#   ansible-playbook playbooks/hardening.yml -e target=debian_vps     # VPS
+
+- name: Apply security hardening
+  hosts: "{{ target | default('linux_managed') }}"
+  vars:
+    # ansible_user en play vars (priorité > group_vars) pour ne pas hériter de
+    # ansible_user:ansible défini dans linux_managed/proxmox/proxmox_pbs.
+    # Par défaut root (première exécution), surchargeable via -e hardening_connect_as=ansible.
+    ansible_user: "{{ hardening_connect_as | default('root') }}"
+  gather_facts: true
+  become: true
+  roles:
+    - hardening

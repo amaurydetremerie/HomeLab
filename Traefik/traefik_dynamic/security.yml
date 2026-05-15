@@ -2,12 +2,11 @@ http:
   middlewares:
     security:
       headers:
-        accessControlMaxAge: 100
-        addVaryHeader: true
-        browserXssFilter: true
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceSTSHeader: true
         contentTypeNosniff: true
-        frameDeny: true
-        sslRedirect: true
+        browserXssFilter: true
         customFrameOptionsValue: "SAMEORIGIN"
         referrerPolicy: "same-origin"
-        featurePolicy: "vibrate 'self'"

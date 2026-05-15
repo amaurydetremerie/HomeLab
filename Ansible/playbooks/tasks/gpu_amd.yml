@@ -1,0 +1,24 @@
+---
+# Appelé depuis proxmox_bootstrap.yml quand proxmox_gpus.amd est défini
+# Le driver amdgpu est inclus dans le kernel — seuls les firmwares et paquets optionnels sont nécessaires
+- name: Installer les paquets AMD GPU
+  ansible.builtin.apt:
+    name: "{{ proxmox_gpus.amd.packages | default([]) }}"
+    state: present
+    update_cache: true
+  when: proxmox_gpus.amd.packages | default([]) | length > 0
+
+- name: Persister les modules AMD au démarrage
+  ansible.builtin.copy:
+    content: "{{ proxmox_gpus.amd.modules | join('\n') }}\n"
+    dest: /etc/modules-load.d/amdgpu.conf
+    mode: "0644"
+  when: proxmox_gpus.amd.modules | default([]) | length > 0
+
+- name: Charger les modules AMD
+  ansible.builtin.command: "modprobe {{ item }}"
+  loop: "{{ proxmox_gpus.amd.modules | default([]) }}"
+  register: modprobe_amd
+  changed_when: modprobe_amd.rc == 0
+  failed_when: modprobe_amd.rc != 0 and 'already' not in modprobe_amd.stderr | default('')
+  when: proxmox_gpus.amd.modules | default([]) | length > 0

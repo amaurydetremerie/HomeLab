@@ -1,0 +1,15 @@
+[Unit]
+Description=WireGuard UI
+After=network.target wg-quick@wg0.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory={{ wgui_data_dir }}
+EnvironmentFile=/etc/systemd/system/wireguard-ui.service.d/override.conf
+ExecStart={{ wgui_bin }} -bind-address 127.0.0.1:5000 -session-secret ${SESSION_SECRET}
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,6 @@
+---
+# Storage géré séparément via proxmox_storage.yml (dépend du fingerprint PBS)
+- import_tasks: template.yml
+- import_tasks: iso.yml
+- import_tasks: lxc.yml
+- import_tasks: vm.yml

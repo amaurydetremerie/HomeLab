@@ -1,0 +1,42 @@
+web:
+  port: {{ gatus_port | default(8080) }}
+
+storage:
+  type: sqlite
+  path: /var/lib/gatus/data.db
+
+{% if gatus_discord_webhook is defined %}
+alerting:
+  discord:
+    webhook-url: {{ gatus_discord_webhook }}
+    default-alert:
+      enabled: true
+      failure-threshold: {{ gatus_alert_failure_threshold | default(2) }}
+      success-threshold: {{ gatus_alert_success_threshold | default(1) }}
+      send-on-resolved: true
+
+{% endif %}
+endpoints:
+{% for ep in gatus_endpoints | default([]) %}
+  - name: {{ ep.name }}
+    url: {{ ep.url }}
+    interval: {{ ep.interval | default('5m') }}
+{% if not ep.url.startswith('tcp://') and gatus_basic_auth is defined %}
+    headers:
+      Authorization: "Basic {{ (gatus_basic_auth.user + ':' + gatus_basic_auth.password) | b64encode }}"
+{% endif %}
+    conditions:
+{% if ep.url.startswith('tcp://') %}
+      - "[CONNECTED] == true"
+{% else %}
+      - "[STATUS] == {{ ep.expected_status | default(200) }}"
+{% endif %}
+{% if ep.ssl_skip_verify is defined and ep.ssl_skip_verify %}
+    client:
+      insecure: true
+{% endif %}
+{% if gatus_discord_webhook is defined and ep.alert | default(true) %}
+    alerts:
+      - type: discord
+{% endif %}
+{% endfor %}

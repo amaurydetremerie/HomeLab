@@ -4,10 +4,20 @@ metadata:
   name: portainer-http
   namespace: portainer
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
     - host: portainer.k3s.wiserisk.be
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: portainer-svc
+                port:
+                  number: 9000
+    - host: portainer.k3s.wiserisk.home
       http:
         paths:
           - path: /

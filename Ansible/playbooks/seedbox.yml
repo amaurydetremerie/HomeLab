@@ -1,0 +1,90 @@
+---
+# Seedbox (*arr suite) — LXC 1201 (10.100.0.201) sur Flash
+# NFS SeedBox monté à /media/seedbox par Proxmox
+#
+# AVANT de lancer : supprimer Swizzin si présent (conflits ports/users possibles)
+#
+# Config : host_vars/seedbox.yml  (liste seedbox_services)
+# Template : playbooks/templates/seedbox/service.j2
+#
+# Utilisation :
+#   ansible-playbook playbooks/seedbox.yml
+
+- name: Install seedbox *arr services
+  hosts: seedbox
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name: [curl, sqlite3, libchromaprint-tools, mediainfo]
+        state: present
+        update_cache: true
+
+    - name: Create service users
+      ansible.builtin.user:
+        name: "{{ item.name }}"
+        system: true
+        shell: /usr/sbin/nologin
+        home: "/var/lib/{{ item.name }}"
+        create_home: true
+      loop: "{{ seedbox_services }}"
+
+    - name: Create install directories
+      ansible.builtin.file:
+        path: "/opt/{{ item.binary }}"
+        state: directory
+        owner: "{{ item.name }}"
+        group: "{{ item.name }}"
+        mode: '0755'
+      loop: "{{ seedbox_services }}"
+
+    - name: Download service tarballs
+      ansible.builtin.get_url:
+        url: "{{ item.download_url }}"
+        dest: "/tmp/{{ item.name }}.tar.gz"
+        force: false
+      loop: "{{ seedbox_services }}"
+      when: item.download_url != ''
+
+    - name: Extract service binaries
+      ansible.builtin.unarchive:
+        src: "/tmp/{{ item.name }}.tar.gz"
+        dest: /opt/
+        remote_src: true
+        owner: "{{ item.name }}"
+        group: "{{ item.name }}"
+      loop: "{{ seedbox_services }}"
+      when: item.download_url != ''
+      notify: Restart services
+
+    - name: Deploy systemd services
+      ansible.builtin.template:
+        src: templates/seedbox/service.j2
+        dest: "/etc/systemd/system/{{ item.name }}.service"
+        owner: root
+        group: root
+        mode: '0644'
+      loop: "{{ seedbox_services }}"
+      notify:
+        - Reload systemd
+        - Restart services
+
+    - name: Enable and start services
+      ansible.builtin.systemd:
+        name: "{{ item.name }}.service"
+        enabled: true
+        state: started
+        daemon_reload: true
+      loop: "{{ seedbox_services }}"
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart services
+      ansible.builtin.systemd:
+        name: "{{ item.name }}.service"
+        state: restarted
+      loop: "{{ seedbox_services }}"

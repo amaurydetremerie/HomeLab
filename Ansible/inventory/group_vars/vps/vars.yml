@@ -1,0 +1,4 @@
+---
+# VPS exposé internet — hardening level 3
+# ansible_user/become hérités de linux_managed
+hardening_level: 3

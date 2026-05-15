@@ -1,0 +1,62 @@
+---
+# Gestion des jobs de backup Proxmox — à lancer après proxmox_storage.yml
+# Définir backup: local|critical|non_critical|none sur chaque LXC/VM dans host_vars
+#
+# ansible-playbook playbooks/proxmox_backup.yml
+# ansible-playbook playbooks/proxmox_backup.yml --limit proxmox_flash
+
+- name: Configure Proxmox backup jobs
+  hosts: "{{ target | default('proxmox_hypervisors') }}"
+  gather_facts: false
+  connection: local
+  pre_tasks:
+    - name: Calculer les VMIDs par type de backup
+      ansible.builtin.set_fact:
+        _all_resources: "{{ proxmox_lxc | default([]) + proxmox_vms | default([]) }}"
+
+    - name: Grouper les VMIDs par type
+      ansible.builtin.set_fact:
+        _vmids_by_type:
+          local: >-
+            {{ _all_resources
+               | selectattr('backup', 'defined')
+               | selectattr('backup', 'equalto', 'local')
+               | map(attribute='vmid') | list }}
+          critical: >-
+            {{ _all_resources
+               | selectattr('backup', 'defined')
+               | selectattr('backup', 'equalto', 'critical')
+               | map(attribute='vmid') | list }}
+          non_critical: >-
+            {{ _all_resources
+               | selectattr('backup', 'defined')
+               | selectattr('backup', 'equalto', 'non_critical')
+               | map(attribute='vmid') | list }}
+          archive: >-
+            {{ _all_resources
+               | selectattr('backup', 'defined')
+               | selectattr('backup', 'equalto', 'archive')
+               | map(attribute='vmid') | list }}
+
+    - name: Récupérer les jobs de backup existants
+      ansible.builtin.uri:
+        url: "https://{{ ansible_host }}:8006/api2/json/cluster/backup"
+        method: GET
+        headers:
+          Authorization: "PVEAPIToken=ansible@pam!ansible={{ proxmox_api_token_secret }}"
+        validate_certs: false
+        status_code: 200
+      register: _existing_jobs
+
+  tasks:
+    - name: "Configurer le job de backup {{ item }}"
+      ansible.builtin.include_tasks: tasks/backup_job.yml
+      vars:
+        _backup_type: "{{ item }}"
+        _pve_api_url: "https://{{ ansible_host }}:8006/api2/json"
+        _pve_auth_header: "PVEAPIToken=ansible@pam!ansible={{ proxmox_api_token_secret }}"
+      loop:
+        - local
+        - critical
+        - non_critical
+        - archive

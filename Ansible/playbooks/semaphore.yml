@@ -1,0 +1,140 @@
+---
+# Semaphore UI Ansible — LXC 1101 (10.100.0.101) sur Wasp
+#
+# Prérequis vault :
+#   vault_semaphore_cookie_hash, vault_semaphore_cookie_encryption
+#   vault_semaphore_access_key_encryption  (générer : openssl rand -hex 32)
+#   vault_semaphore_admin_password
+#
+# Config : host_vars/semaphore.yml
+# Template : playbooks/templates/semaphore/config.json.j2
+#
+# Utilisation :
+#   ansible-playbook playbooks/semaphore.yml
+
+- name: Install and configure Semaphore
+  hosts: semaphore
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name:
+          - curl
+          - git
+          - ansible
+          - python3-proxmoxer
+          - python3-requests
+          - python3-passlib
+          - python3-bcrypt
+        state: present
+        update_cache: true
+
+    - name: Create semaphore group
+      ansible.builtin.group:
+        name: semaphore
+        system: true
+
+    - name: Create semaphore user
+      ansible.builtin.user:
+        name: semaphore
+        group: semaphore
+        system: true
+        shell: /usr/sbin/nologin
+        home: /var/lib/semaphore
+        create_home: true
+
+    - name: Create directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: semaphore
+        group: semaphore
+        mode: '0750'
+      loop:
+        - /var/lib/semaphore
+        - /etc/semaphore
+
+    - name: Download Semaphore binary
+      ansible.builtin.get_url:
+        url: "{{ semaphore_download_url }}"
+        dest: /tmp/semaphore.tar.gz
+        force: false
+
+    - name: Extract Semaphore binary
+      ansible.builtin.unarchive:
+        src: /tmp/semaphore.tar.gz
+        dest: /usr/local/bin/
+        remote_src: true
+        include: [semaphore]
+        owner: root
+        group: root
+        mode: '0755'
+      notify: Restart semaphore
+
+    - name: Deploy Semaphore config
+      ansible.builtin.template:
+        src: templates/semaphore/config.json.j2
+        dest: /etc/semaphore/config.json
+        owner: semaphore
+        group: semaphore
+        mode: '0640'
+      notify: Restart semaphore
+
+    - name: Deploy Semaphore systemd service
+      ansible.builtin.copy:
+        src: files/semaphore/semaphore.service
+        dest: /etc/systemd/system/semaphore.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - Reload systemd
+        - Restart semaphore
+
+    - name: Enable Semaphore
+      ansible.builtin.systemd:
+        name: semaphore
+        enabled: true
+        daemon_reload: true
+
+    - name: Check if Semaphore admin user exists
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/semaphore
+          - user
+          - list
+          - --config
+          - /etc/semaphore/config.json
+      register: semaphore_user_list
+      changed_when: false
+
+    - name: Create Semaphore admin user
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/semaphore
+          - user
+          - add
+          - --admin
+          - --login
+          - "{{ semaphore_admin_user }}"
+          - --name
+          - "{{ semaphore_admin_user }}"
+          - --email
+          - "{{ semaphore_admin_email }}"
+          - --password
+          - "{{ vault_semaphore_admin_password }}"
+          - --config
+          - /etc/semaphore/config.json
+      when: semaphore_admin_user not in semaphore_user_list.stdout
+      no_log: true
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart semaphore
+      ansible.builtin.systemd:
+        name: semaphore
+        state: restarted

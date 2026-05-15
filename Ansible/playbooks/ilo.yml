@@ -1,0 +1,106 @@
+---
+# Gestion des iLO HP via Redfish (iLO 4 / iLO 5)
+# Tous les plays utilisent connection: local — les modules appellent l'API Redfish directement
+#
+# Utilisation :
+#   Info système :        ansible-playbook playbooks/ilo.yml
+#   Info firmware :       ansible-playbook playbooks/ilo.yml --tags firmware
+#   Power on :            ansible-playbook playbooks/ilo.yml --tags power_on
+#   Graceful shutdown :   ansible-playbook playbooks/ilo.yml --tags power_off
+#   Force power off :     ansible-playbook playbooks/ilo.yml --tags power_force_off
+#   Reset :               ansible-playbook playbooks/ilo.yml --tags power_reset
+#   Host ciblé :          ansible-playbook playbooks/ilo.yml --limit ilo_flash
+#
+# Mise à jour firmware :
+#   Requiert une URL HTTP accessible par le BMC hébergeant le fichier .bin/.exe HP
+#   ansible-playbook playbooks/ilo.yml --tags firmware_update \
+#     --extra-vars "ilo_firmware_url=http://10.0.0.x/firmware/ilo5_xxx.bin"
+
+- name: Manage HP iLO via Redfish
+  hosts: ilo
+  gather_facts: false
+  connection: local
+  tasks:
+
+    - name: Get system inventory
+      community.general.redfish_info:
+        category: Systems
+        command: GetSystemInventory
+        baseuri: "{{ ansible_host }}"
+        username: "{{ ilo_username }}"
+        password: "{{ ilo_password }}"
+        validate_certs: false
+      register: system_info
+
+    - name: Display system inventory
+      ansible.builtin.debug:
+        msg: "{{ system_info.redfish_facts.system.entries }}"
+
+    - name: Get firmware inventory
+      community.general.redfish_info:
+        category: Update
+        command: GetFirmwareInventory
+        baseuri: "{{ ansible_host }}"
+        username: "{{ ilo_username }}"
+        password: "{{ ilo_password }}"
+        validate_certs: false
+      register: firmware_info
+      tags: firmware
+
+    - name: Display firmware versions
+      ansible.builtin.debug:
+        msg: "{{ firmware_info.redfish_facts.firmware.entries }}"
+      tags: firmware
+
+    # --- Power operations — requièrent un tag explicite (tags: never = pas d'exécution par défaut) ---
+
+    - name: Power on
+      community.general.redfish_command:
+        category: Systems
+        command: PowerOn
+        baseuri: "{{ ansible_host }}"
+        username: "{{ ilo_username }}"
+        password: "{{ ilo_password }}"
+        validate_certs: false
+      tags: [power_on, never]
+
+    - name: Graceful shutdown
+      community.general.redfish_command:
+        category: Systems
+        command: PowerGracefulShutdown
+        baseuri: "{{ ansible_host }}"
+        username: "{{ ilo_username }}"
+        password: "{{ ilo_password }}"
+        validate_certs: false
+      tags: [power_off, never]
+
+    - name: Force power off
+      community.general.redfish_command:
+        category: Systems
+        command: PowerForceOff
+        baseuri: "{{ ansible_host }}"
+        username: "{{ ilo_username }}"
+        password: "{{ ilo_password }}"
+        validate_certs: false
+      tags: [power_force_off, never]
+
+    - name: Graceful restart
+      community.general.redfish_command:
+        category: Systems
+        command: PowerGracefulRestart
+        baseuri: "{{ ansible_host }}"
+        username: "{{ ilo_username }}"
+        password: "{{ ilo_password }}"
+        validate_certs: false
+      tags: [power_reset, never]
+
+    - name: Update firmware
+      community.general.redfish_command:
+        category: Update
+        command: SimpleUpdate
+        baseuri: "{{ ansible_host }}"
+        username: "{{ ilo_username }}"
+        password: "{{ ilo_password }}"
+        validate_certs: false
+        update_image_uri: "{{ ilo_firmware_url }}"
+      tags: [firmware_update, never]

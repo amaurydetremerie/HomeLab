@@ -1,0 +1,21 @@
+---
+# --- API Proxmox ---
+# ansible_host et proxmox_pve_node viennent des host_vars de chaque hyperviseur
+proxmox_api_host: "{{ ansible_host }}"
+proxmox_api_user: "ansible@pam"
+proxmox_api_token_id: "ansible"
+proxmox_node: "{{ proxmox_pve_node }}"
+
+# --- Valeurs communes (surchargeables par host) ---
+proxmox_storage: "local-zfs"
+proxmox_bridge_mgmt: "vmbr0"
+proxmox_bridge_services: "vmbr1"
+proxmox_gateway_mgmt: "10.0.0.1"
+proxmox_gateway_services: "10.100.0.1"
+proxmox_lxc_package: "debian-12-standard"
+
+# --- Listes vides par défaut — à définir dans host_vars de chaque hyperviseur ---
+proxmox_storages: []
+proxmox_isos: []
+proxmox_lxc: []
+proxmox_vms: []

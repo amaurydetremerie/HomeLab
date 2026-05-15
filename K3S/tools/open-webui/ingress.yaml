@@ -4,10 +4,20 @@ metadata:
   name: open-webui-http
   namespace: open-webui
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
     - host: ai.k3s.wiserisk.be
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: open-webui-svc
+                port:
+                  number: 8080
+    - host: ai.k3s.wiserisk.home
       http:
         paths:
           - path: /

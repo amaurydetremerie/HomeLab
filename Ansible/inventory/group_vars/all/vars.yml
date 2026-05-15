@@ -1,0 +1,49 @@
+---
+ansible_user: root  # Proxmox hypervisors, TrueNAS, PBS — toujours root
+                    # LXC/VMs/K3S/VPS : surcharge via group_vars/<groupe>/vars.yml → ansible_user: ansible
+
+# ── VPS ────────────────────────────────────────────────────────────────────────
+vps_public_ip: "77.90.52.180"    # IP publique du VPS (OVH) — mettre à jour ici si elle change
+vps_wg_endpoint: "vpn.wiserisk.be:51820"  # Endpoint WireGuard (DNS, résolu dynamiquement)
+
+# ── Clés SSH publiques (pas des secrets) ───────────────────────────────────────
+# Clé ansible — stockée dans Semaphore Key Store, injectée dans LXC root (proxmox.yml play 4)
+# puis dans le user ansible par le rôle hardening
+ansible_operator_ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMdZ3RXJ8BtUTPnTNwNZGtHvhYJJpTPiNSqvpvcOmKbA ansible"
+
+# Clé personnelle wiserisk — injectée dans le user wiserisk par le rôle hardening
+# Ne jamais injecter dans Semaphore ; usage humain uniquement
+wiserisk_ssh_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIFlU1csWdQFBD7ZLqqNmORjSxG3Gl0IZabb+/4Scff5 wiserisk"
+
+# ── Backup jobs ────────────────────────────────────────────────────────────────
+# Destinataire des alertes mail (failure only)
+proxmox_backup_mailto: "{{ vault_admin_email }}"
+
+# Définitions des types de backup — référencés par backup: <type> sur chaque LXC/VM
+# Les VMIDs avec backup: none (ou sans champ backup) sont exclus de tous les jobs
+proxmox_backup_types:
+  local:
+    storage: local
+    schedule: "22:30"
+    prune_backups: "keep-last=3"
+    mode: snapshot
+    compress: zstd
+    mailnotification: failure
+  critical:
+    storage: Backups
+    schedule: "10:00"
+    mode: snapshot
+    compress: zstd
+    mailnotification: failure
+  non_critical:
+    storage: Backups
+    schedule: "sun 09:00"
+    mode: snapshot
+    compress: zstd
+    mailnotification: failure
+  archive:
+    storage: Backups
+    schedule: "monthly"
+    mode: snapshot
+    compress: zstd
+    mailnotification: failure

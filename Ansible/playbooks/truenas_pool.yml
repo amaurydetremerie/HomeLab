@@ -1,0 +1,119 @@
+---
+# Création/import du pool TrueNAS et provisioning des datasets
+#
+# Premier déploiement  : le pool n'existe pas → pause pour création/import manuel via l'UI
+# Reinstall (HDD existants) : le pool est détecté → pause skippée, datasets créés si manquants
+#
+# ansible-playbook playbooks/truenas_pool.yml
+# ansible-playbook playbooks/truenas_pool.yml --limit truenas_hermes
+
+- name: Provision TrueNAS pool and datasets
+  hosts: truenas
+  gather_facts: false
+  connection: local
+  vars:
+    truenas_api_base: "https://{{ ansible_host }}/api/v2.0"
+
+  pre_tasks:
+    - name: Recharger le vault (token TrueNAS potentiellement ajouté depuis la pause OS)
+      ansible.builtin.include_vars:
+        file: "{{ inventory_dir }}/group_vars/all/vault.yml"
+      failed_when: false
+
+  tasks:
+
+    - name: Check if pool exists
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/pool"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+      register: existing_pools
+
+    - name: TrueNAS — création ou import du pool requis
+      ansible.builtin.pause:
+        prompt: |
+
+          ╔══════════════════════════════════════════════════════════════════════╗
+          ║  ÉTAPE MANUELLE — Premier déploiement uniquement                    ║
+          ╠══════════════════════════════════════════════════════════════════════╣
+          ║  Le pool "{{ truenas_pool_name }}" n'existe pas sur {{ inventory_hostname }}.
+          ║                                                                      ║
+          ║  Via l'UI TrueNAS (Storage > Pools) :                               ║
+          ║    • Nouveau serveur   → Create Pool                                 ║
+          ║    • Disques existants → Import Pool                                 ║
+          ║                                                                      ║
+          ║  Le pool doit être nommé : {{ truenas_pool_name }}
+          ║                                                                      ║
+          ║  → Appuyer sur Entrée une fois le pool disponible                   ║
+          ╚══════════════════════════════════════════════════════════════════════╝
+      when: >
+        existing_pools.json
+        | selectattr('name', 'equalto', truenas_pool_name)
+        | list | length == 0
+
+    - name: Get existing datasets
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/pool/dataset?pool={{ truenas_pool_name }}"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+      register: existing_datasets
+      when: truenas_datasets | default([]) | length > 0
+
+    - name: Create datasets
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/pool/dataset"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          name: "{{ item.name }}"
+          type: FILESYSTEM
+          atime: "{{ item.atime | default('off') }}"
+          compression: "{{ item.compression | default('lz4') }}"
+        validate_certs: false
+        status_code: [200]
+      loop: "{{ truenas_datasets | default([]) }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when: >
+        item.name not in (existing_datasets.json
+        | default([]) | map(attribute='name') | list)
+
+    - name: Get existing zvols
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/pool/dataset?pool={{ truenas_pool_name }}&type=VOLUME"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+        validate_certs: false
+      register: existing_zvols
+      when: truenas_zvols | default([]) | length > 0
+
+    - name: Create zvols
+      ansible.builtin.uri:
+        url: "{{ truenas_api_base }}/pool/dataset"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ truenas_api_key }}"
+          Content-Type: application/json
+        body_format: json
+        body:
+          name: "{{ item.name }}"
+          type: VOLUME
+          volsize: "{{ item.size | human_to_bytes }}"
+          compression: "{{ item.compression | default('lz4') }}"
+          sparse: "{{ item.sparse | default(false) }}"
+        validate_certs: false
+        status_code: [200]
+      loop: "{{ truenas_zvols | default([]) }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when: >
+        item.name not in (existing_zvols.json
+        | default([]) | map(attribute='name') | list)

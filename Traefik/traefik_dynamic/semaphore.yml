@@ -1,0 +1,42 @@
+http:
+  middlewares:
+    semaphore-strip-proxy-headers:
+      headers:
+        customRequestHeaders:
+          Remote-User: ""
+          Remote-Groups: ""
+          Remote-Name: ""
+          Remote-Email: ""
+
+  services:
+    semaphore:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.101:3000"
+
+  routers:
+    semaphore:
+      rule: "Host(`semaphore.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "semaphore-strip-proxy-headers@file"
+        - "security@file"
+        - "compression@file"
+      service: "semaphore@file"
+    semaphore-home:
+      rule: "Host(`semaphore.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
+    semaphore-local-secure:
+      rule: "Host(`semaphore.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "semaphore@file"
+      tls: {}

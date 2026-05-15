@@ -1,0 +1,62 @@
+---
+# Appelé depuis proxmox_gpu.yml quand proxmox_gpus.nvidia est défini
+# Un seul driver Nvidia system-wide — gère tous les GPUs Nvidia du host
+# La version attendue est extraite du nom de fichier dans driver_url
+# ex: NVIDIA-Linux-x86_64-570.172.08.run → 570.172.08
+- name: Déterminer la version attendue du driver
+  ansible.builtin.set_fact:
+    _nvidia_expected_version: "{{ proxmox_gpus.nvidia.driver_url | basename | regex_replace('NVIDIA-Linux-x86_64-(.+)\\.run', '\\1') }}"
+
+- name: Récupérer la version du driver Nvidia installé
+  ansible.builtin.command: nvidia-smi --query-gpu=driver_version --format=csv,noheader
+  register: nvidia_installed_version
+  changed_when: false
+  failed_when: false
+
+- name: Installer ou mettre à jour le driver Nvidia
+  when: nvidia_installed_version.rc != 0 or nvidia_installed_version.stdout | trim != _nvidia_expected_version
+  block:
+
+    - name: Installer les prérequis DKMS
+      ansible.builtin.apt:
+        name:
+          - dkms
+          - build-essential
+          - "linux-headers-{{ ansible_kernel }}"
+        state: present
+        update_cache: true
+
+    - name: Télécharger le driver Nvidia {{ _nvidia_expected_version }}
+      ansible.builtin.get_url:
+        url: "{{ proxmox_gpus.nvidia.driver_url }}"
+        dest: "/tmp/{{ proxmox_gpus.nvidia.driver_url | basename }}"
+        mode: "0755"
+
+    - name: Installer le driver Nvidia (--silent --dkms)
+      ansible.builtin.command: "/tmp/{{ proxmox_gpus.nvidia.driver_url | basename }} --silent --dkms"
+      changed_when: true
+
+- name: Persister les modules Nvidia au démarrage
+  ansible.builtin.copy:
+    content: "nvidia\nnvidia_uvm\nnvidia_drm\n"
+    dest: /etc/modules-load.d/nvidia.conf
+    mode: "0644"
+
+- name: Charger les modules Nvidia
+  ansible.builtin.command: "modprobe {{ item }}"
+  loop:
+    - nvidia
+    - nvidia_uvm
+    - nvidia_drm
+  register: modprobe_nvidia
+  changed_when: modprobe_nvidia.rc == 0
+  failed_when: modprobe_nvidia.rc != 0 and 'already' not in modprobe_nvidia.stderr | default('')
+
+- name: Vérifier nvidia-smi
+  ansible.builtin.command: nvidia-smi
+  changed_when: false
+  register: nvidia_smi_output
+
+- name: Afficher nvidia-smi
+  ansible.builtin.debug:
+    msg: "{{ nvidia_smi_output.stdout_lines }}"

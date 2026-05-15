@@ -1,0 +1,85 @@
+---
+# Installation et configuration Gatus — monitoring uptime
+#
+# Config : host_vars/<host>.yml (gatus_version, gatus_port, gatus_endpoints)
+# Template : playbooks/templates/gatus/config.yaml.j2
+#
+# Utilisation :
+#   ansible-playbook playbooks/gatus.yml                   # hosts: gatus
+#   ansible-playbook playbooks/vps.yml                     # importé avec target=vps
+
+- name: Install and configure Gatus
+  hosts: "{{ target | default('gatus') }}"
+  gather_facts: false
+  become: true
+  vars:
+    gatus_bin: /usr/local/bin/gatus
+    gatus_config_dir: /etc/gatus
+    gatus_data_dir: /var/lib/gatus
+    gatus_user: gatus
+    gatus_binary_src: "{{ playbook_dir }}/../../binaries/gatus-{{ gatus_version }}"
+  handlers:
+    - name: Restart gatus
+      ansible.builtin.systemd:
+        name: gatus
+        state: restarted
+
+  tasks:
+    - name: Create gatus group
+      ansible.builtin.group:
+        name: "{{ gatus_user }}"
+        system: true
+
+    - name: Create gatus user
+      ansible.builtin.user:
+        name: "{{ gatus_user }}"
+        group: "{{ gatus_user }}"
+        system: true
+        shell: /usr/sbin/nologin
+        home: "{{ gatus_data_dir }}"
+        create_home: false
+
+    - name: Create directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ gatus_user }}"
+        group: "{{ gatus_user }}"
+        mode: '0750'
+      loop:
+        - "{{ gatus_config_dir }}"
+        - "{{ gatus_data_dir }}"
+
+    - name: Deploy Gatus binary
+      ansible.builtin.copy:
+        src: "{{ gatus_binary_src }}"
+        dest: "{{ gatus_bin }}"
+        owner: root
+        group: root
+        mode: '0755'
+      notify: Restart gatus
+
+    - name: Deploy Gatus config
+      ansible.builtin.template:
+        src: templates/gatus/config.yaml.j2
+        dest: "{{ gatus_config_dir }}/config.yaml"
+        owner: "{{ gatus_user }}"
+        group: "{{ gatus_user }}"
+        mode: '0640'
+      notify: Restart gatus
+
+    - name: Deploy gatus.service
+      ansible.builtin.copy:
+        src: files/gatus/gatus.service
+        dest: /etc/systemd/system/gatus.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart gatus
+
+    - name: Enable and start Gatus
+      ansible.builtin.systemd:
+        name: gatus
+        enabled: true
+        state: started
+        daemon_reload: true

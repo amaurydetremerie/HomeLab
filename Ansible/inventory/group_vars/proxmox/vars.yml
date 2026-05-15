@@ -1,0 +1,10 @@
+---
+# Connexion via ansible user (NOPASSWD sudo) — après hardening.yml step [1] de site.yml
+ansible_user: ansible
+ansible_become: true
+ansible_become_method: sudo
+ansible_python_interpreter: /usr/bin/python3
+
+# Level 1 : users + SSH key-only + fail2ban
+# Pas de ufw — Proxmox a son propre firewall (Datacenter → Firewall)
+hardening_level: 1

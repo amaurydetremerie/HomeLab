@@ -7,24 +7,21 @@ http:
 
   routers:
     ollama:
-      rule: "Host(`ollama.wiserisk.be`) || Host(`ollama.wiserisk.home`)"
-      entryPoints:
-        - "web"
-      middlewares:
-        - "redirect-to-https@file"
-      service: "noop@internal"
-    ollama-secure:
       rule: "Host(`ollama.wiserisk.be`)"
       entryPoints:
-        - "websecure"
+        - "web"
       middlewares:
         - "ollama-bearer@file"
         - "security@file"
         - "compression@file"
       service: "ollama@file"
-      tls:
-        certResolver: letsencrypt-ecdsa
-        options: mintls13
+    ollama-home:
+      rule: "Host(`ollama.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
     ollama-secure-local:
       rule: "Host(`ollama.wiserisk.home`)"
       entryPoints:

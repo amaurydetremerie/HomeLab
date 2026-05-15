@@ -1,0 +1,13 @@
+[Unit]
+Description=Port forward {{ item.name }} ({{ item.listen_port }} → {{ item.target_ip }}:{{ item.target_port }})
+After=tailscaled.service network.target
+Requires=tailscaled.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/socat TCP-LISTEN:{{ item.listen_port }},fork,reuseaddr TCP:{{ item.target_ip }}:{{ item.target_port }}
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

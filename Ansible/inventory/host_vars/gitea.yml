@@ -1,0 +1,25 @@
+---
+# Gitea — LXC 1100 (10.100.0.100) sur Wasp
+# Données (repos + DB) sur NFS Git : /mnt/pve/Git → /opt/gitea
+
+# Renseigner la version souhaitée avant déploiement
+# Chercher sur https://dl.gitea.io/gitea/
+gitea_version: "1.26.1"
+gitea_download_url: "https://dl.gitea.io/gitea/{{ gitea_version }}/gitea-{{ gitea_version }}-linux-amd64"
+
+gitea_domain: "git.wiserisk.be"
+gitea_public_domain: "git.wiserisk.be"
+gitea_port: 3000
+gitea_ssh_port: 2222
+
+gitea_smtp_host: "smtp.gmail.com:587"
+gitea_smtp_user: "{{ vault_admin_email }}"
+gitea_smtp_from: "{{ vault_admin_email }}"
+
+hardening_ufw_rules:
+  - port: "3000"
+    proto: tcp
+    rule: allow
+  - port: "2222"
+    proto: tcp
+    rule: allow

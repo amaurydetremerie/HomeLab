@@ -1,12 +1,24 @@
 http:
   services:
-    adguard:
+    adguard-local:
       loadBalancer:
         servers:
-          - url: "http://10.0.0.86:80"
+          - url: "http://10.0.0.181:80"
+    adguard-vps:
+      loadBalancer:
+        servers:
+          - url: "http://10.8.0.1:3001"
 
   routers:
     adguard:
+      rule: "Host(`adguard.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "adguard-local@file"
+    adguard-local:
       rule: "Host(`adguard.wiserisk.home`)"
       entryPoints:
         - "web"
@@ -20,5 +32,21 @@ http:
       middlewares:
         - "security@file"
         - "compression@file"
-      service: "adguard@file"
+      service: "adguard-local@file"
       tls: {}
+    adguard-vps-local:
+      rule: "Host(`adguard.vps.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
+    adguard-vps-local-secure:
+      rule: "Host(`adguard.vps.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "adguard-vps@file"
+      tls: { }

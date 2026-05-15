@@ -1,0 +1,113 @@
+---
+# VPS Debian — stack DNS + VPN + monitoring + reverse proxy
+# Renseigner ansible_host avant déploiement (Bloc 8 → NEXT_STEPS.md)
+
+# ── WireGuard (serveur) ────────────────────────────────────────────────────
+wireguard_role: server
+wireguard_interface: wg0
+wireguard_address: 10.8.0.1/24
+wireguard_port: 51820
+wireguard_outbound_interface: eth0     # adapter selon l'iface publique du VPS
+wireguard_private_key: "{{ vault_wireguard_vps_private_key }}"
+
+# Peers = clients qui se connectent au VPS
+# Clés publiques à générer côté client : wg pubkey < wg0.conf
+wireguard_peers:
+  - name: traefik-flash
+    public_key: "{{ vault_wg_traefik_flash_pubkey }}"
+    allowed_ips: 10.8.0.3/32
+  - name: traefik-wasp
+    public_key: "{{ vault_wg_traefik_wasp_pubkey }}"
+    allowed_ips: 10.8.0.2/32
+  - name: phone
+    public_key: "{{ vault_wg_phone_pubkey }}"
+    allowed_ips: 10.8.0.4/32
+  - name: router
+    public_key: "{{ vault_wg_router_pubkey }}"
+    allowed_ips: 10.8.0.5/32
+
+# ── Unbound (loopback — upstream d'AdGuard) ────────────────────────────────
+unbound_config_src: files/unbound/unbound_loopback.conf   # port 5335, 127.0.0.1 uniquement
+
+# ── AdGuard (DNS filtré pour les clients WireGuard) ───────────────────────
+adguard_version: "0.107.74"
+adguard_port: 3001                                         # port 80 occupé par Traefik
+adguard_dns_port: 5353                                     # Traefik Edge prend le :53 public et forward ici
+adguard_upstream_dns: "127.0.0.1:5335"
+adguard_dns_rewrites: []
+
+# ── Traefik ────────────────────────────────────────────────────────────────
+traefik_acme_email: "{{ vault_admin_email }}"
+traefik_download_url: "https://github.com/traefik/traefik/releases/download/v3.7.1/traefik_v3.7.1_linux_amd64.tar.gz"
+
+# ── WireGuard UI ────────────────────────────────────────────────────────────
+# Vérifier la dernière version : https://github.com/ngoduykhanh/wireguard-ui/releases
+wireguard_ui_version: "0.6.2"
+wireguard_ui_endpoint: "{{ vps_wg_endpoint }}"   # Cible du SRV vpn.wiserisk.be — port public Traefik Edge
+
+# ── Lldap ───────────────────────────────────────────────────────────────────
+# Vérifier la dernière version : https://github.com/lldap/lldap/releases
+lldap_version: "0.6.3"
+lldap_base_domain: "wiserisk"
+lldap_base_tld: "be"
+
+# ── Authelia ────────────────────────────────────────────────────────────────
+# Vérifier la dernière version : https://github.com/authelia/authelia/releases
+authelia_version: "4.39.19"
+
+# ── Gatus ──────────────────────────────────────────────────────────────────
+# https://github.com/TwiN/gatus/releases
+gatus_version: "5.35.0"
+gatus_port: 8080
+gatus_discord_webhook: "{{ vault_gatus_discord_webhook }}"
+gatus_basic_auth:
+  user: monitoring
+  password: "{{ vault_gatus_monitor_password }}"
+gatus_endpoints:
+  # Connectivité WireGuard — indépendant de la chaîne Traefik publique
+  # Si ces checks échouent : tunnel WG down ou Traefik interne down
+  - name: WireGuard → Traefik Wasp
+    url: "tcp://10.8.0.2:80"
+    interval: 1m
+  # Vérification chaîne complète : VPS Traefik → WG → interne → service
+  - name: Gitea (public)
+    url: "https://git.wiserisk.be"
+    interval: 5m
+    expected_status: 200
+  - name: Jellyfin (public)
+    url: "https://jellyfin.wiserisk.be"
+    interval: 5m
+    expected_status: 200
+  # Vérification chaîne complète K3S : VPS Traefik → WG → interne → K3S → service
+  - name: FlareSolverr (public)
+    url: "https://flaresolverr.k3s.wiserisk.be"
+    interval: 5m
+    expected_status: 200
+
+# ── UFW ────────────────────────────────────────────────────────────────────
+hardening_ufw_forward_policy: "ACCEPT"
+hardening_ufw_rules:
+  - port: "53"
+    proto: tcp
+    rule: allow
+  - port: "53"
+    proto: udp
+    rule: allow
+
+  - port: "80"
+    proto: tcp
+    rule: allow
+  - port: "443"
+    proto: tcp
+    rule: allow
+
+  - port: "51820"
+    proto: udp
+    rule: allow
+
+  - port: "12201"
+    proto: udp
+    rule: allow
+
+  - from_ip: "10.8.0.0/24"
+    rule: allow

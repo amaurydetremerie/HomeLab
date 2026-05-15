@@ -1,3 +1,11 @@
 /.idea/
 /Config/keys.json
 /K3S/config/k3s.yaml
+
+# Fichier mot de passe vault local
+.vault_pass
+**/.vault_pass
+
+# Fichiers temporaires Ansible
+**/*.retry
+**/.ansible/

@@ -1,0 +1,62 @@
+---
+# Installation et configuration WireGuard — serveur ou client
+#
+# wireguard_role: server   → écoute sur wireguard_port, active NAT, gère plusieurs peers
+# wireguard_role: client   → se connecte à un serveur via peer.endpoint
+#
+# Prérequis vault :
+#   wireguard_private_key: "{{ vault_wireguard_<host>_private_key }}"
+#   (défini dans host_vars/<host>.yml, clé privée dans le vault)
+#
+# Config : host_vars/<host>.yml
+# Template : playbooks/templates/wireguard/wg.conf.j2
+#
+# Utilisation :
+#   ansible-playbook playbooks/wireguard.yml               # hosts: wireguard
+#   ansible-playbook playbooks/vps.yml                     # importé avec target=vps
+
+- name: Install and configure WireGuard
+  hosts: "{{ target | default('wireguard') }}"
+  gather_facts: true
+  become: true
+  handlers:
+    - name: Restart wg-quick
+      ansible.builtin.systemd:
+        name: "wg-quick@{{ wireguard_interface | default('wg0') }}"
+        state: restarted
+
+  tasks:
+    - name: Install wireguard
+      ansible.builtin.apt:
+        name:
+          - wireguard
+          - wireguard-tools
+          - iptables
+        state: present
+        update_cache: true
+
+    - name: Enable IPv4 forwarding (serveur uniquement)
+      ansible.posix.sysctl:
+        name: net.ipv4.ip_forward
+        value: "1"
+        sysctl_set: true
+        state: present
+        reload: true
+      when: wireguard_role | default('client') == 'server'
+
+    - name: Deploy WireGuard interface config (bootstrap uniquement — wireguard-ui gère ensuite)
+      ansible.builtin.template:
+        src: templates/wireguard/wg.conf.j2
+        dest: "/etc/wireguard/{{ wireguard_interface | default('wg0') }}.conf"
+        owner: root
+        group: root
+        mode: '0600'
+        force: false
+      notify: Restart wg-quick
+
+    - name: Enable and start wg-quick service
+      ansible.builtin.systemd:
+        name: "wg-quick@{{ wireguard_interface | default('wg0') }}"
+        enabled: true
+        state: started
+        daemon_reload: true

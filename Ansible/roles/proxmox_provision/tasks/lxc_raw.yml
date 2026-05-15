@@ -1,0 +1,32 @@
+---
+# Directives LXC brutes non gérées par le module community.general.proxmox
+# (accès devices, bind-mounts système, passthrough GPU, TUN, USB, ...)
+# Le fichier /etc/pve/lxc/<vmid>.conf doit exister (container créé au play précédent)
+# Les changements prennent effet au prochain démarrage du container
+# Bind mounts (chemins hôte bruts commençant par /) — refusés par l'API Proxmox
+# pour ansible@pam. Appliqués ici via pct set en SSH root.
+- name: Collecter les bind mounts LXC
+  ansible.builtin.set_fact:
+    lxc_bind_mounts_list: >-
+      {{ lxc_bind_mounts_list | default([]) +
+         (item.mounts | dict2items
+          | selectattr('value', 'match', '^/')
+          | map('combine', {'vmid': item.vmid})
+          | list) }}
+  loop: "{{ proxmox_lxc | selectattr('mounts', 'defined') | list }}"
+
+- name: Appliquer les bind mounts via pct set
+  ansible.builtin.command: "/usr/sbin/pct set {{ item.vmid }} -{{ item.key }} {{ item.value }}"
+  loop: "{{ lxc_bind_mounts_list | default([]) }}"
+  loop_control:
+    label: "vmid={{ item.vmid }} -{{ item.key }} {{ item.value }}"
+  changed_when: true
+
+- name: Add raw directives to LXC configs
+  ansible.builtin.blockinfile:
+    path: "/etc/pve/lxc/{{ item.vmid }}.conf"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    block: "{{ item.lxc_raw | join('\n') }}"
+  loop: "{{ proxmox_lxc | selectattr('lxc_raw', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.hostname }} (vmid={{ item.vmid }})"

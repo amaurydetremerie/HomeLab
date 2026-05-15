@@ -1,0 +1,58 @@
+---
+# ── wiserisk — accès humain ────────────────────────────────────────────────────
+- name: "Créer le groupe {{ hardening_wiserisk_user }}"
+  ansible.builtin.group:
+    name: "{{ hardening_wiserisk_user }}"
+    state: present
+
+- name: "Créer l'utilisateur {{ hardening_wiserisk_user }}"
+  ansible.builtin.user:
+    name: "{{ hardening_wiserisk_user }}"
+    group: "{{ hardening_wiserisk_user }}"
+    groups: sudo
+    shell: /bin/bash
+    create_home: true
+    password: "{{ vault_root_password | password_hash('sha512') }}"
+    update_password: on_create
+    state: present
+
+- name: "Injecter la clé SSH personnelle dans {{ hardening_wiserisk_user }}"
+  ansible.posix.authorized_key:
+    user: "{{ hardening_wiserisk_user }}"
+    key: "{{ wiserisk_ssh_public_key }}"
+    exclusive: true
+    state: present
+
+# ── ansible — automation ────────────────────────────────────────────────────────
+- name: "Créer le groupe {{ hardening_ansible_user }}"
+  ansible.builtin.group:
+    name: "{{ hardening_ansible_user }}"
+    state: present
+
+- name: "Créer l'utilisateur {{ hardening_ansible_user }}"
+  ansible.builtin.user:
+    name: "{{ hardening_ansible_user }}"
+    group: "{{ hardening_ansible_user }}"
+    shell: /bin/bash
+    create_home: true
+    state: present
+
+- name: "Injecter la clé SSH ansible dans {{ hardening_ansible_user }}"
+  ansible.posix.authorized_key:
+    user: "{{ hardening_ansible_user }}"
+    key: "{{ ansible_operator_ssh_public_key }}"
+    exclusive: true
+    state: present
+
+- name: Installer sudo
+  ansible.builtin.apt:
+    name: sudo
+    state: present
+    update_cache: false
+
+- name: "Configurer sudo NOPASSWD pour {{ hardening_ansible_user }}"
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ hardening_ansible_user }}"
+    content: "{{ hardening_ansible_user }} ALL=(ALL) NOPASSWD:ALL\n"
+    mode: "0440"
+    validate: "/usr/sbin/visudo -cf %s"

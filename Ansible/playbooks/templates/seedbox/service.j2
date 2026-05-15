@@ -1,0 +1,15 @@
+[Unit]
+Description={{ item.description }}
+After=network.target
+
+[Service]
+User={{ item.name }}
+Group={{ item.name }}
+Type=simple
+ExecStart=/opt/{{ item.binary }}/{{ item.binary }} {{ item.args }}
+TimeoutStopSec=20
+KillMode=process
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,122 @@
+---
+# Installation et configuration AdGuard Home
+#
+# Variables par host :
+#   adguard_version      — version GitHub à télécharger (ex: 0.107.52)
+#   adguard_port         — port admin (80 pour LXC, 3001 pour VPS)
+#   adguard_upstream_dns — upstream DNS (Unbound)
+#   adguard_dns_rewrites — liste de rewrites DNS locaux
+#
+# Prérequis vault :
+#   vault_adguard_user, vault_adguard_password
+#
+# Utilisation :
+#   ansible-playbook playbooks/adguard.yml                    # wasp + flash
+#   ansible-playbook playbooks/adguard.yml -e target=adguard_wasp
+#   ansible-playbook playbooks/adguard.yml -e target=vps
+
+# ── Installation ───────────────────────────────────────────────────────────────
+- name: Install AdGuard Home
+  hosts: "{{ target | default('adguard') }}"
+  gather_facts: false
+  tasks:
+    - name: Check if AdGuard binary exists
+      ansible.builtin.stat:
+        path: /opt/AdGuardHome/AdGuardHome
+      register: adguard_binary
+
+    - name: Download AdGuard Home v{{ adguard_version }}
+      ansible.builtin.get_url:
+        url: "https://github.com/AdguardTeam/AdGuardHome/releases/download/v{{ adguard_version }}/AdGuardHome_linux_amd64.tar.gz"
+        dest: /tmp/AdGuardHome_linux_amd64.tar.gz
+        mode: "0644"
+      when: not adguard_binary.stat.exists
+
+    - name: Extract AdGuard Home
+      ansible.builtin.unarchive:
+        src: /tmp/AdGuardHome_linux_amd64.tar.gz
+        dest: /opt/
+        remote_src: true
+      when: not adguard_binary.stat.exists
+
+    - name: Check if AdGuardHome.yaml exists
+      ansible.builtin.stat:
+        path: /opt/AdGuardHome/AdGuardHome.yaml
+      register: adguard_yaml
+
+    - name: Write initial AdGuardHome.yaml (évite le setup wizard)
+      ansible.builtin.template:
+        src: templates/adguard/AdGuardHome.yaml.j2
+        dest: /opt/AdGuardHome/AdGuardHome.yaml
+        owner: root
+        group: root
+        mode: '0600'
+      register: adguard_yaml_written
+      when: not adguard_yaml.stat.exists
+
+    - name: Install AdGuard Home as system service
+      ansible.builtin.command:
+        cmd: /opt/AdGuardHome/AdGuardHome -s install
+        creates: /etc/systemd/system/AdGuardHome.service
+
+    - name: Restart AdGuardHome (config initiale écrite)
+      ansible.builtin.systemd:
+        name: AdGuardHome
+        state: restarted
+      when: adguard_yaml_written is changed
+
+    - name: Wait for AdGuard to be ready on admin port
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: "{{ adguard_port }}"
+        timeout: 30
+
+# ── Configuration ──────────────────────────────────────────────────────────────
+- name: Configure AdGuard Home
+  hosts: "{{ target | default('adguard') }}"
+  gather_facts: false
+  tasks:
+    - name: Configure upstream DNS (Unbound)
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ adguard_port }}/control/dns_config"
+        method: POST
+        user: "{{ vault_adguard_user }}"
+        password: "{{ vault_adguard_password }}"
+        force_basic_auth: true
+        body_format: json
+        body:
+          upstream_dns:
+            - "{{ adguard_upstream_dns }}"
+          bootstrap_dns:
+            - "1.1.1.1"
+            - "8.8.8.8"
+          upstream_mode: "parallel"
+        status_code: [200, 302]
+
+    - name: Get current DNS rewrites
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ adguard_port }}/control/rewrite/list"
+        method: GET
+        user: "{{ vault_adguard_user }}"
+        password: "{{ vault_adguard_password }}"
+        force_basic_auth: true
+        status_code: [200, 302]
+      register: current_rewrites
+
+    - name: Add missing DNS rewrites
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ adguard_port }}/control/rewrite/add"
+        method: POST
+        user: "{{ vault_adguard_user }}"
+        password: "{{ vault_adguard_password }}"
+        force_basic_auth: true
+        body_format: json
+        body:
+          domain: "{{ item.domain }}"
+          answer: "{{ item.answer }}"
+        status_code: [200, 302]
+      loop: "{{ adguard_dns_rewrites }}"
+      when: >
+        current_rewrites.json
+        | selectattr('domain', 'equalto', item.domain)
+        | list | length == 0

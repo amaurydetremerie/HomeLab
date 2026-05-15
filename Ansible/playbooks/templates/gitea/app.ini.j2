@@ -1,0 +1,61 @@
+APP_NAME = Gitea
+RUN_USER = git
+RUN_MODE = prod
+WORK_PATH = /opt/gitea
+
+[server]
+DOMAIN           = {{ gitea_domain }}
+HTTP_PORT        = {{ gitea_port }}
+ROOT_URL         = https://{{ gitea_public_domain }}/
+START_SSH_SERVER = true
+SSH_DOMAIN       = {{ gitea_domain }}
+SSH_PORT         = {{ gitea_ssh_port }}
+SSH_LISTEN_PORT  = {{ gitea_ssh_port }}
+LFS_START_SERVER = true
+LFS_CONTENT_PATH = /opt/gitea/lfs
+
+[repository]
+ROOT = /opt/gitea/repositories
+
+[database]
+DB_TYPE = sqlite3
+PATH    = /opt/gitea/data/gitea.db
+
+[indexer]
+ISSUE_INDEXER_PATH   = /opt/gitea/indexers/issues.bleve
+REPO_INDEXER_ENABLED = true
+REPO_INDEXER_PATH    = /opt/gitea/indexers/repos.bleve
+
+[session]
+PROVIDER        = file
+PROVIDER_CONFIG = /opt/gitea/sessions
+
+[picture]
+AVATAR_UPLOAD_PATH            = /opt/gitea/avatars
+REPOSITORY_AVATAR_UPLOAD_PATH = /opt/gitea/repo-avatars
+
+[attachment]
+PATH = /opt/gitea/attachments
+
+[log]
+ROOT_PATH = /var/log/gitea
+MODE      = file
+LEVEL     = warn
+
+[security]
+INSTALL_LOCK   = true
+SECRET_KEY     = {{ vault_gitea_secret_key }}
+INTERNAL_TOKEN = {{ vault_gitea_internal_token }}
+
+[service]
+DISABLE_REGISTRATION       = false
+REQUIRE_SIGNIN_VIEW        = false
+DEFAULT_KEEP_EMAIL_PRIVATE = true
+
+[mailer]
+ENABLED   = true
+SMTP_ADDR = smtp.gmail.com
+SMTP_PORT = 587
+USER      = {{ gitea_smtp_user }}
+PASSWD    = {{ vault_gitea_smtp_password }}
+FROM      = {{ gitea_smtp_from }}

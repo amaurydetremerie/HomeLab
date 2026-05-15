@@ -1,0 +1,32 @@
+http:
+  services:
+    gitea:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.100:3000"
+
+  routers:
+    gitea:
+      rule: "Host(`git.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "gitea@file"
+    gitea-home:
+      rule: "Host(`git.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: "noop@internal"
+    gitea-local-secure:
+      rule: "Host(`git.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "gitea@file"
+      tls: {}

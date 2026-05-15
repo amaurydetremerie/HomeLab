@@ -5,9 +5,10 @@ metadata:
   namespace: kube-system
 spec:
   entryPoints:
+    - web
     - websecure
   routes:
-    - match: Host(`traefik.k3s.wiserisk.home`)
+    - match: Host(`traefik.k3s.wiserisk.be`) || Host(`traefik.k3s.wiserisk.home`)
       kind: Rule
       services:
         - name: api@internal

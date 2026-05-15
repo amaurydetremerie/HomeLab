@@ -1,0 +1,40 @@
+---
+# IP côté réseau de gestion (10.0.0.x)
+ansible_host: 10.0.0.182
+# IP côté réseau services (10.100.0.x) — interface de passerelle
+traefik_internal_ip: 10.100.0.1
+
+# Passerelle DMZ — hardening level 3 (exposé internet via VPS)
+hardening_level: 3
+
+# ── WireGuard (client) ─────────────────────────────────────────────────────
+wireguard_role: client
+wireguard_interface: wg0
+wireguard_address: 10.8.0.2/32          # IP unique dans le subnet WireGuard
+wireguard_private_key: "{{ vault_wireguard_traefik_wasp_private_key }}"  # adapter le nom
+
+wireguard_peers:
+  - name: vps-server
+    public_key: "{{ vault_wg_vps_pubkey }}"
+    endpoint: "{{ vps_wg_endpoint }}"
+    allowed_ips:
+      - 10.8.0.0/24                     # accès au subnet WireGuard uniquement
+      # - 0.0.0.0/0                     # route tout le trafic via VPS (exit node)
+    persistent_keepalive: 25
+
+# ── Traefik ────────────────────────────────────────────────────────────────
+traefik_acme_email: "{{ vault_admin_email }}"
+traefik_download_url: "https://github.com/traefik/traefik/releases/download/v3.7.1/traefik_v3.7.1_linux_amd64.tar.gz"
+gateway: true
+hardening_ufw_forward_policy: "ACCEPT"
+
+hardening_ufw_rules:
+  - port: "80"
+    proto: tcp
+    rule: allow
+  - port: "443"
+    proto: tcp
+    rule: allow
+  - proto: udp
+    from_ip: "{{ vps_public_ip }}"
+    rule: allow

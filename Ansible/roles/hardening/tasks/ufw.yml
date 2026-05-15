@@ -1,0 +1,37 @@
+---
+# Note : ufw dans un LXC unprivileged nécessite features: nesting=1
+- name: Installer ufw
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+
+- name: Politique par défaut — deny inbound, allow outbound
+  community.general.ufw:
+    policy: deny
+    direction: incoming
+
+- name: Politique forward UFW
+  ansible.builtin.lineinfile:
+    path: /etc/default/ufw
+    regexp: '^DEFAULT_FORWARD_POLICY='
+    line: 'DEFAULT_FORWARD_POLICY="{{ hardening_ufw_forward_policy }}"'
+  notify: reload ufw
+
+- name: "Autoriser SSH (port {{ hardening_ssh_port }})"
+  community.general.ufw:
+    rule: allow
+    port: "{{ hardening_ssh_port | string }}"
+    proto: tcp
+
+- name: Appliquer les règles supplémentaires
+  community.general.ufw:
+    rule: "{{ item.rule | default('allow') }}"
+    port: "{{ (item.port | string) if item.port is defined else omit }}"
+    proto: "{{ item.proto | default(omit) }}"
+    from_ip: "{{ item.from_ip | default(omit) }}"
+    to_ip: "{{ item.to_ip | default(omit) }}"
+  loop: "{{ hardening_ufw_rules }}"
+
+- name: Activer ufw
+  community.general.ufw:
+    state: enabled

@@ -11,17 +11,16 @@ Requires=sync-ollama-bearer.service
 Restart=always
 User=traefik
 Group=traefik
-ExecStart=/usr/local/bin/traefik --configfile=/etc/Homelab/Traefik/traefik.toml
+ExecStart=/usr/local/bin/traefik --configfile=/etc/Homelab/Traefik/traefik.yaml
 LimitNOFILE=1048576
 PrivateTmp=true
 PrivateDevices=false
 ProtectHome=true
 ProtectSystem=full
 WorkingDirectory=/etc/traefik
-ReadWritePaths=/etc/traefik/acme.json
 ReadWritePaths=/var/log/traefik
 ReadWritePaths=/etc/traefik/plugins-storage
-ReadOnlyPaths=/etc/Homelab/Traefik/traefik.toml
+ReadOnlyPaths=/etc/Homelab/Traefik/traefik.yaml
 ReadOnlyPaths=/etc/Homelab/Traefik/traefik_dynamic
 CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 AmbientCapabilities=CAP_NET_BIND_SERVICE

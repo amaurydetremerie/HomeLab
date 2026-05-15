@@ -1,0 +1,8 @@
+---
+ansible_user: ansible
+ansible_become: true
+ansible_become_method: sudo
+
+# Level 1 : users + SSH key-only + fail2ban
+# Pas de ufw — PBS expose ses propres ports (8007), ufw créerait des conflits
+hardening_level: 1

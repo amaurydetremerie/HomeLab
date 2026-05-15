@@ -1,0 +1,18 @@
+---
+# Exemple host_vars pour un client WireGuard (Proxmox, LXC, etc.)
+# Renommer en <hostname>.yml et adapter
+
+# ── WireGuard (client) ─────────────────────────────────────────────────────
+wireguard_role: client
+wireguard_interface: wg0
+wireguard_address: 10.8.0.2/32          # IP unique dans le subnet WireGuard
+wireguard_private_key: "{{ vault_wireguard_flash_private_key }}"  # adapter le nom
+
+wireguard_peers:
+  - name: vps-server
+    public_key: "{{ vault_wg_vps_pubkey }}"
+    endpoint: "vps.example.com:51820"   # domaine ou IP publique du VPS
+    allowed_ips:
+      - 10.8.0.0/24                     # accès au subnet WireGuard uniquement
+      # - 0.0.0.0/0                     # route tout le trafic via VPS (exit node)
+    persistent_keepalive: 25

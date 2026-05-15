@@ -1,0 +1,9 @@
+#!/bin/bash
+VAULT_FILE="Ansible/inventory/group_vars/all/vault.yml"
+
+if [ -f "$VAULT_FILE" ]; then
+  if ! head -1 "$VAULT_FILE" | grep -q '^\$ANSIBLE_VAULT'; then
+    echo "ERREUR : $VAULT_FILE n'est pas chiffré. Lance 'ansible-vault encrypt' avant de committer."
+    exit 1
+  fi
+fi

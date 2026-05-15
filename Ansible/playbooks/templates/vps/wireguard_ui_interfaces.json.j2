@@ -1,0 +1,10 @@
+{
+        "addresses": [
+                "{{ wireguard_address }}"
+        ],
+        "listen_port": "{{ wireguard_port }}",
+        "updated_at": "2026-01-01T00:00:00Z",
+        "post_up": "iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o {{ wireguard_outbound_interface | default('eth0') }} -j MASQUERADE",
+        "pre_down": "",
+        "post_down": "iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o {{ wireguard_outbound_interface | default('eth0') }} -j MASQUERADE"
+}

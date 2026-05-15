@@ -1,0 +1,365 @@
+---
+# Bootstrap K3S cluster from scratch
+#
+# Prérequis :
+#   - TrueNAS Hermes (10.100.0.10) doit être UP :
+#       • /mnt/Hermes/K3S       → PVs registry, traefik, monitoring, ...
+#       • /mnt/Hermes/K3S-Secure → PVs Vault (vault-pv + unseal-pv)
+#
+# Séquence :
+#   1. Master  : K3S server + nfs-common + Helm + kustomize + registry mirror
+#   2. Workers : rejoignent le cluster + registry mirror
+#   3. Master  : StorageClass nfs + ArgoCD (Helm) + app-of-apps
+#      → ArgoCD sync wave 0  : argocd-manifest (config ArgoCD)
+#      → ArgoCD sync wave 1  : kube-system (CoreDNS custom)
+#      → ArgoCD sync wave 2  : traefik Manifest (PV/PVC/IngressRoute/Middleware)
+#      → ArgoCD sync wave 3  : Vault — PAUSE ICI : init + unseal manuel requis
+#                              (readinessProbe bloque les waves suivantes tant que sealed)
+#      → ArgoCD sync wave 4  : registry (lit les credentials Docker Hub depuis Vault)
+#      → ArgoCD sync wave 5  : system-upgrade-controller
+#      → ArgoCD sync wave 6  : renovate (CronJob, tourne chaque nuit à 3h)
+#      → ArgoCD sync wave 9  : app-of-apps (auto-référence)
+#      → ArgoCD sync wave 10-19 : monitoring stack
+#      → ArgoCD sync wave 20+: services
+#
+# Note traefik : le HelmChartConfig (traefik-config.yaml) est géré par le contrôleur Helm K3S,
+#   PAS par ArgoCD (ArgoCD ne peut pas tracker la santé d'un HelmChartConfig → jamais Healthy).
+#   Ce playbook le déploie dans /var/lib/rancher/k3s/server/manifests/ APRÈS qu'ArgoCD wave 3
+#   ait créé le traefik-pvc (condition nécessaire). K3S fait alors helm upgrade traefik.
+#   ArgoCD wave 3 gère uniquement : PV/PVC, IngressRoute dashboard, Middleware.
+#
+# Note registry mirror : actif sur les nœuds dès ce playbook, mais fonctionnel
+#   (proxy Docker Hub) uniquement après Vault unsealed + registry déployée (wave 2).
+#
+# Usage :
+#   Tout :        ansible-playbook playbooks/k3s.yml
+#   Master seul : ansible-playbook playbooks/k3s.yml --tags master
+#   Workers :     ansible-playbook playbooks/k3s.yml --tags workers
+#   ArgoCD :      ansible-playbook playbooks/k3s.yml --tags argocd  (cluster déjà up)
+
+# =========================================================
+# Play 1 — K3S server (master)
+# =========================================================
+- name: Bootstrap K3S master
+  hosts: k3s_masters
+  gather_facts: false
+  become: true
+  tags: master
+  vars:
+    kustomize_version: "5.4.3"
+    k3s_registry_host: registry.k3s.wiserisk.be
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  handlers:
+    - name: Restart K3S
+      ansible.builtin.systemd:
+        name: k3s
+        state: restarted
+  tasks:
+
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name:
+          - nfs-common
+          - curl
+          - apt-transport-https
+        update_cache: true
+        state: present
+
+    - name: Install K3S server
+      ansible.builtin.shell:
+        cmd: curl -sfL https://get.k3s.io | sh -s - --write-kubeconfig-mode=644
+        creates: /usr/local/bin/k3s
+
+    - name: Enable and start k3s service
+      ansible.builtin.systemd:
+        name: k3s
+        enabled: true
+        state: started
+
+    - name: Wait for K3S node to be Ready
+      ansible.builtin.command: kubectl get nodes
+      register: nodes_status
+      retries: 20
+      delay: 10
+      until: nodes_status.rc == 0
+      changed_when: false
+
+    - name: Configure K3S registry mirrors
+      ansible.builtin.copy:
+        content: |
+          mirrors:
+            "docker.io":
+              endpoint:
+                - "https://{{ k3s_registry_host }}"
+            "{{ k3s_registry_host }}":
+              endpoint:
+                - "https://{{ k3s_registry_host }}"
+        dest: /etc/rancher/k3s/registries.yaml
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart K3S
+
+    - name: Apply registry config (flush handlers now)
+      ansible.builtin.meta: flush_handlers
+
+    - name: Wait for K3S to be Ready after registry restart
+      ansible.builtin.command: kubectl get nodes
+      register: nodes_status
+      retries: 20
+      delay: 10
+      until: nodes_status.rc == 0
+      changed_when: false
+
+    - name: Install Helm
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+        creates: /usr/local/bin/helm
+
+    - name: Install kustomize
+      ansible.builtin.shell:
+        cmd: >
+          curl -sL
+          https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv{{ kustomize_version }}/kustomize_v{{ kustomize_version }}_linux_amd64.tar.gz
+          | tar xz -C /usr/local/bin/
+        creates: /usr/local/bin/kustomize
+
+    - name: Get K3S node token
+      ansible.builtin.slurp:
+        src: /var/lib/rancher/k3s/server/node-token
+      register: k3s_token_raw
+
+    - name: Set K3S token fact (used by workers play)
+      ansible.builtin.set_fact:
+        k3s_node_token: "{{ k3s_token_raw.content | b64decode | trim }}"
+
+# =========================================================
+# Play 2 — K3S workers
+# =========================================================
+- name: Join K3S workers to cluster
+  hosts: k3s_workers
+  gather_facts: false
+  become: true
+  tags: workers
+  vars:
+    k3s_registry_host: registry.k3s.wiserisk.be
+  handlers:
+    - name: Restart K3S agent
+      ansible.builtin.systemd:
+        name: k3s-agent
+        state: restarted
+  tasks:
+
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name:
+          - nfs-common
+          - curl
+        update_cache: true
+        state: present
+
+    - name: Wait for K3S API on master to be accessible
+      ansible.builtin.wait_for:
+        host: "{{ hostvars[groups['k3s_masters'][0]]['ansible_host'] }}"
+        port: 6443
+        delay: 5
+        timeout: 120
+
+    - name: Join K3S cluster as agent
+      ansible.builtin.shell:
+        cmd: curl -sfL https://get.k3s.io | sh -s -
+        creates: /usr/local/bin/k3s
+      environment:
+        K3S_URL: "https://{{ hostvars[groups['k3s_masters'][0]]['ansible_host'] }}:6443"
+        K3S_TOKEN: "{{ hostvars[groups['k3s_masters'][0]]['k3s_node_token'] }}"
+
+    - name: Enable and start k3s-agent service
+      ansible.builtin.systemd:
+        name: k3s-agent
+        enabled: true
+        state: started
+
+    - name: Configure K3S registry mirrors
+      ansible.builtin.copy:
+        content: |
+          mirrors:
+            "docker.io":
+              endpoint:
+                - "https://{{ k3s_registry_host }}"
+            "{{ k3s_registry_host }}":
+              endpoint:
+                - "https://{{ k3s_registry_host }}"
+        dest: /etc/rancher/k3s/registries.yaml
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart K3S agent
+
+# =========================================================
+# Play 3 — ArgoCD bootstrap (sur master)
+# =========================================================
+- name: Bootstrap ArgoCD and app-of-apps
+  hosts: k3s_masters
+  gather_facts: false
+  become: true
+  tags: argocd
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  tasks:
+
+    - name: Create NFS StorageClass
+      ansible.builtin.command:
+        cmd: kubectl apply -f -
+        stdin: |
+          apiVersion: storage.k8s.io/v1
+          kind: StorageClass
+          metadata:
+            name: nfs
+          provisioner: kubernetes.io/no-provisioner
+          volumeBindingMode: Immediate
+      register: sc_result
+      changed_when: "'created' in sc_result.stdout or 'configured' in sc_result.stdout"
+
+    - name: Copy ArgoCD Helm chart to master
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../K3S/infrastructure/argocd/Helm/"
+        dest: /tmp/argocd-helm/
+        mode: preserve
+
+    - name: Copy argocd namespace manifest
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../K3S/infrastructure/argocd/Manifest/namespace.yaml"
+        dest: /tmp/argocd-namespace.yaml
+
+    - name: Copy app-of-apps manifest
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../K3S/infrastructure/argocd/Apps/appOfApps.yaml"
+        dest: /tmp/argocd-appofapps.yaml
+
+    - name: Apply argocd namespace
+      ansible.builtin.command: kubectl apply -f /tmp/argocd-namespace.yaml
+      register: ns_result
+      changed_when: "'created' in ns_result.stdout or 'configured' in ns_result.stdout"
+
+    - name: Deploy ArgoCD via Helm
+      ansible.builtin.command: >
+        helm upgrade --install argocd /tmp/argocd-helm
+        --namespace argocd
+        --create-namespace
+        --wait
+        --timeout 10m
+      register: helm_result
+      changed_when: "'has been upgraded' in helm_result.stdout or 'has been deployed' in helm_result.stdout"
+
+    - name: Wait for ArgoCD server rollout
+      ansible.builtin.command: >
+        kubectl rollout status deployment/argocd-server -n argocd --timeout=300s
+      changed_when: false
+
+    - name: Apply app-of-apps
+      ansible.builtin.command: kubectl apply -f /tmp/argocd-appofapps.yaml
+      register: aoa_result
+      changed_when: "'created' in aoa_result.stdout or 'configured' in aoa_result.stdout"
+
+    - name: Wait for Vault to respond (auto-unseal check)
+      ansible.builtin.command: >
+        kubectl exec -n secure deploy/vault -- vault status -format=json
+      register: vault_status_raw
+      changed_when: false
+      failed_when: false
+      retries: 6
+      delay: 10
+      until: vault_status_raw.rc in [0, 2]
+
+    - name: Set Vault initialized fact
+      ansible.builtin.set_fact:
+        vault_initialized: >-
+          {{
+            (vault_status_raw.stdout | from_json).initialized
+            if vault_status_raw.rc in [0, 2] and vault_status_raw.stdout
+            else false
+          }}
+
+    - name: Vault — initialisation requise au premier déploiement
+      ansible.builtin.pause:
+        prompt: |
+
+          ╔══════════════════════════════════════════════════════════════════════╗
+          ║  ÉTAPE MANUELLE — Premier déploiement uniquement                    ║
+          ╠══════════════════════════════════════════════════════════════════════╣
+          ║  Vault a un mécanisme d'auto-unseal : il lit les clés depuis le PVC ║
+          ║  unseal-pvc → TrueNAS /mnt/Hermes/K3S-Secure/unseal/               ║
+          ║  Au 1er déploiement ces fichiers n'existent pas encore.             ║
+          ║                                                                      ║
+          ║  1. Initialiser Vault :                                              ║
+          ║     kubectl exec -n secure deploy/vault -- vault operator init       ║
+          ║     → Sauvegarder les 5 unseal keys + root token en lieu sûr        ║
+          ║                                                                      ║
+          ║  2. Stocker 3 clés sur TrueNAS (depuis Hermes ou un client NFS) :   ║
+          ║     echo "<key1>" > /mnt/Hermes/K3S-Secure/unseal/unseal-key-1      ║
+          ║     echo "<key2>" > /mnt/Hermes/K3S-Secure/unseal/unseal-key-2      ║
+          ║     echo "<key3>" > /mnt/Hermes/K3S-Secure/unseal/unseal-key-3      ║
+          ║     → Le script vault-unseal.sh les détecte et unseale Vault         ║
+          ║                                                                      ║
+          ║  3. Vérifier que Vault est unsealed :                                ║
+          ║     kubectl exec -n secure deploy/vault -- vault status              ║
+          ║     → Sealed: false                                                  ║
+          ║                                                                      ║
+          ║  4. Configurer les secrets Docker Hub dans Vault :                   ║
+          ║     kubectl exec -n secure deploy/vault -- vault login <root-token>  ║
+          ║     kubectl exec -n secure deploy/vault -- \                         ║
+          ║       vault kv put k3s/data/docker username=<u> token=<t>           ║
+          ║                                                                      ║
+          ║  → Appuyer sur Entrée pour lancer l'attente (le playbook polle       ║
+          ║    jusqu'à ce que Vault soit Healthy dans ArgoCD)                   ║
+          ╚══════════════════════════════════════════════════════════════════════╝
+      when: not vault_initialized
+
+    - name: Wait for Vault Application to be Healthy (wave 1 — bloqué tant que sealed)
+      ansible.builtin.command: >
+        kubectl -n argocd get application vault
+        -o jsonpath='{.status.health.status}'
+      register: vault_health
+      retries: 60
+      delay: 15
+      until: vault_health.stdout == 'Healthy'
+      changed_when: false
+
+    - name: Force registry hard-refresh pour récupérer les credentials Vault
+      ansible.builtin.command: >
+        kubectl -n argocd annotate application registry
+        argocd.argoproj.io/refresh=hard --overwrite
+      changed_when: true
+
+    - name: Wait for registry Application to be Healthy (wave 2)
+      ansible.builtin.command: >
+        kubectl -n argocd get application registry
+        -o jsonpath='{.status.health.status}'
+      register: registry_health
+      retries: 30
+      delay: 10
+      until: registry_health.stdout == 'Healthy'
+      changed_when: false
+
+    - name: Deploy Traefik HelmChartConfig (géré par K3S Helm controller, hors ArgoCD)
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../../K3S/infrastructure/traefik/traefik-config.yaml.j2"
+        dest: /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Display ArgoCD admin password
+      ansible.builtin.command: >
+        kubectl -n argocd get secret argocd-initial-admin-secret
+        -o jsonpath="{.data.password}"
+      register: argocd_password
+      changed_when: false
+      failed_when: false
+
+    - name: Show ArgoCD initial admin password
+      ansible.builtin.debug:
+        msg: >-
+          ArgoCD admin password :
+          {{ argocd_password.stdout | b64decode if argocd_password.stdout else 'secret not found (already rotated?)' }}

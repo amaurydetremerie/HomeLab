@@ -1,0 +1,9 @@
+---
+# Jellyfin media server — LXC 1202 (10.100.0.202) sur Flash
+# GPU Quadro P2200 passthrough + /dev/dri (défini dans proxmox_flash.yml)
+# Médias : NFS Hermes /mnt/Hermes/Data/Media/Videos → /mnt/media/seedbox
+
+hardening_ufw_rules:
+  - port: "8096"
+    proto: tcp
+    rule: allow

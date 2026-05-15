@@ -1,0 +1,24 @@
+---
+# Appelé depuis proxmox_bootstrap.yml quand proxmox_gpus.intel est défini
+# Le driver i915 est inclus dans le kernel — seuls les firmwares et paquets optionnels sont nécessaires
+- name: Installer les paquets Intel GPU
+  ansible.builtin.apt:
+    name: "{{ proxmox_gpus.intel.packages | default([]) }}"
+    state: present
+    update_cache: true
+  when: proxmox_gpus.intel.packages | default([]) | length > 0
+
+- name: Persister les modules Intel au démarrage
+  ansible.builtin.copy:
+    content: "{{ proxmox_gpus.intel.modules | join('\n') }}\n"
+    dest: /etc/modules-load.d/i915.conf
+    mode: "0644"
+  when: proxmox_gpus.intel.modules | default([]) | length > 0
+
+- name: Charger les modules Intel
+  ansible.builtin.command: "modprobe {{ item }}"
+  loop: "{{ proxmox_gpus.intel.modules | default([]) }}"
+  register: modprobe_intel
+  changed_when: modprobe_intel.rc == 0
+  failed_when: modprobe_intel.rc != 0 and 'already' not in modprobe_intel.stderr | default('')
+  when: proxmox_gpus.intel.modules | default([]) | length > 0

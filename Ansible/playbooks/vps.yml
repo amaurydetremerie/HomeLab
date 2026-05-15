@@ -1,0 +1,76 @@
+---
+# Bootstrap VPS — stack complète idempotente
+#
+# Services déployés (dans l'ordre de dépendances) :
+#   1. WireGuard      — serveur VPN
+#   2. Unbound        — résolveur récursif sur 127.0.0.1:5335
+#   3. AdGuard        — DNS filtré (upstream = Unbound), admin sur :3001
+#   4. Traefik Edge   — reverse proxy HTTPS + wildcard OVH
+#   5. Gatus          — monitoring uptime
+#   6. Unbound status — page de statut sur 127.0.0.1:9091
+#   7. WireGuard UI   — gestion peers WireGuard sur 127.0.0.1:5000
+#   8. Lldap          — serveur LDAP sur 127.0.0.1:3890
+#   9. Authelia       — SSO ForwardAuth sur 127.0.0.1:9092 (dépend de Lldap)
+#
+# Prérequis :
+#   - hardening appliqué en amont (site.yml ou hardening.yml --limit vps)
+#   - VPS dans inventory/hosts.yml groupe [vps]
+#   - IP dans host_vars/debian_vps.yml (ansible_host)
+#   - Vault rempli (voir group_vars/all/vault.example.yml section WireGuard)
+#
+# Utilisation :
+#   ansible-playbook playbooks/vps.yml
+#   ansible-playbook playbooks/vps.yml --tags wireguard
+#   ansible-playbook playbooks/vps.yml --tags traefik,gatus
+
+- name: VPS — WireGuard
+  ansible.builtin.import_playbook: wireguard.yml
+  vars:
+    target: vps
+  tags: wireguard
+
+- name: VPS — Unbound
+  ansible.builtin.import_playbook: unbound.yml
+  vars:
+    target: vps
+  tags: unbound
+
+- name: VPS — AdGuard
+  ansible.builtin.import_playbook: adguard.yml
+  vars:
+    target: vps
+  tags: adguard
+
+- name: VPS — Traefik Edge
+  ansible.builtin.import_playbook: traefik_edge.yml
+  tags: traefik
+
+- name: VPS — Gatus
+  ansible.builtin.import_playbook: gatus.yml
+  vars:
+    target: vps
+  tags: gatus
+
+- name: VPS — Unbound status
+  ansible.builtin.import_playbook: unbound_status.yml
+  vars:
+    target: vps
+  tags: unbound_status
+
+- name: VPS — WireGuard UI
+  ansible.builtin.import_playbook: wireguard_ui.yml
+  vars:
+    target: vps
+  tags: wireguard_ui
+
+- name: VPS — Lldap
+  ansible.builtin.import_playbook: lldap.yml
+  vars:
+    target: vps
+  tags: lldap
+
+- name: VPS — Authelia
+  ansible.builtin.import_playbook: authelia.yml
+  vars:
+    target: vps
+  tags: authelia

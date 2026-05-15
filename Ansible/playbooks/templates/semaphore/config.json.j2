@@ -1,0 +1,15 @@
+{
+  "sqlite": {
+    "host": "/var/lib/semaphore/semaphore.sqlite"
+  },
+  "dialect": "sqlite",
+  "tmp_path": "/tmp/semaphore",
+  "port": ":{{ semaphore_port }}",
+  "cookie_hash": "{{ vault_semaphore_cookie_hash }}",
+  "cookie_encryption": "{{ vault_semaphore_cookie_encryption }}",
+  "access_key_encryption": "{{ vault_semaphore_access_key_encryption }}",
+  "email_sender": "{{ semaphore_admin_email }}",
+  "email_host": "smtp.gmail.com",
+  "email_port": "587",
+  "web_host": "https://{{ semaphore_public_domain }}"
+}

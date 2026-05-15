@@ -1,0 +1,30 @@
+---
+- name: Désactiver la connexion SSH root
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin'
+    line: 'PermitRootLogin no'
+  notify: restart ssh
+
+- name: Désactiver l'authentification par mot de passe SSH
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+  notify: restart ssh
+
+- name: Désactiver ChallengeResponseAuthentication
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?KbdInteractiveAuthentication|^#?ChallengeResponseAuthentication'
+    line: 'KbdInteractiveAuthentication no'
+  notify: restart ssh
+
+# Level 3 : restreindre SSH aux seuls users autorisés
+- name: Restreindre SSH aux utilisateurs wiserisk et ansible (level 3)
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?AllowUsers'
+    line: "AllowUsers {{ hardening_wiserisk_user }} {{ hardening_ansible_user }}"
+  notify: restart ssh
+  when: hardening_level | int >= 3

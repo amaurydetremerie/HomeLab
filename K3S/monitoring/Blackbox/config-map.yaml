@@ -16,7 +16,7 @@ data:
           fail_if_not_ssl: true
           tls_config:
             insecure_skip_verify: false
-      http_2xx_basic_auth:
+      http_2xx_authelia:
         prober: http
         timeout: 5s
         http:
@@ -27,8 +27,8 @@ data:
           tls_config:
             insecure_skip_verify: false
           basic_auth:
-            username: <path:k3s/data/global#basic_username>
-            password: <path:k3s/data/global#basic_password>
+            username: <path:k3s/data/authelia#monitoring_username>
+            password: <path:k3s/data/authelia#monitoring_password>
       http_2xx_bearer:
         prober: http
         timeout: 5s

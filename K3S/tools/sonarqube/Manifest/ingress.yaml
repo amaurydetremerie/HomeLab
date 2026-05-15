@@ -4,10 +4,20 @@ metadata:
   name: sonarqube-http
   namespace: sonarqube
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
     - host: sonarqube.k3s.wiserisk.be
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sonarqube-sonarqube
+                port:
+                  number: 9000
+    - host: sonarqube.k3s.wiserisk.home
       http:
         paths:
           - path: /

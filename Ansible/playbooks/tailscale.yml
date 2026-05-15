@@ -1,0 +1,143 @@
+---
+# Tailscale — LXC tailscale (10.100.0.220) sur Wasp
+# Rôles : exit node + subnet router (10.0.0.0/24, 10.100.0.0/24)
+#         + port forwarding socat vers services Hades (routes acceptées depuis tailscale_hades)
+#
+# Le LXC doit avoir nesting=1 + lxc_raw TUN device (défini dans proxmox_wasp.yml)
+#
+# Prérequis vault :
+#   vault_tailscale_auth_key  (clé réutilisable — https://login.tailscale.com/admin/settings/keys)
+#
+# Après déploiement, approuver dans l'admin Tailscale :
+#   - subnet routes (10.0.0.0/24, 10.100.0.0/24)
+#   - exit node
+#   https://login.tailscale.com/admin/machines
+#
+# Config : host_vars/tailscale.yml
+#
+# Utilisation :
+#   ansible-playbook playbooks/tailscale.yml
+
+- name: Install and configure Tailscale
+  hosts: tailscale
+  gather_facts: false
+  become: true
+  vars:
+    _routes: "{{ tailscale_advertise_routes | default([]) }}"
+    _fwd:    "{{ tailscale_port_forwards    | default([]) }}"
+    ts_routes_flag:    "{{ '--advertise-routes=' + _routes | join(',') if _routes | length > 0 else '' }}"
+    ts_exit_flag:      "{{ '--advertise-exit-node' if tailscale_exit_node    | default(false) else '' }}"
+    ts_accept_flag:    "{{ '--accept-routes'        if tailscale_accept_routes | default(false) else '' }}"
+  tasks:
+    - name: Install curl and gnupg
+      ansible.builtin.apt:
+        name: [curl, gnupg]
+        state: present
+        update_cache: true
+
+    - name: Add Tailscale apt key
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.noarmor.gpg | tee /usr/share/keyrings/tailscale-archive-keyring.gpg > /dev/null
+        creates: /usr/share/keyrings/tailscale-archive-keyring.gpg
+
+    - name: Add Tailscale apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/debian bookworm main"
+        state: present
+        filename: tailscale
+
+    - name: Install tailscale
+      ansible.builtin.apt:
+        name: tailscale
+        state: present
+        update_cache: true
+
+    - name: Enable IP forwarding
+      ansible.posix.sysctl:
+        name: "{{ item }}"
+        value: '1'
+        state: present
+        reload: true
+      loop:
+        - net.ipv4.ip_forward
+        - net.ipv6.conf.all.forwarding
+
+    - name: Enable and start tailscaled
+      ansible.builtin.systemd:
+        name: tailscaled
+        enabled: true
+        state: started
+
+    - name: Check Tailscale connection status
+      ansible.builtin.command:
+        cmd: tailscale status --json
+      register: ts_status_raw
+      changed_when: false
+      failed_when: false
+
+    - name: Parse Tailscale backend state
+      ansible.builtin.set_fact:
+        ts_connected: >-
+          {{ ts_status_raw.rc == 0 and
+             (ts_status_raw.stdout | from_json).get('BackendState', '') == 'Running' }}
+
+    - name: Vérifier vault_tailscale_auth_key avant authentification
+      ansible.builtin.assert:
+        that:
+          - vault_tailscale_auth_key | default('') | length > 0
+        fail_msg: "vault_tailscale_auth_key est vide — remplir le vault avant de lancer tailscale.yml"
+      when: not ts_connected
+
+    - name: Authenticate Tailscale (première connexion)
+      ansible.builtin.command:
+        cmd: "tailscale up --auth-key={{ vault_tailscale_auth_key }} {{ ts_routes_flag }} {{ ts_exit_flag }} {{ ts_accept_flag }}"
+      when: not ts_connected
+      no_log: true
+
+    - name: Update Tailscale config (si déjà connecté)
+      ansible.builtin.command:
+        cmd: "tailscale up {{ ts_routes_flag }} {{ ts_exit_flag }} {{ ts_accept_flag }}"
+      when: ts_connected
+      register: ts_up_result
+      changed_when: ts_up_result.stdout != ''
+
+    # ── Port forwarding socat (conditionnel) ────────────────────────────────
+    - name: Install socat
+      ansible.builtin.apt:
+        name: socat
+        state: present
+      when: _fwd | length > 0
+
+    - name: Deploy socat port-forward systemd services
+      ansible.builtin.template:
+        src: templates/tailscale/socat-forward.service.j2
+        dest: "/etc/systemd/system/socat-{{ item.name }}.service"
+        owner: root
+        group: root
+        mode: '0644'
+      loop: "{{ _fwd }}"
+      when: _fwd | length > 0
+      notify:
+        - Reload systemd
+        - Restart socat services
+
+    - name: Enable and start socat port-forward services
+      ansible.builtin.systemd:
+        name: "socat-{{ item.name }}.service"
+        enabled: true
+        state: started
+        daemon_reload: true
+      loop: "{{ _fwd }}"
+      when: _fwd | length > 0
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart socat services
+      ansible.builtin.systemd:
+        name: "socat-{{ item.name }}.service"
+        state: restarted
+      loop: "{{ _fwd }}"
+      when: _fwd | length > 0

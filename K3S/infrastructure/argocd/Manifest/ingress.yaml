@@ -4,9 +4,7 @@ metadata:
   name: argocd
   namespace: argocd
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.tls.options: default
+    traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
     - host: argocd.k3s.wiserisk.be
@@ -19,6 +17,13 @@ spec:
                 name: argocd-server
                 port:
                   number: 80
-  tls:
-    - hosts:
-        - argocd.k3s.wiserisk.be
+    - host: argocd.k3s.wiserisk.home
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80

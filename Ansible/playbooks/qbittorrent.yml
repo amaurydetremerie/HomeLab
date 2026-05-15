@@ -1,0 +1,67 @@
+---
+# qBittorrent — LXC 1105 (10.100.0.105) sur Flash
+# NFS SeedBox monté à /media/seedbox par Proxmox
+#
+# Accès web : http://10.100.0.105:{{ qbittorrent_webui_port }}
+# Credentials par défaut : admin / adminadmin (à changer à la première connexion)
+#
+# Config : host_vars/qbittorrent.yml
+# Template : playbooks/templates/qbittorrent/qbittorrent-nox.service.j2
+#
+# Utilisation :
+#   ansible-playbook playbooks/qbittorrent.yml
+
+- name: Install and configure qBittorrent
+  hosts: qbittorrent
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Install qbittorrent-nox
+      ansible.builtin.apt:
+        name: qbittorrent-nox
+        state: present
+        update_cache: true
+
+    - name: Create qbittorrent user
+      ansible.builtin.user:
+        name: qbittorrent
+        system: true
+        shell: /usr/sbin/nologin
+        home: /var/lib/qbittorrent
+        create_home: true
+
+    - name: Create config directory
+      ansible.builtin.file:
+        path: /var/lib/qbittorrent/.config/qBittorrent
+        state: directory
+        owner: qbittorrent
+        group: qbittorrent
+        mode: '0750'
+
+    - name: Deploy qBittorrent systemd service
+      ansible.builtin.template:
+        src: templates/qbittorrent/qbittorrent-nox.service.j2
+        dest: /etc/systemd/system/qbittorrent-nox.service
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - Reload systemd
+        - Restart qbittorrent
+
+    - name: Enable and start qBittorrent
+      ansible.builtin.systemd:
+        name: qbittorrent-nox
+        enabled: true
+        state: started
+        daemon_reload: true
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart qbittorrent
+      ansible.builtin.systemd:
+        name: qbittorrent-nox
+        state: restarted

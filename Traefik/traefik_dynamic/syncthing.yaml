@@ -11,23 +11,20 @@ http:
 
   routers:
     hermes-syncthing:
-      rule: "Host(`hermes.syncthing.wiserisk.be`) || Host(`hermes.syncthing.wiserisk.home`)"
+      rule: "Host(`hermes.syncthing.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "hermes-syncthing@file"
+    hermes-syncthing-home:
+      rule: "Host(`hermes.syncthing.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
-    hermes-syncthing-secure:
-      rule: "Host(`hermes.syncthing.wiserisk.be`)"
-      entryPoints:
-        - "websecure"
-      middlewares:
-        - "security@file"
-        - "compression@file"
-      service: "hermes-syncthing@file"
-      tls:
-        certResolver: letsencrypt-ecdsa
-        options: mintls13
     hermes-syncthing-secure-local:
       rule: "Host(`hermes.syncthing.wiserisk.home`)"
       entryPoints:
@@ -38,23 +35,20 @@ http:
       service: "hermes-syncthing@file"
       tls: {}
     hades-syncthing:
-      rule: "Host(`hades.syncthing.wiserisk.be`) || Host(`hades.syncthing.wiserisk.home`)"
+      rule: "Host(`hades.syncthing.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: "hades-syncthing@file"
+    hades-syncthing-home:
+      rule: "Host(`hades.syncthing.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
-    hade-syncthings-secure:
-      rule: "Host(`hades.syncthing.wiserisk.be`)"
-      entryPoints:
-        - "websecure"
-      middlewares:
-        - "security@file"
-        - "compression@file"
-      service: "hades-syncthing@file"
-      tls:
-        certResolver: letsencrypt-ecdsa
-        options: mintls13
     hades-syncthing-secure-local:
       rule: "Host(`hades.syncthing.wiserisk.home`)"
       entryPoints:
@@ -63,4 +57,4 @@ http:
         - "security@file"
         - "compression@file"
       service: "hades-syncthing@file"
-      tls: { }
+      tls: {}

@@ -1,0 +1,47 @@
+http:
+  middlewares:
+    authelia:
+      forwardAuth:
+        address: 'http://127.0.0.1:9092/api/authz/forward-auth'
+        trustForwardHeader: true
+        authResponseHeaders:
+          - 'Remote-User'
+          - 'Remote-Groups'
+          - 'Remote-Name'
+          - 'Remote-Email'
+
+  services:
+    authelia:
+      loadBalancer:
+        servers:
+          - url: 'http://127.0.0.1:9092'
+
+    lldap:
+      loadBalancer:
+        servers:
+          - url: 'http://127.0.0.1:17170'
+
+  routers:
+    # Authelia — pas de middleware authelia (évite la boucle infinie)
+    authelia-secure:
+      rule: "Host(`auth.vps.wiserisk.be`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - security@file
+      service: authelia@file
+      tls:
+        certResolver: letsencrypt-ovh
+
+    # Lldap UI — protégé par Authelia
+    lldap-secure:
+      rule: "Host(`lldap.vps.wiserisk.be`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - authelia@file
+        - security@file
+        - compression@file
+      service: lldap@file
+      tls:
+        certResolver: letsencrypt-ovh

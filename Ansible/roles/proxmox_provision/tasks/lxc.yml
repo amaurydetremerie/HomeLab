@@ -1,0 +1,39 @@
+---
+- name: Create LXC containers
+  community.general.proxmox:
+    api_host: "{{ proxmox_api_host }}"
+    api_user: "{{ proxmox_api_user }}"
+    api_token_id: "{{ proxmox_api_token_id }}"
+    api_token_secret: "{{ proxmox_api_token_secret }}"
+    node: "{{ proxmox_node }}"
+    vmid: "{{ item.vmid }}"
+    hostname: "{{ item.hostname }}"
+    description: "{{ item.description | default('') }}"
+    cores: "{{ item.cores | default(1) }}"
+    memory: "{{ item.memory | default(512) }}"
+    swap: "{{ item.swap | default(0) }}"
+    disk_volume:
+      storage: "{{ proxmox_storage }}"
+      size: "{{ item.disk | default(8) | int }}"
+    ostemplate: >-
+      {%- set tpl = item.ostemplate | default('') -%}
+      {%- if tpl and ':' in tpl -%}
+        {{ tpl }}
+      {%- elif tpl -%}
+        local:vztmpl/{{ _aplinfo.json.data | selectattr('package', 'equalto', tpl) | map(attribute='template') | list | last }}
+      {%- else -%}
+        {{ proxmox_lxc_ostemplate }}
+      {%- endif -%}
+    netif: "{{ item.netif }}"
+    mounts: "{{ (item.mounts | default({}) | dict2items | rejectattr('value', 'match', '^/') | items2dict) or omit }}"
+    unprivileged: "{{ item.unprivileged | default(true) }}"
+    features: "{{ item.features | default([]) }}"
+    startup: "{{ item.startup | default(omit) }}"
+    onboot: "{{ item.onboot | default(true) }}"
+    password: "{{ vault_root_password }}"
+    state: present
+  loop: "{{ proxmox_lxc }}"
+  loop_control:
+    label: "{{ item.hostname }} (vmid={{ item.vmid }})"
+  delegate_to: localhost
+  become: false

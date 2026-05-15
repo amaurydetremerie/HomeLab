@@ -1,0 +1,16 @@
+---
+- name: Configurer fail2ban strict (level 3 — machines exposées)
+  ansible.builtin.copy:
+    dest: /etc/fail2ban/jail.d/strict.conf
+    content: |
+      [DEFAULT]
+      bantime  = 86400
+      findtime = 600
+      maxretry = 3
+
+      [sshd]
+      enabled  = true
+      port     = {{ hardening_ssh_port }}
+      maxretry = 3
+    mode: "0644"
+  notify: restart fail2ban
