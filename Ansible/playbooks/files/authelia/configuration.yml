@@ -19,6 +19,17 @@ authentication_backend:
 access_control:
   default_policy: 'deny'
   rules:
+    # APIs *arr — machine-to-machine, authentifié par API key
+    - domain: 'seedbox.wiserisk.be'
+      policy: 'bypass'
+      resources:
+        - '^/sonarr/api'
+        - '^/radarr/api'
+    - domain: 'prowlarr.k3s.wiserisk.be'
+      policy: 'bypass'
+      resources:
+        - '^/api'
+        - '^/[0-9]+/api'
     - domain:
         - 'wiserisk.be'
         - '*.wiserisk.be'
