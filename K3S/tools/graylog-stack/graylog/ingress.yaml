@@ -17,16 +17,6 @@ spec:
                 name: graylog-svc
                 port:
                   number: 9000
-    - host: test-graylog.k3s.wiserisk.be
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: graylog-svc
-                port:
-                  number: 9000
     - host: graylog.k3s.wiserisk.home
       http:
         paths:

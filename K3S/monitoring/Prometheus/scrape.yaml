@@ -59,6 +59,11 @@ stringData:
           - https://hlabmonitor.k3s.wiserisk.be/actuator/health
           - https://ai.k3s.wiserisk.be
           - https://prowlarr.k3s.wiserisk.be
+          - https://adguard.wiserisk.be
+          - https://gatus.wiserisk.be
+          - https://gatus.vps.wiserisk.be
+          - https://traefik.wiserisk.be
+          - https://traefik.k3s.wiserisk.be
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
@@ -114,6 +119,19 @@ stringData:
           - https://prometheus.k3s.wiserisk.home
           - https://ai.k3s.wiserisk.home
           - https://prowlarr.k3s.wiserisk.home
+          - https://argocd.k3s.wiserisk.home
+          - https://flaresolverr.k3s.wiserisk.home
+          - https://gatus.wiserisk.home
+          - https://grafana.k3s.wiserisk.home
+          - https://graylog.k3s.wiserisk.home
+          - https://hlabmonitor.k3s.wiserisk.home
+          - https://librespeed.k3s.wiserisk.home
+          - https://nextcloud.k3s.wiserisk.home
+          - https://portainer.k3s.wiserisk.home
+          - https://registry.k3s.wiserisk.home
+          - https://sonarqube.k3s.wiserisk.home
+          - https://vault.k3s.wiserisk.home
+          - https://webhook.wiserisk.home
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
@@ -139,6 +157,7 @@ stringData:
           # Traefik LXC
           - 10.0.0.85    # traefik_flash
           - 10.0.0.182   # traefik_wasp
+          - 10.100.0.1   # traefik_wasp internal
           # AdGuard LXC
           - 10.0.0.88    # adguard_flash
           - 10.0.0.181   # adguard_wasp
@@ -165,12 +184,11 @@ stringData:
           - 10.100.0.220 # tailscale
           # VPS
           - 77.90.52.180 # debian_vps
-          # Inconnus (à identifier)
-          - 10.0.0.49
-          - 10.0.0.86
-          - 10.0.0.142
-          - 10.0.0.185
-          - 10.100.0.1
+          # Others
+          - 10.0.0.49    # P1
+          - 10.0.0.142   # Shelly
+          - 10.0.0.185   # APC
+          
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
