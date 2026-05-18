@@ -4,7 +4,7 @@ metadata:
   name: alertmanager-http
   namespace: monitoring
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
     - host: alertmanager.k3s.wiserisk.home

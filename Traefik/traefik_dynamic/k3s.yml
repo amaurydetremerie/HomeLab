@@ -12,34 +12,23 @@ http:
         - "web"
       service: "k3s-wildcard@file"
       priority: 2
+    # Trafic .home : TLS terminé ici, forwarding HTTP vers K3S
     k3s-wildcard-home:
       rule: "HostRegexp(`.*\\.k3s\\.wiserisk\\.home`) || Host(`k3s.wiserisk.home`)"
       entryPoints:
-        - "web"
+        - "websecure"
       service: "k3s-wildcard@file"
       priority: 2
+      tls: {}
 
 tcp:
   services:
-    # TLS passthrough uniquement pour .home (K3S gère son propre TLS localement)
-    k3s-secure-wildcard-tcp:
-      loadBalancer:
-        servers:
-          - address: "10.100.0.151:443"
     k3s-management-tcp:
       loadBalancer:
         servers:
           - address: "10.100.0.151:6443"
 
   routers:
-    k3s-secure-wildcard-tcp:
-      rule: "HostSNIRegexp(`.*\\.k3s\\.wiserisk\\.home`) || HostSNI(`k3s.wiserisk.home`)"
-      entryPoints:
-        - "websecure"
-      service: "k3s-secure-wildcard-tcp@file"
-      priority: 2
-      tls:
-        passthrough: true
     k3s-management-tcp:
       rule: "HostSNI(`*`)"
       entryPoints:

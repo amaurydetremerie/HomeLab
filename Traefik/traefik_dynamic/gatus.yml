@@ -1,31 +1,11 @@
 http:
   services:
-    gatus-vps:
-      loadBalancer:
-        servers:
-          - url: "http://10.8.0.1:8080"
     gatus-local:
       loadBalancer:
         servers:
           - url: "http://10.100.0.102:8080"
 
   routers:
-    gatus-vps:
-      rule: "Host(`gatus.vps.wiserisk.home`)"
-      entryPoints:
-        - "web"
-      middlewares:
-        - "redirect-to-https@file"
-      service: "noop@internal"
-    gatus-vps-secure-local:
-      rule: "Host(`gatus.vps.wiserisk.home`)"
-      entryPoints:
-        - "websecure"
-      middlewares:
-        - "security@file"
-        - "compression@file"
-      service: "gatus-vps@file"
-      tls: {}
     gatus:
       rule: "Host(`gatus.wiserisk.be`)"
       entryPoints:
@@ -35,14 +15,14 @@ http:
         - "compression@file"
       service: "gatus-local@file"
     gatus-local:
-      rule: "Host(`gatus.local.wiserisk.home`)"
+      rule: "Host(`gatus.wiserisk.home`)"
       entryPoints:
         - "web"
       middlewares:
         - "redirect-to-https@file"
       service: "noop@internal"
     gatus-local-secure-local:
-      rule: "Host(`gatus.local.wiserisk.home`)"
+      rule: "Host(`gatus.wiserisk.home`)"
       entryPoints:
         - "websecure"
       middlewares:

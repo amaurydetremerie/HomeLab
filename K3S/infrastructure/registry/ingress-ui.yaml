@@ -4,7 +4,7 @@ metadata:
   name: registry-ui-http
   namespace: registry-system
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
     - host: registry-ui.k3s.wiserisk.home

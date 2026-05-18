@@ -4,7 +4,7 @@ metadata:
   name: prometheus-http
   namespace: monitoring
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
     - host: prometheus.k3s.wiserisk.home

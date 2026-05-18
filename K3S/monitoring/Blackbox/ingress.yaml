@@ -4,7 +4,7 @@ metadata:
   name: blackbox-exporter-http
   namespace: monitoring
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
     - host: blackbox.k3s.wiserisk.home

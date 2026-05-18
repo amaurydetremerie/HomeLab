@@ -6,7 +6,6 @@ metadata:
 spec:
   entryPoints:
     - web
-    - websecure
   routes:
     - match: Host(`traefik.k3s.wiserisk.be`) || Host(`traefik.k3s.wiserisk.home`)
       kind: Rule
