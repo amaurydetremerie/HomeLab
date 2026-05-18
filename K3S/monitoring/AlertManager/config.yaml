@@ -22,6 +22,11 @@ stringData:
           receiver: 'discord'
           group_wait: 30s
         - match:
+            severity: info
+          receiver: 'discord'
+          group_wait: 30s
+          repeat_interval: 8760h
+        - match:
             alertname: myalert
           receiver: 'discord'
           group_wait: 1s

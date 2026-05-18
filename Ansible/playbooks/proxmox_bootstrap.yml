@@ -58,4 +58,41 @@
           ╚══════════════════════════════════════════════════════════════════════╝
       when: token_output.rc == 0
 
+    - name: Créer l'utilisateur prometheus@pam
+      ansible.builtin.command: pveum user add prometheus@pam --comment "Prometheus PVE exporter"
+      register: exporter_user_add
+      changed_when: exporter_user_add.rc == 0
+      failed_when: exporter_user_add.rc != 0 and 'already exists' not in exporter_user_add.stderr
+
+    - name: Attribuer le rôle PVEAuditor à prometheus@pam
+      ansible.builtin.command: pveum acl modify / --user prometheus@pam --role PVEAuditor
+      changed_when: true
+
+    - name: Créer le token API exporter
+      ansible.builtin.command: pveum user token add prometheus@pam exporter --privsep=0 --output-format json
+      register: exporter_token_output
+      changed_when: exporter_token_output.rc == 0
+      failed_when: exporter_token_output.rc != 0 and 'already exists' not in exporter_token_output.stderr
+
+    - name: Afficher le token exporter (valeur unique — ne sera plus visible après)
+      ansible.builtin.debug:
+        msg: "Token exporter {{ inventory_hostname }} : {{ exporter_token_output.stdout | from_json }}"
+      when: exporter_token_output.rc == 0
+
+    - name: Pause — stocker le token exporter dans HashiVault avant de continuer
+      ansible.builtin.pause:
+        prompt: |
+
+          ╔══════════════════════════════════════════════════════════════════════╗
+          ║  Token exporter créé pour {{ inventory_hostname }} (affiché ci-dessus)
+          ║  Cette valeur ne sera plus accessible après — la stocker maintenant. ║
+          ║                                                                      ║
+          ║  Dans HashiVault → k3s/data/monitoring :                            ║
+          ║    pve_flash_token_value: <value>  (si flash)                       ║
+          ║    pve_wasp_token_value:  <value>  (si wasp)                        ║
+          ║                                                                      ║
+          ║  → Appuyer sur Entrée une fois HashiVault mis à jour                 ║
+          ╚══════════════════════════════════════════════════════════════════════╝
+      when: exporter_token_output.rc == 0
+
 - ansible.builtin.import_playbook: proxmox_gpu.yml

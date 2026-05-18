@@ -111,6 +111,104 @@ spec:
           annotations:
             summary: "Storage {{ $labels.id }} critically full on {{ $labels.instance }}"
             description: "{{ $labels.id }} is {{ $value | humanize }}% full"
+    - name: proxmox-overprovisioning
+      rules:
+        - alert: NodeMemoryOverProvisioned
+          expr: >
+            sum by(job) (pve_memory_size_bytes{id=~"(lxc|qemu)/.*"})
+            / on(job) group_left()
+            pve_memory_size_bytes{id=~"node/.*"}
+            * 100 > 100
+          for: 5m
+          labels:
+            severity: info
+          annotations:
+            summary: "RAM fully provisioned on {{ $labels.job }}"
+            description: "{{ $labels.job }} has {{ $value | humanize }}% of RAM provisioned across guests (threshold: 100%)"
+        - alert: NodeMemoryOverProvisioned
+          expr: >
+            sum by(job) (pve_memory_size_bytes{id=~"(lxc|qemu)/.*"})
+            / on(job) group_left()
+            pve_memory_size_bytes{id=~"node/.*"}
+            * 100 > 125
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "RAM over-provisioned on {{ $labels.job }}"
+            description: "{{ $labels.job }} has {{ $value | humanize }}% of RAM provisioned across guests (threshold: 125%)"
+        - alert: NodeMemoryOverProvisioned
+          expr: >
+            sum by(job) (pve_memory_size_bytes{id=~"(lxc|qemu)/.*"})
+            / on(job) group_left()
+            pve_memory_size_bytes{id=~"node/.*"}
+            * 100 > 175
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "RAM critically over-provisioned on {{ $labels.job }}"
+            description: "{{ $labels.job }} has {{ $value | humanize }}% of RAM provisioned across guests (threshold: 175%)"
+        - alert: NodeCPUOverProvisioned
+          expr: >
+            sum by(job) (pve_cpu_usage_limit{id=~"(lxc|qemu)/.*"})
+            / on(job) group_left()
+            pve_cpu_usage_limit{id=~"node/.*"}
+            * 100 > 300
+          for: 5m
+          labels:
+            severity: info
+          annotations:
+            summary: "CPU provisioning above 300% on {{ $labels.job }}"
+            description: "{{ $labels.job }} has {{ $value | humanize }}% of vCPUs provisioned across guests (threshold: 300%)"
+        - alert: NodeStorageOverProvisioned
+          expr: >
+            sum by(job) (pve_disk_size_bytes{id=~"(lxc|qemu)/.*"})
+            / on(job) group_left()
+            pve_disk_size_bytes{id=~"storage/.*/local-zfs"}
+            * 100 > 50
+          for: 5m
+          labels:
+            severity: info
+          annotations:
+            summary: "local-zfs over 50% provisioned on {{ $labels.job }}"
+            description: "{{ $labels.job }} has {{ $value | humanize }}% of local-zfs provisioned across guests (threshold: 50%)"
+        - alert: NodeStorageOverProvisioned
+          expr: >
+            sum by(job) (pve_disk_size_bytes{id=~"(lxc|qemu)/.*"})
+            / on(job) group_left()
+            pve_disk_size_bytes{id=~"storage/.*/local-zfs"}
+            * 100 > 80
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "local-zfs over 80% provisioned on {{ $labels.job }}"
+            description: "{{ $labels.job }} has {{ $value | humanize }}% of local-zfs provisioned across guests (threshold: 80%)"
+        - alert: NodeStorageOverProvisioned
+          expr: >
+            sum by(job) (pve_disk_size_bytes{id=~"(lxc|qemu)/.*"})
+            / on(job) group_left()
+            pve_disk_size_bytes{id=~"storage/.*/local-zfs"}
+            * 100 > 100
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "local-zfs fully over-provisioned on {{ $labels.job }}"
+            description: "{{ $labels.job }} has {{ $value | humanize }}% of local-zfs provisioned across guests (threshold: 100%)"
+        - alert: NodeCPUOverProvisioned
+          expr: >
+            sum by(job) (pve_cpu_usage_limit{id=~"(lxc|qemu)/.*"})
+            / on(job) group_left()
+            pve_cpu_usage_limit{id=~"node/.*"}
+            * 100 > 800
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "CPU over-provisioned on {{ $labels.job }}"
+            description: "{{ $labels.job }} has {{ $value | humanize }}% of vCPUs provisioned across guests (threshold: 800%)"
     - name: proxmox-offline
       rules:
         - alert: NodeOffline
