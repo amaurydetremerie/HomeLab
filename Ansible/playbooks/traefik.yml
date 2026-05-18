@@ -23,6 +23,13 @@
     traefik_acme_dir:   /etc/traefik
     traefik_log_dir:    /var/log/traefik
   tasks:
+    # ── Dépendances ──────────────────────────────────────────────────────────
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name: [jq, curl]
+        state: present
+        update_cache: false
+
     # ── Utilisateur et répertoires ───────────────────────────────────────────
     - name: Create traefik group
       ansible.builtin.group:

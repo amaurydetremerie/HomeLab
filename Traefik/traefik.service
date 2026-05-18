@@ -5,7 +5,7 @@ After=network-online.target
 AssertFileIsExecutable=/usr/local/bin/traefik
 AssertPathExists=/etc/Homelab/Traefik
 AssertPathExists=/etc/traefik
-Requires=sync-ollama-bearer.service
+Wants=sync-ollama-bearer.service
 
 [Service]
 Restart=always
