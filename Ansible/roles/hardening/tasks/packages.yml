@@ -1,21 +1,4 @@
 ---
-- name: Détecter présence des repos Proxmox enterprise
-  ansible.builtin.stat:
-    path: /etc/apt/sources.list.d/pve-enterprise.list
-  register: pve_enterprise_stat
-
-- name: Désactiver les repos Proxmox enterprise (remplacer par no-subscription)
-  ansible.builtin.copy:
-    dest: "{{ item.dest }}"
-    content: "{{ item.content }}"
-    mode: "0644"
-  loop:
-    - dest: /etc/apt/sources.list.d/pve-enterprise.list
-      content: "# deb https://enterprise.proxmox.com/debian/pve bookworm pve-enterprise\ndeb http://download.proxmox.com/debian/pve bookworm pve-no-subscription\n"
-    - dest: /etc/apt/sources.list.d/ceph.list
-      content: "# deb https://enterprise.proxmox.com/debian/ceph-quincy bookworm enterprise\ndeb http://download.proxmox.com/debian/ceph-quincy bookworm no-subscription\n"
-  when: pve_enterprise_stat.stat.exists
-
 - name: Installer fail2ban et unattended-upgrades
   ansible.builtin.apt:
     name:

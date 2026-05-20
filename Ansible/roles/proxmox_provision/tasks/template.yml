@@ -27,7 +27,7 @@
   when: proxmox_lxc | length > 0
 
 - name: Download LXC OS template
-  community.general.proxmox_template:
+  community.proxmox.proxmox_template:
     api_host: "{{ proxmox_api_host }}"
     api_user: "{{ proxmox_api_user }}"
     api_token_id: "{{ proxmox_api_token_id }}"

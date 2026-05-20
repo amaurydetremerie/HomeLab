@@ -9,6 +9,7 @@
       ansible_operator_ssh_public_key dans inventory/group_vars/all/vars.yml
       avant de lancer le hardening.
 
+- import_tasks: proxmox_repos.yml
 - import_tasks: users.yml
 - import_tasks: ssh.yml
 - import_tasks: packages.yml

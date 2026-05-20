@@ -5,7 +5,8 @@
 #   adguard_version      — version GitHub à télécharger (ex: 0.107.52)
 #   adguard_port         — port admin (80 pour LXC, 3001 pour VPS)
 #   adguard_upstream_dns — upstream DNS (Unbound)
-#   adguard_dns_rewrites — liste de rewrites DNS locaux
+#   adguard_dns_rewrites    — liste de rewrites DNS locaux
+#   adguard_blocking_lists  — listes de blocage (optionnel)
 #
 # Prérequis vault :
 #   vault_adguard_user, vault_adguard_password
@@ -120,3 +121,31 @@
         current_rewrites.json
         | selectattr('domain', 'equalto', item.domain)
         | list | length == 0
+
+    - name: Récupérer les listes de filtrage existantes
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ adguard_port }}/control/filtering/status"
+        method: GET
+        user: "{{ vault_adguard_user }}"
+        password: "{{ vault_adguard_password }}"
+        force_basic_auth: true
+        status_code: [200, 302]
+      register: adguard_filter_status
+      when: adguard_blocking_lists is defined
+
+    - name: Ajouter les listes de filtrage manquantes
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ adguard_port }}/control/filtering/add_url"
+        method: POST
+        user: "{{ vault_adguard_user }}"
+        password: "{{ vault_adguard_password }}"
+        force_basic_auth: true
+        body_format: json
+        body:
+          name: "{{ item.name }}"
+          url: "{{ item.url }}"
+        status_code: [200, 302]
+      loop: "{{ adguard_blocking_lists }}"
+      when:
+        - adguard_blocking_lists is defined
+        - item.url not in (adguard_filter_status.json.filters | map(attribute='url') | list)

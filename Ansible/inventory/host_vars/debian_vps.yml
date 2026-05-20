@@ -35,6 +35,11 @@ adguard_port: 3001                                         # port 80 occupé par
 adguard_dns_port: 5353                                     # Traefik Edge prend le :53 public et forward ici
 adguard_upstream_dns: "127.0.0.1:5335"
 adguard_dns_rewrites: []
+adguard_blocking_lists:
+  - name: "Hagezi Pro+"
+    url: "https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.plus.txt"
+  - name: "OISD Full"
+    url: "https://big.oisd.nl/"
 
 # ── Traefik ────────────────────────────────────────────────────────────────
 traefik_acme_email: "{{ vault_admin_email }}"

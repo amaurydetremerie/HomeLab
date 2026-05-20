@@ -10,19 +10,6 @@ spec:
       enabled: true
     additionalArguments:
       - "--api.insecure=true"
-      - "--entryPoints.acme"
-      - "--certificatesResolvers.letsencrypt-ecdsa.acme.email={{ admin_email }}"
-      - "--certificatesResolvers.letsencrypt-ecdsa.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
-      - "--certificatesResolvers.letsencrypt-ecdsa.acme.storage=/data/acme.json"
-      - "--certificatesResolvers.letsencrypt-ecdsa.acme.keyType=EC384"
-      - "--certificatesResolvers.letsencrypt-ecdsa.acme.httpChallenge.entryPoint=acme"
-      - "--certificatesResolvers.letsencrypt-ecdsa.acme.tlsChallenge=true"
-      - "--certificatesResolvers.letsencrypt-rsa2048.acme.email={{ admin_email }}"
-      - "--certificatesResolvers.letsencrypt-rsa2048.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
-      - "--certificatesResolvers.letsencrypt-rsa2048.acme.storage=/data/acme.json"
-      - "--certificatesResolvers.letsencrypt-rsa2048.acme.keyType=RSA2048"
-      - "--certificatesResolvers.letsencrypt-rsa2048.acme.httpChallenge.entryPoint=acme"
-      - "--certificatesResolvers.letsencrypt-rsa2048.acme.tlsChallenge=true"
     logs:
       general:
         level: DEBUG

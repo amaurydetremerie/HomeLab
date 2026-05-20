@@ -155,14 +155,15 @@ stringData:
           - 10.0.0.81    # proxmox_flash
           - 10.0.0.82    # proxmox_wasp
           # Traefik LXC
-          - 10.0.0.85    # traefik_flash
+          - 10.0.0.192   # traefik_flash
+          - 10.100.0.2   # traefik_flash internal
           - 10.0.0.182   # traefik_wasp
           - 10.100.0.1   # traefik_wasp internal
           # AdGuard LXC
-          - 10.0.0.88    # adguard_flash
+          - 10.0.0.191   # adguard_flash
           - 10.0.0.181   # adguard_wasp
           # Unbound LXC
-          - 10.0.0.89    # unbound_flash
+          - 10.0.0.190   # unbound_flash
           - 10.0.0.180   # unbound_wasp
           # HAOS
           - 10.0.0.95    # home_assistant

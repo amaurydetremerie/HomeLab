@@ -11,14 +11,16 @@ Ces problèmes empêchent ou faussent l'exécution des playbooks. À corriger av
 ### ~~B1 — Syntax error `hosts.yml` : groupe lxc~~ ✅ corrigé
 `children:` était imbriqué sous `hosts:` pour le groupe `lxc`. Restructuré avec la syntaxe correcte.
 
-### ~~B2 — host_vars adguard/unbound ne correspondent à aucun host~~ ✅ corrigé (Wasp) / ⚠️ Flash en attente
+### ~~B2 — host_vars adguard/unbound ne correspondent à aucun host~~ ✅ corrigé complet
 `adguard.yml` et `unbound.yml` supprimés. Remplacés par des fichiers avec les bonnes IPs :
 - `adguard_wasp.yml` ✅ — upstream `10.0.0.180` (unbound_wasp), rewrite → `10.0.0.182` (traefik_wasp)
 - `unbound_wasp.yml` ✅ — UFW port 53
-- `adguard_flash.yml` ❌ manquant — upstream `10.0.0.89` (unbound_flash), rewrite → `10.0.0.85` (traefik_flash)
-- `unbound_flash.yml` ✅ créé — UFW port 53 (déploiement Flash en attente)
+- `adguard_flash.yml` ✅ — upstream `10.0.0.190` (unbound_flash), rewrite → `10.0.0.192` (traefik_flash)
+- `unbound_flash.yml` ✅ — UFW port 53
 
-Les LXC Flash (vmid 9088/9089) sont à ajouter dans `host_vars/proxmox_flash.yml` avant déploiement.
+LXC provisionnés dans `proxmox_flash.yml` : `unbound-flash` (vmid 9190, 10.0.0.190) + `adguard-flash` (vmid 9191, 10.0.0.191).
+Le LXC legacy 9086 (10.0.0.86) sur Flash sera détruit lors du reinstall OS.
+
 Les playbooks ciblent le groupe (`adguard` / `unbound`) qui contient les deux instances grâce au fix B1.
 
 ### ~~B3 — Fichiers stagés mais supprimés du disque~~ ✅ corrigé
@@ -33,20 +35,23 @@ Fichier supprimé.
 ### ~~B6 — Gatus absent de l'inventaire Wasp~~ ✅ corrigé
 LXC `gatus` ajouté dans `hosts.yml` (10.100.0.102), `host_vars/proxmox_wasp.yml` (vmid 1102) et `host_vars/gatus.yml` créé. Rôle : monitoring de secours (K3S down), pas monitoring interne.
 
-### B8 — Repos Proxmox enterprise désactivés trop tard dans `hardening.yml`
-`roles/hardening/tasks/main.yml` importe `users.yml` en premier. `users.yml` fait `apt install sudo` (ligne 47) avant que `packages.yml` désactive les repos enterprise. Sur un Proxmox fresh install, ces repos bloquent apt (pas d'abonnement) → échec au premier `apt`. Uniquement sur les hosts proxmox.
+### ~~B8 — Repos Proxmox enterprise désactivés trop tard dans `hardening.yml`~~ ✅ corrigé
+`roles/hardening/tasks/proxmox_repos.yml` créé avec les deux tâches de désactivation (stat + copy). Importé en tête de `main.yml` avant `users.yml`. No-op sur hôtes non-Proxmox (`when: pve_enterprise_stat.stat.exists`).
 
-**Fix à implémenter :** extraire les deux tâches de désactivation des repos de `packages.yml` dans un nouveau fichier `roles/hardening/tasks/proxmox_repos.yml`, et l'importer en tête de `main.yml` (avant `users.yml`).
+### ~~B9 — `host_vars/traefik.yml` fichier orphelin~~ ✅ corrigé
+Fichier supprimé.
 
-**Workaround actuel :** désactiver manuellement les repos enterprise avant le premier run hardening sur chaque Proxmox.
+### ~~B10 — `host_vars/traefik_flash.yml` incomplet~~ ✅ corrigé
+Complété en miroir de `traefik_wasp.yml` : `ansible_host`, `traefik_internal_ip`, `hardening_level`, `traefik_acme_email`, `traefik_download_url`, `hardening_ufw_forward_policy`, `hardening_ufw_rules`.
 
-### B9 — `host_vars/traefik.yml` fichier orphelin
-Le groupe `traefik` dans `hosts.yml` ne contient plus de host nommé `traefik` (remplacé par `traefik_wasp` et `traefik_flash`). Le fichier `host_vars/traefik.yml` n'est donc chargé par aucun host et peut être supprimé sans impact.
+### ~~B-NIC — `proxmox_flash.yml` : noms NIC incorrects~~ ✅ corrigé
+`proxmox_phys_ifaces: [ens6f0, ens6f1]`
 
-### B10 — `host_vars/traefik_flash.yml` incomplet
-Manque les variables requises par `playbooks/traefik.yml` pour Flash :
-`traefik_internal_ip`, `hardening_level`, `traefik_acme_email`, `traefik_download_url`, `hardening_ufw_forward_policy`, `hardening_ufw_rules`.
-À compléter (en miroir de `traefik_wasp.yml`) avant le premier déploiement sur Flash.
+### ~~B-COMMENT — `adguard_wasp.yml` : commentaire vmid faux~~ ✅ corrigé
+Commentaire corrigé : `LXC 9181 (10.0.0.181) sur Wasp`.
+
+### ~~B-GH-WORKFLOWS — `.github/workflows/` : workflows obsolètes~~ ✅ corrigé
+`.github/workflows/traefik.yml` et `.github/workflows/webhook.yml` supprimés.
 
 ### ~~B7 — `hardening.yml` : première exécution impossible depuis `site.yml`~~ ✅ corrigé
 
@@ -146,41 +151,39 @@ créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fo
 - [x] **Unbound** *(DNS récursif upstream d'AdGuard)*
   `playbooks/unbound.yml` — Unbound récursif (root hints + DNSSEC).
   Config dans `playbooks/files/unbound/unbound.conf`.
-  Deux instances : `unbound_wasp` (10.0.0.87) sur Wasp + `unbound_flash` (10.0.0.89) sur Flash.
+  Deux instances : `unbound_wasp` (10.0.0.180) sur Wasp + `unbound_flash` (10.0.0.190) sur Flash.
   VPS : config `unbound_loopback.conf` (127.0.0.1:5335 uniquement — AdGuard est sur le même hôte).
 
 - [x] **AdGuard** *(DNS filtrage pub)*
   `playbooks/adguard.yml` — configure via API AdGuard : upstream = Unbound, rewrite `*.wiserisk.home → traefik`.
   - Wasp : upstream `10.0.0.180` (unbound_wasp), rewrite vers `10.0.0.182` (traefik_wasp) ✅ déployé
-  - Flash : upstream `10.0.0.89` (unbound_flash), rewrite vers `10.0.0.85` (traefik_flash) ❌ en attente
+  - Flash : upstream `10.0.0.190` (unbound_flash), rewrite vers `10.0.0.192` (traefik_flash) ❌ en attente (Flash pas encore reinstallé)
   Secrets : `vault_adguard_user`, `vault_adguard_password`.
 
 - [x] **Traefik** *(reverse proxy — interne)*
   `playbooks/traefik.yml` — déploie binaire (optionnel), `Traefik/` → `/etc/Homelab/Traefik/`, overrides systemd avec secrets vault.
   Tag `--tags config` pour ne pousser que les configs sans toucher au binaire.
   Secrets : `vault_traefik_my_auth`, `vault_traefik_basic_auth`, `vault_traefik_vault_token`, `vault_traefik_vault_addr`.
-  Deux instances : `traefik_wasp` (10.0.0.84) + `traefik_flash` (10.0.0.85).
+  Deux instances : `traefik_wasp` (10.0.0.182) + `traefik_flash` (10.0.0.192).
 
-- [ ] **Traefik — architecture cible : certs OVH sur VPS + LB interne** ⚠️ non implémenté
+- [x] **Traefik — architecture cible : certs OVH sur VPS + LB interne** ✅ partiellement déployé
 
   **Architecture voulue :**
-  - VPS Traefik : terminaison TLS wildcard `*.wiserisk.be` via OVH DNS-01, load balance vers `10.8.0.2:80` + `10.8.0.3:80` (WireGuard → traefik_wasp/flash)
+  - VPS Traefik-Edge : terminaison TLS wildcard `*.wiserisk.be` via OVH DNS-01, load balance vers `10.8.0.2:80` + `10.8.0.3:80` (WireGuard → traefik_wasp/flash)
   - Internal Traefik : reçoit HTTP depuis VPS, route vers les services, **sans** gérer de certs
   - K3S Traefik : idem, plus de gestion de certs
 
-  **État actuel :**
-  - `traefik.toml` utilise `httpChallenge` / `tlsChallenge` — pas OVH, pas wildcard
-  - `Traefik/` contient uniquement les configs internes — aucune config VPS (LB, route wildcard, resolver OVH)
-  - Les dynamic configs (`gitea.yml`, `semaphore.yml`, etc.) ont `certResolver: letsencrypt-ecdsa` → le Traefik interne gère les certs lui-même
-  - `k3s.yml` : `passthrough: true` → K3S Traefik gère ses propres certs
+  **État réel (confirmé SSH 2026-05-20) :**
+  - ✅ VPS Traefik-Edge déployé (`/etc/Homelab/Traefik-Edge/`) avec OVH DNS-01, certs wildcard `*.wiserisk.be`
+  - ✅ traefik_wasp interne : aucun `certificatesResolvers` dans le config
+  - ✅ lldap + Authelia déployés sur VPS (ForwardAuth sur les routes VPS)
+  - ✅ WireGuard UI déployé sur VPS
+  - ✅ Dynamic configs internes : pas de `certResolver:` dans les routers publics
+  - ⏳ traefik_flash : non déployé (Flash en attente de reinstall OS)
+  - ✅ K3S Traefik : `certificatesResolvers` supprimés de `K3S/infrastructure/traefik/traefik-config.yaml.j2`
 
-  **Ce qu'il faut faire :**
-  1. Créer `Traefik/traefik_vps.toml` — resolver OVH DNS-01 + credentials OVH dans le vault
-  2. Créer `Traefik/traefik_dynamic_vps/` — wildcard cert + router `*.wiserisk.be` + LB vers WG IPs
-  3. Modifier `traefik.toml` (interne) — supprimer les `certificatesResolvers`
-  4. Modifier les dynamic configs — supprimer `tls: certResolver:` sur les routers publics (TLS terminé au VPS), garder `tls: {}` uniquement pour les routes `.wiserisk.home`
-  5. `k3s.yml` — supprimer `passthrough: true`, passer K3S sur HTTP interne
-  6. Adapter `playbooks/traefik.yml` — déployer la bonne config selon le host (VPS vs interne)
+  **Reste à faire :**
+  1. Déployer traefik_flash après reinstall Flash (voir Bloc 11)
 
 - [x] **Gatus sur Wasp** *(monitoring de secours K3S)*
   LXC 1102 (10.100.0.102) ajouté dans `hosts.yml`, `host_vars/proxmox_wasp.yml` et `host_vars/gatus.yml`.
@@ -271,6 +274,15 @@ créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fo
   Clés WireGuard dans vault : `vault_wireguard_<host>_private_key` + `vault_wg_<host>_pubkey`.
   Exemple client dans `host_vars/wireguard_client_example.yml`.
 
+- [x] **lldap + Authelia** ✅ déployés sur VPS
+  lldap (LDAP léger) et Authelia (SSO + ForwardAuth) tournent depuis 5-6 jours. Routes VPS protégées par Authelia.
+
+- [x] **WireGuard UI** ✅ déployé sur VPS
+
+- [ ] **VPS RAM** — 77% utilisé (745 Mo/967 Mo, pas de swap configuré)
+  Services actifs : Traefik-Edge + lldap + Authelia + Gatus + Unbound + WireGuard UI.
+  Surveiller en cas de pic. Si l'OOM killer intervient, envisager un swap fichier 512 Mo.
+
 - [x] ~~**Mise en place VPS**~~ ✅ déployé (VPS + traefik_wasp fonctionnels)
 
   **Ordre de déploiement testé et validé :**
@@ -321,10 +333,18 @@ créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fo
 
 ## Bloc 6 — Améliorations transverses
 
-- [ ] **Migration modules `community.proxmox`**
-  Les modules `community.general.proxmox*` sont dépréciés → déplacés dans `community.proxmox` (supprimé en v15.0.0).
-  Remplacer dans tous les playbooks : `community.general.proxmox` → `community.proxmox.proxmox`, idem pour `proxmox_kvm` et `proxmox_template`.
-  Ajouter `community.proxmox` dans `requirements.yml`.
+- [x] **~~Filtres AdGuard renforcés~~** ✅ corrigé (Wasp + Flash + VPS)
+  `adguard_blocking_lists` ajouté dans `adguard_wasp.yml`, `adguard_flash.yml` et `debian_vps.yml` (Hagezi Pro+ + OISD Full).
+  Tâches `GET /control/filtering/status` + `POST /control/filtering/add_url` ajoutées dans `adguard.yml` (idempotentes).
+
+- [x] **~~Grafana pod bloqué~~** ✅ corrigé (action manuelle `kubectl delete pod`)
+
+- [ ] **K3S master — pression mémoire**
+  Master à 75% mémoire (SonarQube 1.7 Gi + Graylog 1.1 Gi + Elasticsearch 0.8 Gi concentrés sur master).
+  Worker à 26% seulement. Envisager `nodeSelector` ou `affinity` pour SonarQube sur k3s-worker.
+
+- [x] **~~Migration modules `community.proxmox`~~** ✅ corrigé
+  `lxc.yml`, `template.yml`, `vm.yml` migrés vers `community.proxmox.*`. `community.proxmox` ajouté dans `requirements.yml`.
 
 - [ ] **Automatisation token TrueNAS**
   Ajouter dans `proxmox_bootstrap.yml` ou un playbook dédié la création du token API TrueNAS via API admin (POST `/api/v2.0/api_key`), pour éviter l'étape manuelle pendant la pause OS install
@@ -400,13 +420,26 @@ créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fo
 
 ## Bloc 7 — Migration CI/CD vers Gitea + dépréciation Webhook
 
-- [ ] **Migration pipelines GitHub Actions → Gitea**
-  Remplacer `.github/workflows/traefik.yml` et `webhook.yml` par des pipelines Gitea Actions.
-  Déclencheur : push sur la branche main → job Ansible via Semaphore (API) → `playbooks/traefik.yml`.
+- [x] **~~Supprimer `.github/workflows/`~~** ✅ corrigé — fichiers supprimés (voir B-GH-WORKFLOWS).
 
-- [ ] **Dépréciation du LXC Webhook**
-  Une fois les pipelines Gitea en place, le LXC webhook (vmid 1103) devient inutile.
-  Le retirer de `host_vars/proxmox_flash.yml`.
+- [ ] **Migrer repos GitHub → Gitea**
+  Gitea est running mais vide (aucun repo importé). Import via UI Gitea : Explore → Migrate → GitHub.
+  Token GitHub requis. Repos prioritaires : HomeLab (ce repo), configs K3S/ArgoCD.
+  Après migration : `git remote set-url origin http://git.wiserisk.be/<org>/<repo>` en local.
+
+- [ ] **Configurer Semaphore** (UI Ansible)
+  Semaphore running mais non configuré. Étapes :
+  1. Key Store : clé SSH ansible privée + vault password file
+  2. Repository : URL Gitea + credentials
+  3. Environment : `ANSIBLE_VAULT_PASSWORD_FILE` ou inline vault password
+  4. Templates : un template par playbook principal (hardening, proxmox, vps, etc.)
+  5. Tester un run playbook simple
+
+- [ ] **Pipelines Gitea Actions**
+  Remplacer les `.github/workflows/` par `.gitea/workflows/` (Gitea Actions).
+  Déclencheur : push main → appel API Semaphore → run playbook ciblé.
+
+- [x] ~~**Dépréciation du LXC Webhook**~~ ✅ LXC vmid 1103 supprimé
 
 - [ ] **Pipelines Gitea pour les apps K3S**
   Même logique que Traefik : modifications des manifests K3S → push Gitea → pipeline → ArgoCD sync.
@@ -441,3 +474,94 @@ créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fo
 
 - [ ] **Apps TrueNAS Hades**
   Définir les apps à déployer sur Hades dans `host_vars/truenas_hades.yml`, lancer `truenas.yml --limit truenas_hades --tags upgrade_all`
+
+---
+
+## Bloc 11 — Architecture gateway (décision documentée)
+
+### Décision : une gateway LXC par nœud Proxmox
+
+| LXC | VMid | vmbr0 (gestion) | vmbr1 (services) | Gère le trafic |
+|-----|------|-----------------|------------------|----------------|
+| traefik_wasp | 1001 | 10.0.0.182 | 10.100.0.1 | Wasp LXCs + K3S (via Wasp) |
+| traefik_flash | 1002 | 10.0.0.192 | 10.100.0.2 | Flash LXCs + K3S (via Flash) |
+
+**Pourquoi deux gateways :**
+- Résilience croisée : si Wasp est down, les LXCs Flash restent accessibles via VPS → WireGuard 10.8.0.3 → traefik_flash
+- NAT local au nœud : pas de trafic inter-nœud inutile pour la sortie internet
+- VPS load-balance entre 10.8.0.2 et 10.8.0.3 (les deux sont peers WireGuard)
+
+**Static route routeur (Asus) pour 10.100.0.0/24 :**
+Pointer vers `traefik_wasp` (10.0.0.182). Si Wasp est down, ses LXCs sont aussi down → la route morte est cohérente.
+Flash 10.100.0.x reste accessible via Tailscale (subnet router 10.100.0.220) même sans route routeur.
+Si le routeur Asus supporte ECMP : ajouter une seconde route via 10.0.0.192 (traefik_flash) pour redondance totale.
+
+---
+
+## Bloc 12 — Flash reinstall + onboarding Ansible
+
+> **Prérequis :** Wasp + VPS 100% stables, K3S sain, B2/B-NIC/B10 corrigés dans Ansible, Gitea migré.
+> Flash héberge actuellement (non géré Ansible) : K3S master+worker, TrueNAS Hermes, PBS, Ollama, Jellyfin, qBittorrent, SeedBox, Tailscale, HomeAssistant.
+
+- [x] **~~Corriger les fichiers Ansible avant reinstall~~** ✅ tout corrigé
+  - ~~B-NIC~~ ✅ `proxmox_phys_ifaces: [ens6f0, ens6f1]`
+  - ~~B10~~ ✅ `traefik_flash.yml` complété
+  - ~~B2~~ ✅ `adguard_flash.yml` créé + LXC unbound-flash (9190) + adguard-flash (9191) dans `proxmox_flash.yml`
+  - ~~B8~~ ✅ `proxmox_repos.yml` créé
+  - Vault Flash : `vault_proxmox_flash_api_token_secret` ❌ (généré au bootstrap — ne peut pas être pré-rempli)
+
+- [ ] **WireGuard traefik_flash**
+  Peer 10.8.0.3 déjà configuré côté VPS mais inactif (pas de handshake).
+  Avant déploiement Flash : générer les clés et ajouter dans le vault :
+  ```bash
+  wg genkey | tee /tmp/wg_tf.priv | wg pubkey  # → vault_wg_traefik_flash_pubkey
+  # clé privée → vault_wireguard_traefik_flash_private_key
+  ```
+
+- [ ] **Ordre de déploiement post-reinstall Proxmox Flash**
+  ```bash
+  # Prérequis : copier la clé SSH root une seule fois
+  ssh-copy-id -i ~/.ssh/ansibleWiseRiskHomelab.pub root@10.0.0.81
+
+  # 1. Hardening hyperviseur
+  ansible-playbook playbooks/hardening.yml -e target=proxmox_flash
+  ansible-playbook playbooks/hardening.yml -e target=proxmox_flash -e hardening_connect_as=ansible
+
+  # 2. Bootstrap (crée token API Flash → remplir vault_proxmox_flash_api_token_secret)
+  ansible-playbook playbooks/proxmox_bootstrap.yml --limit proxmox_flash
+
+  # 3. Storage + réseau + LXC/VM provisioning
+  ansible-playbook playbooks/proxmox_storage.yml --limit proxmox_flash
+  ansible-playbook playbooks/proxmox.yml -e target=proxmox_flash
+  # → crée traefik_flash (1002), unbound_flash (9089), adguard_flash (9088)
+  # → crée VMs Hermes, K3S-Master, K3S-Worker, PBS, HomeAssistant
+
+  # [PAUSE MANUELLE] — install OS sur chaque VM
+
+  # 4. Hardening + services LXC Flash (même pattern que Wasp)
+  ansible-playbook playbooks/hardening.yml -e target=traefik --limit traefik_flash
+  ansible-playbook playbooks/hardening.yml -e target=traefik --limit traefik_flash -e hardening_connect_as=ansible
+  ansible-playbook playbooks/wireguard.yml -e target=traefik --limit traefik_flash
+  ansible-playbook playbooks/vps.yml --tags wireguard   # VPS connaît maintenant traefik_flash actif
+  ansible-playbook playbooks/traefik.yml --limit traefik_flash
+
+  ansible-playbook playbooks/hardening.yml -e target=unbound --limit unbound_flash
+  ansible-playbook playbooks/hardening.yml -e target=unbound --limit unbound_flash -e hardening_connect_as=ansible
+  ansible-playbook playbooks/unbound.yml --limit unbound_flash
+
+  ansible-playbook playbooks/hardening.yml -e target=adguard --limit adguard_flash
+  ansible-playbook playbooks/hardening.yml -e target=adguard --limit adguard_flash -e hardening_connect_as=ansible
+  ansible-playbook playbooks/adguard.yml --limit adguard_flash
+
+  # 5. Services Flash via Ansible (LXC existants, hardening + service)
+  # hardening de chaque LXC (ollama, jellyfin, qbittorrent, seedbox, tailscale)
+  # puis les playbooks service
+  ansible-playbook playbooks/ollama.yml
+  ansible-playbook playbooks/jellyfin.yml
+  ansible-playbook playbooks/qbittorrent.yml
+  ansible-playbook playbooks/seedbox.yml
+  ansible-playbook playbooks/tailscale.yml
+
+  # 6. VMs K3S, TrueNAS, PBS, HomeAssistant (hardening + services)
+  # Voir Blocs 2-4 pour PBS et K3S
+  ```

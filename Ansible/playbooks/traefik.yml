@@ -1,5 +1,5 @@
 ---
-# Déploiement Traefik — LXC traefik (10.0.0.85 / 10.100.0.1)
+# Déploiement Traefik — LXC traefik-wasp (10.0.0.182) / traefik-flash (10.0.0.192)
 # Configs source : Traefik/ à la racine du repo → /etc/Homelab/Traefik/ sur le LXC
 #
 # Prérequis vault :

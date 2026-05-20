@@ -1,14 +1,14 @@
 ---
-# AdGuard Home — LXC 9181 (10.0.0.181) sur Wasp
-# Architecture : AdGuard → Unbound (10.0.0.180) → root hints
+# AdGuard Home — LXC 9191 (10.0.0.191) sur Flash
+# Architecture : AdGuard → Unbound (10.0.0.190) → root hints
 
 adguard_version: "0.107.74"
 adguard_port: 80
-adguard_upstream_dns: "10.0.0.180"  # unbound_wasp
+adguard_upstream_dns: "10.0.0.190"  # unbound_flash
 
 adguard_dns_rewrites:
   - domain: "*.wiserisk.home"
-    answer: "10.0.0.182"            # traefik_wasp
+    answer: "10.0.0.192"            # traefik_flash
 
 adguard_blocking_lists:
   - name: "Hagezi Pro+"
