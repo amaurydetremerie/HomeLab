@@ -24,6 +24,7 @@ actions:
         container:
           require_docker: true
           docker_timeout: 300s
+          workdir_parent: /workspace
         runner:
           capacity: 2
           labels:
