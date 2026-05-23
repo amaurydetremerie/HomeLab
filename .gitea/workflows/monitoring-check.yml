@@ -97,6 +97,6 @@ jobs:
             }')
 
           curl -sf -X POST "${GITEA_URL}/api/v1/repos/${GITEA_REPO}/issues" \
-            -H "Authorization: token ${{ secrets.GITEA_TOKEN }}" \
+            -H "Authorization: token ${{ secrets.HOMELAB_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d "$ISSUE_BODY"

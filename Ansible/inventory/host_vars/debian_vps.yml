@@ -110,6 +110,10 @@ hardening_ufw_rules:
     proto: tcp
     rule: allow
 
+  - port: "2222"
+    proto: tcp
+    rule: allow
+
   - port: "51820"
     proto: udp
     rule: allow

@@ -19,7 +19,7 @@
   gather_facts: false
   vars:
     semaphore_url: "https://semaphore.wiserisk.be"
-    semaphore_admin_login: "wiserisk"
+    semaphore_admin_login: "{{ hostvars['semaphore']['semaphore_admin_user'] }}"
     gitea_url: "https://git.wiserisk.be"
     gitea_repo_owner: "wiserisk"
     gitea_repo_name: "HomeLab"
@@ -422,9 +422,9 @@
         status_code: [201, 204]
       no_log: true
 
-    - name: Create GITEA_TOKEN secret
+    - name: Create HOMELAB_TOKEN secret
       ansible.builtin.uri:
-        url: "{{ gitea_url }}/api/v1/repos/{{ gitea_repo_owner }}/{{ gitea_repo_name }}/actions/secrets/GITEA_TOKEN"
+        url: "{{ gitea_url }}/api/v1/repos/{{ gitea_repo_owner }}/{{ gitea_repo_name }}/actions/secrets/HOMELAB_TOKEN"
         method: PUT
         headers:
           Authorization: "token {{ vault_gitea_action_token }}"

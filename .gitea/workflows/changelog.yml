@@ -81,7 +81,7 @@ jobs:
         shell: bash
         run: |
           OPEN_PRS=$(curl -sf "${GITEA_URL}/api/v1/repos/${GITEA_REPO}/pulls?state=open&limit=50" \
-            -H "Authorization: token ${{ secrets.GITEA_TOKEN }}")
+            -H "Authorization: token ${{ secrets.HOMELAB_TOKEN }}")
 
           PR_NUMBER=$(echo "$OPEN_PRS" | jq -r '[.[] | select(.title == "docs: changelog update")] | first | .number // ""')
 
@@ -101,7 +101,7 @@ jobs:
 
           git config user.name "Gitea Actions"
           git config user.email "actions@wiserisk.be"
-          git remote set-url origin "https://wiserisk:${{ secrets.GITEA_TOKEN }}@git.wiserisk.be/wiserisk/HomeLab.git"
+          git remote set-url origin "https://wiserisk:${{ secrets.HOMELAB_TOKEN }}@git.wiserisk.be/wiserisk/HomeLab.git"
           git checkout -b "$BRANCH"
 
           python3 - "$CHANGELOG" <<'PYEOF'
@@ -130,7 +130,7 @@ jobs:
           }')
 
           curl -sf -X POST "${GITEA_URL}/api/v1/repos/${GITEA_REPO}/pulls" \
-            -H "Authorization: token ${{ secrets.GITEA_TOKEN }}" \
+            -H "Authorization: token ${{ secrets.HOMELAB_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d "$PR_BODY"
 
@@ -142,6 +142,6 @@ jobs:
           PR_NUMBER="${{ steps.check_pr.outputs.pr_number }}"
 
           curl -sf -X PATCH "${GITEA_URL}/api/v1/repos/${GITEA_REPO}/pulls/${PR_NUMBER}" \
-            -H "Authorization: token ${{ secrets.GITEA_TOKEN }}" \
+            -H "Authorization: token ${{ secrets.HOMELAB_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d "$(jq -n --arg body "$CHANGELOG" '{body: $body}')"

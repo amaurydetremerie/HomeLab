@@ -35,6 +35,5 @@ hardening_ufw_rules:
   - port: "443"
     proto: tcp
     rule: allow
-  - proto: udp
-    from_ip: "{{ vps_public_ip }}"
+  - from_ip: "{{ wireguard_peers[0].allowed_ips[0] }}"
     rule: allow

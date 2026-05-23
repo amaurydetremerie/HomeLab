@@ -30,6 +30,9 @@ entryPoints:
     address: ":6443"
   graylog:
     address: ":12201/udp"
+  # Gitea SSH : forwarded vers 10.100.0.100:2222
+  giteassh:
+    address: ":2222"
 
 experimental:
   plugins:

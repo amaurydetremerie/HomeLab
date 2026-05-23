@@ -1,3 +1,16 @@
+tcp:
+  services:
+    gitea-ssh:
+      loadBalancer:
+        servers:
+          - address: "10.100.0.100:2222"
+  routers:
+    gitea-ssh:
+      rule: "HostSNI(`*`)"
+      entryPoints:
+        - giteassh
+      service: gitea-ssh@file
+
 http:
   services:
     gitea:
