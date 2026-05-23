@@ -44,18 +44,4 @@ spec:
           configMap:
             name: gitea-runner-config
         - name: data
-          persistentVolumeClaim:
-            claimName: gitea-runner-data
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: gitea-runner-data
-  namespace: gitea-runner
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: nfs
-  resources:
-    requests:
-      storage: 1Gi
+          emptyDir: {}
