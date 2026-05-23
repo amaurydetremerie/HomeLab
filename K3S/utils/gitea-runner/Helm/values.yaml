@@ -8,6 +8,11 @@ actions:
   global:
     storageClass: local-path
 
+  init:
+    image:
+      repository: alpine
+      tag: "3.19"
+
   statefulset:
     replicas: 1
     runner:
