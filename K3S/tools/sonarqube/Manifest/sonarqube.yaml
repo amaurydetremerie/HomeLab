@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/amaurydetremerie/HomeLab.git
+    repoURL: https://git.wiserisk.be/wiserisk/HomeLab.git
     targetRevision: HEAD
     path: K3S/tools/sonarqube/Helm
     plugin:
