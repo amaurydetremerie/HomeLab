@@ -1,0 +1,175 @@
+name: Ansible auto-deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  detect:
+    runs-on: k3s
+    outputs:
+      traefik: ${{ steps.check.outputs.traefik }}
+      traefik_edge: ${{ steps.check.outputs.traefik_edge }}
+      vps: ${{ steps.check.outputs.vps }}
+      wireguard: ${{ steps.check.outputs.wireguard }}
+      adguard: ${{ steps.check.outputs.adguard }}
+      authelia: ${{ steps.check.outputs.authelia }}
+      lldap: ${{ steps.check.outputs.lldap }}
+      proxmox: ${{ steps.check.outputs.proxmox }}
+      gitea: ${{ steps.check.outputs.gitea }}
+      semaphore: ${{ steps.check.outputs.semaphore }}
+      k3s: ${{ steps.check.outputs.k3s }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - id: check
+        shell: bash
+        run: |
+          CHANGED=$(git diff --name-only HEAD~1 HEAD)
+          echo "Changed files:"
+          echo "$CHANGED"
+
+          detect() {
+            local key="$1"; shift
+            for pattern in "$@"; do
+              if echo "$CHANGED" | grep -qE "$pattern"; then
+                echo "${key}=true" >> "$GITHUB_OUTPUT"
+                return
+              fi
+            done
+            echo "${key}=false" >> "$GITHUB_OUTPUT"
+          }
+
+          detect traefik       '^Traefik/(?!\.)'
+          detect traefik_edge  '^Traefik-Edge/'
+          detect vps           '^Ansible/playbooks/vps\.yml' \
+                               '^Ansible/inventory/host_vars/debian_vps'
+          detect wireguard     '^Ansible/playbooks/wireguard' \
+                               '^Ansible/playbooks/files/wireguard/'
+          detect adguard       '^Ansible/playbooks/adguard\.yml' \
+                               '^Ansible/playbooks/files/adguard/'
+          detect authelia      '^Ansible/playbooks/authelia\.yml' \
+                               '^Ansible/playbooks/files/authelia/' \
+                               '^Ansible/playbooks/templates/authelia/'
+          detect lldap         '^Ansible/playbooks/lldap\.yml' \
+                               '^Ansible/playbooks/files/lldap/'
+          detect proxmox       '^Ansible/playbooks/proxmox' \
+                               '^Ansible/inventory/host_vars/flash' \
+                               '^Ansible/inventory/host_vars/wasp'
+          detect gitea         '^Ansible/playbooks/gitea\.yml' \
+                               '^Ansible/inventory/host_vars/gitea\.yml' \
+                               '^Ansible/playbooks/templates/gitea/'
+          detect semaphore     '^Ansible/playbooks/semaphore\.yml' \
+                               '^Ansible/inventory/host_vars/semaphore\.yml' \
+                               '^Ansible/playbooks/templates/semaphore/'
+          detect k3s           '^K3S/'
+
+  trigger:
+    needs: detect
+    if: >
+      needs.detect.outputs.traefik == 'true' ||
+      needs.detect.outputs.traefik_edge == 'true' ||
+      needs.detect.outputs.vps == 'true' ||
+      needs.detect.outputs.wireguard == 'true' ||
+      needs.detect.outputs.adguard == 'true' ||
+      needs.detect.outputs.authelia == 'true' ||
+      needs.detect.outputs.lldap == 'true' ||
+      needs.detect.outputs.proxmox == 'true' ||
+      needs.detect.outputs.gitea == 'true' ||
+      needs.detect.outputs.semaphore == 'true' ||
+      needs.detect.outputs.k3s == 'true'
+    runs-on: k3s
+    env:
+      SEMAPHORE_BASE_URL: ${{ secrets.SEMAPHORE_BASE_URL }}
+      SEMAPHORE_TOKEN: ${{ secrets.SEMAPHORE_TOKEN }}
+      SEMAPHORE_PROJECT_ID: ${{ secrets.SEMAPHORE_PROJECT_ID }}
+    steps:
+      - name: Trigger traefik
+        if: needs.detect.outputs.traefik == 'true'
+        run: |
+          curl -sf -X POST "${SEMAPHORE_BASE_URL}/api/project/${SEMAPHORE_PROJECT_ID}/tasks" \
+            -H "Authorization: Bearer ${SEMAPHORE_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"template_id\": ${{ secrets.SEMAPHORE_TEMPLATE_TRAEFIK }}, \"message\": \"Auto: ${{ github.sha }}\"}"
+
+      - name: Trigger traefik-edge
+        if: needs.detect.outputs.traefik_edge == 'true'
+        run: |
+          curl -sf -X POST "${SEMAPHORE_BASE_URL}/api/project/${SEMAPHORE_PROJECT_ID}/tasks" \
+            -H "Authorization: Bearer ${SEMAPHORE_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"template_id\": ${{ secrets.SEMAPHORE_TEMPLATE_TRAEFIK_EDGE }}, \"message\": \"Auto: ${{ github.sha }}\"}"
+
+      - name: Trigger vps
+        if: needs.detect.outputs.vps == 'true'
+        run: |
+          curl -sf -X POST "${SEMAPHORE_BASE_URL}/api/project/${SEMAPHORE_PROJECT_ID}/tasks" \
+            -H "Authorization: Bearer ${SEMAPHORE_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"template_id\": ${{ secrets.SEMAPHORE_TEMPLATE_VPS }}, \"message\": \"Auto: ${{ github.sha }}\"}"
+
+      - name: Trigger wireguard
+        if: needs.detect.outputs.wireguard == 'true'
+        run: |
+          curl -sf -X POST "${SEMAPHORE_BASE_URL}/api/project/${SEMAPHORE_PROJECT_ID}/tasks" \
+            -H "Authorization: Bearer ${SEMAPHORE_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"template_id\": ${{ secrets.SEMAPHORE_TEMPLATE_WIREGUARD }}, \"message\": \"Auto: ${{ github.sha }}\"}"
+
+      - name: Trigger adguard
+        if: needs.detect.outputs.adguard == 'true'
+        run: |
+          curl -sf -X POST "${SEMAPHORE_BASE_URL}/api/project/${SEMAPHORE_PROJECT_ID}/tasks" \
+            -H "Authorization: Bearer ${SEMAPHORE_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"template_id\": ${{ secrets.SEMAPHORE_TEMPLATE_ADGUARD }}, \"message\": \"Auto: ${{ github.sha }}\"}"
+
+      - name: Trigger authelia
+        if: needs.detect.outputs.authelia == 'true'
+        run: |
+          curl -sf -X POST "${SEMAPHORE_BASE_URL}/api/project/${SEMAPHORE_PROJECT_ID}/tasks" \
+            -H "Authorization: Bearer ${SEMAPHORE_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"template_id\": ${{ secrets.SEMAPHORE_TEMPLATE_AUTHELIA }}, \"message\": \"Auto: ${{ github.sha }}\"}"
+
+      - name: Trigger lldap
+        if: needs.detect.outputs.lldap == 'true'
+        run: |
+          curl -sf -X POST "${SEMAPHORE_BASE_URL}/api/project/${SEMAPHORE_PROJECT_ID}/tasks" \
+            -H "Authorization: Bearer ${SEMAPHORE_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"template_id\": ${{ secrets.SEMAPHORE_TEMPLATE_LLDAP }}, \"message\": \"Auto: ${{ github.sha }}\"}"
+
+      - name: Trigger proxmox
+        if: needs.detect.outputs.proxmox == 'true'
+        run: |
+          curl -sf -X POST "${SEMAPHORE_BASE_URL}/api/project/${SEMAPHORE_PROJECT_ID}/tasks" \
+            -H "Authorization: Bearer ${SEMAPHORE_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"template_id\": ${{ secrets.SEMAPHORE_TEMPLATE_PROXMOX }}, \"message\": \"Auto: ${{ github.sha }}\"}"
+
+      - name: Trigger gitea
+        if: needs.detect.outputs.gitea == 'true'
+        run: |
+          curl -sf -X POST "${SEMAPHORE_BASE_URL}/api/project/${SEMAPHORE_PROJECT_ID}/tasks" \
+            -H "Authorization: Bearer ${SEMAPHORE_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"template_id\": ${{ secrets.SEMAPHORE_TEMPLATE_GITEA }}, \"message\": \"Auto: ${{ github.sha }}\"}"
+
+      - name: Trigger semaphore
+        if: needs.detect.outputs.semaphore == 'true'
+        run: |
+          curl -sf -X POST "${SEMAPHORE_BASE_URL}/api/project/${SEMAPHORE_PROJECT_ID}/tasks" \
+            -H "Authorization: Bearer ${SEMAPHORE_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"template_id\": ${{ secrets.SEMAPHORE_TEMPLATE_SEMAPHORE }}, \"message\": \"Auto: ${{ github.sha }}\"}"
+
+      - name: Trigger k3s
+        if: needs.detect.outputs.k3s == 'true'
+        run: |
+          curl -sf -X POST "${SEMAPHORE_BASE_URL}/api/project/${SEMAPHORE_PROJECT_ID}/tasks" \
+            -H "Authorization: Bearer ${SEMAPHORE_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"template_id\": ${{ secrets.SEMAPHORE_TEMPLATE_K3S }}, \"message\": \"Auto: ${{ github.sha }}\"}"

@@ -109,6 +109,121 @@
         state: started
         daemon_reload: true
 
+    - name: Wait for Gitea API to be ready
+      ansible.builtin.uri:
+        url: "http://localhost:{{ gitea_port }}/api/v1/version"
+        status_code: 200
+      register: gitea_api_ready
+      retries: 15
+      delay: 3
+      until: gitea_api_ready.status == 200
+
+    - name: Create Gitea repos if not exist
+      ansible.builtin.uri:
+        url: "http://localhost:{{ gitea_port }}/api/v1/user/repos"
+        method: POST
+        url_username: "{{ gitea_admin_user }}"
+        url_password: "{{ vault_gitea_admin_password }}"
+        force_basic_auth: true
+        body_format: json
+        body:
+          name: "{{ item.local_repo }}"
+          private: true
+          auto_init: false
+        status_code: [201, 409]
+      loop: "{{ gitea_github_mirrors }}"
+
+    - name: Check LLDAP auth sources
+      ansible.builtin.command:
+        cmd: gitea admin auth list -c /etc/gitea/app.ini
+      become_user: git
+      register: gitea_auth_list
+      changed_when: false
+
+    - name: Add LLDAP auth source
+      ansible.builtin.command:
+        argv:
+          - gitea
+          - admin
+          - auth
+          - add-ldap
+          - --name
+          - lldap
+          - --host
+          - "{{ gitea_lldap_host }}"
+          - --port
+          - "{{ gitea_lldap_port }}"
+          - --security-protocol
+          - unencrypted
+          - --bind-dn
+          - "uid=admin,ou=people,dc=wiserisk,dc=be"
+          - --bind-password
+          - "{{ vault_lldap_admin_password }}"
+          - --user-search-base
+          - "ou=people,dc=wiserisk,dc=be"
+          - --user-filter
+          - "(&(objectClass=person)(uid=%s))"
+          - --username-attribute
+          - uid
+          - --firstname-attribute
+          - givenName
+          - --surname-attribute
+          - sn
+          - --email-attribute
+          - mail
+          - --synchronize-users
+          - -c
+          - /etc/gitea/app.ini
+      become_user: git
+      when: "'lldap' not in gitea_auth_list.stdout"
+      no_log: true
+
+    - name: Get existing push mirrors
+      ansible.builtin.uri:
+        url: "http://localhost:{{ gitea_port }}/api/v1/repos/{{ gitea_admin_user }}/{{ item.local_repo }}/push_mirrors"
+        url_username: "{{ gitea_admin_user }}"
+        url_password: "{{ vault_gitea_admin_password }}"
+        force_basic_auth: true
+        status_code: 200
+      register: gitea_push_mirrors
+      loop: "{{ gitea_github_mirrors }}"
+
+    - name: Configure GitHub push mirrors
+      ansible.builtin.uri:
+        url: "http://localhost:{{ gitea_port }}/api/v1/repos/{{ gitea_admin_user }}/{{ item.item.local_repo }}/push_mirrors"
+        method: POST
+        url_username: "{{ gitea_admin_user }}"
+        url_password: "{{ vault_gitea_admin_password }}"
+        force_basic_auth: true
+        body_format: json
+        body:
+          remote_name: github
+          remote_address: "https://github.com/{{ item.item.github_repo }}.git"
+          remote_username: "{{ item.item.github_repo.split('/')[0] }}"
+          remote_password: "{{ vault_github_pat }}"
+          sync_on_commit: true
+          interval: "8h0m0s"
+        status_code: [200, 201]
+      when: item.json | selectattr('remote_name', 'equalto', 'github') | list | length == 0
+      loop: "{{ gitea_push_mirrors.results }}"
+      no_log: true
+
+    - name: Add wiserisk SSH public key to Gitea
+      ansible.builtin.uri:
+        url: "http://localhost:{{ gitea_port }}/api/v1/user/keys"
+        method: POST
+        url_username: "{{ gitea_admin_user }}"
+        url_password: "{{ vault_gitea_admin_password }}"
+        force_basic_auth: true
+        body_format: json
+        body:
+          key: "{{ wiserisk_ssh_public_key }}"
+          read_only: false
+          title: "ansible-managed"
+      register: add_key_result
+      failed_when: add_key_result.status not in [201, 422]
+      changed_when: add_key_result.status == 201
+
   handlers:
     - name: Reload systemd
       ansible.builtin.systemd:

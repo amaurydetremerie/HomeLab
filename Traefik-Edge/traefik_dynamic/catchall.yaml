@@ -23,8 +23,11 @@ http:
 
     # Services incompatibles avec Authelia (apps mobiles, API)
     # K3S : seuls les services avec leur propre auth ou usage API externe bypasse Authelia
+    # Gitea/Semaphore : auth propre (LLDAP), Authelia bloque les automatisations API
     bypass-auth:
       rule: >-
+        Host(`git.wiserisk.be`) ||
+        Host(`semaphore.wiserisk.be`) ||
         Host(`ha.wiserisk.be`) ||
         Host(`jellyfin.wiserisk.be`) ||
         Host(`ollama.wiserisk.be`) ||

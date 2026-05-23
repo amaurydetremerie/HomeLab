@@ -29,6 +29,9 @@ entryPoints:
     address: ":53/udp"
   dns-tcp:
     address: ":53"
+  # LDAP : LLDAP écoute sur 127.0.0.1:3890, exposé sur :389 pour Gitea/Semaphore
+  ldap:
+    address: ":389"
 
 # Email injecté via TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_OVH_ACME_EMAIL dans l'override systemd
 # Credentials OVH injectés via OVH_ENDPOINT, OVH_APPLICATION_KEY, OVH_APPLICATION_SECRET, OVH_CONSUMER_KEY

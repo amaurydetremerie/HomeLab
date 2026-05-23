@@ -95,8 +95,11 @@ vault_authelia_storage_key: ""    # openssl rand -hex 32 (min 20 chars)
 
 # ── Gitea ─────────────────────────────────────────────────────────────────────
 vault_gitea_smtp_password: ""
+vault_gitea_admin_password: ""      # Mot de passe du compte admin Gitea (wiserisk) — utilisé par les playbooks API
 vault_gitea_secret_key: ""          # openssl rand -hex 32
 vault_gitea_internal_token: ""      # openssl rand -hex 32
+vault_github_pat: ""                # GitHub PAT — github.com > Settings > Fine-grained tokens
+                                    # Scope : Contents write sur HomeLab, HLabMonitor, HLabMonitor-UI
 
 # ── Semaphore ─────────────────────────────────────────────────────────────────
 vault_semaphore_cookie_hash: ""           # openssl rand -base64 32

@@ -11,7 +11,11 @@ data:
       token: '<path:k3s/data/renovate#gitea>',
       onboarding: false,
       requireConfig: 'required',
-      repositories: [],
+      repositories: [
+        'wiserisk/HomeLab',
+        'wiserisk/HLabMonitor',
+        'wiserisk/HLabMonitor-UI',
+      ],
       registryAliases: {
         'docker.io': 'registry.k3s.wiserisk.be',
       },

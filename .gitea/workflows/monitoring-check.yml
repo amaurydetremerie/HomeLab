@@ -1,0 +1,102 @@
+name: Monitoring gap check
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: k3s
+    env:
+      GITEA_URL: https://git.wiserisk.be
+      GITEA_REPO: wiserisk/HomeLab
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Analyze diff with Claude
+        id: claude
+        shell: bash
+        run: |
+          DIFF=$(git diff HEAD~1 HEAD)
+
+          if [ -z "$DIFF" ]; then
+            echo "has_gap=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          SCRAPE=$(cat K3S/monitoring/Prometheus/scrape.yaml 2>/dev/null || echo "")
+          HLAB=$(cat K3S/monitoring/HLabMonitor/configmap.yaml 2>/dev/null || echo "")
+          RULES=$(cat K3S/monitoring/Prometheus/rules.yaml 2>/dev/null || echo "")
+          BLACKBOX=$(cat K3S/monitoring/Blackbox/config-map.yaml 2>/dev/null || echo "")
+
+          RESPONSE=$(curl -sf -X POST "https://api.anthropic.com/v1/messages" \
+            -H "x-api-key: ${{ secrets.CLAUDE_API_KEY }}" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "content-type: application/json" \
+            -d "$(jq -n \
+              --arg diff "$DIFF" \
+              --arg scrape "$SCRAPE" \
+              --arg hlab "$HLAB" \
+              --arg rules "$RULES" \
+              --arg blackbox "$BLACKBOX" \
+              '{
+                model: "claude-haiku-4-5-20251001",
+                max_tokens: 1024,
+                messages: [{
+                  role: "user",
+                  content: (
+                    "Tu analyses un diff Git d'\''un repo HomeLab IaC (Ansible + K3S + Traefik). "
+                    + "Détermine si un ajout de service, host ou ressource est accompagné des adaptations monitoring nécessaires.\n\n"
+                    + "DIFF:\n" + $diff + "\n\n"
+                    + "PROMETHEUS SCRAPE CONFIG:\n" + $scrape + "\n\n"
+                    + "HLABMONITOR CONFIGMAP:\n" + $hlab + "\n\n"
+                    + "ALERT RULES:\n" + $rules + "\n\n"
+                    + "BLACKBOX CONFIG:\n" + $blackbox + "\n\n"
+                    + "Règles :\n"
+                    + "- Nouveau namespace/deployment/service K3S → scrape job dans scrape.yaml + check HTTP dans HLabMonitor configmap\n"
+                    + "- Nouveau router Traefik interne (*.wiserisk.home) → check HTTP dans HLabMonitor configmap\n"
+                    + "- Nouveau router Traefik-Edge public (*.wiserisk.be) → check HTTP dans HLabMonitor configmap ET target blackbox dans scrape.yaml\n"
+                    + "- Nouveau host Ansible (hosts.yml ou host_vars/) → target ICMP blackbox-ping dans scrape.yaml + check ping dans HLabMonitor configmap\n\n"
+                    + "Ne réponds QUE si tu détectes un gap concret (ajout sans monitoring correspondant). "
+                    + "Si le diff ne contient aucun ajout de service/host/ressource, ou si tout est bien couvert, réponds exactement NO_GAP.\n"
+                    + "Si gap détecté : décris-le en 2-3 phrases précises avec les fichiers concernés."
+                  )
+                }]
+              }')")
+
+          CONTENT=$(echo "$RESPONSE" | jq -r '.content[0].text // "NO_GAP"')
+
+          if [ "$CONTENT" = "NO_GAP" ]; then
+            echo "has_gap=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_gap=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "gap_description<<EOF"
+              echo "$CONTENT"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create Gitea issue for monitoring gap
+        if: steps.claude.outputs.has_gap == 'true'
+        shell: bash
+        run: |
+          DESCRIPTION="${{ steps.claude.outputs.gap_description }}"
+          COMMIT_SHA="${{ github.sha }}"
+          SHORT_SHA="${COMMIT_SHA:0:8}"
+
+          ISSUE_BODY=$(jq -n \
+            --arg desc "$DESCRIPTION" \
+            --arg sha "$COMMIT_SHA" \
+            '{
+              title: ("Monitoring gap — " + $sha[:8]),
+              body: ("**Commit :** `" + $sha + "`\n\n" + $desc + "\n\n---\n*Généré automatiquement par le workflow monitoring-check.*"),
+              labels: ["monitoring-gap"]
+            }')
+
+          curl -sf -X POST "${GITEA_URL}/api/v1/repos/${GITEA_REPO}/issues" \
+            -H "Authorization: token ${{ secrets.GITEA_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "$ISSUE_BODY"

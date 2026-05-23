@@ -1,0 +1,147 @@
+name: Changelog
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  changelog:
+    runs-on: k3s
+    env:
+      GITEA_URL: https://git.wiserisk.be
+      GITEA_REPO: wiserisk/HomeLab
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get commits since last tag
+        id: commits
+        shell: bash
+        run: |
+          LAST_REF=$(git describe --tags --abbrev=0 2>/dev/null || git rev-list --max-parents=0 HEAD)
+          COMMITS=$(git log "${LAST_REF}..HEAD" --oneline 2>/dev/null || true)
+
+          if [ -z "$COMMITS" ]; then
+            echo "empty=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "empty=false" >> "$GITHUB_OUTPUT"
+          {
+            echo "list<<EOF"
+            echo "$COMMITS"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Generate changelog with Claude
+        id: generate
+        if: steps.commits.outputs.empty != 'true'
+        shell: bash
+        run: |
+          COMMITS="${{ steps.commits.outputs.list }}"
+
+          RESPONSE=$(curl -sf -X POST "https://api.anthropic.com/v1/messages" \
+            -H "x-api-key: ${{ secrets.CLAUDE_API_KEY }}" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "content-type: application/json" \
+            -d "$(jq -n \
+              --arg commits "$COMMITS" \
+              '{
+                model: "claude-haiku-4-5-20251001",
+                max_tokens: 2048,
+                messages: [{
+                  role: "user",
+                  content: (
+                    "Génère un changelog structuré et concis en français à partir de ces commits Git d'\''un repo HomeLab IaC.\n\n"
+                    + "COMMITS:\n" + $commits + "\n\n"
+                    + "Format attendu (Markdown) — utilise uniquement les sections pertinentes :\n"
+                    + "## Changelog\n"
+                    + "### Infrastructure\n- ...\n"
+                    + "### Monitoring\n- ...\n"
+                    + "### CI/CD\n- ...\n"
+                    + "### K3S / Services\n- ...\n"
+                    + "### Sécurité\n- ...\n\n"
+                    + "Une ligne par changement. Ignore les commits de merge ou de style. Sois concis."
+                  )
+                }]
+              }')")
+
+          CHANGELOG=$(echo "$RESPONSE" | jq -r '.content[0].text // ""')
+
+          {
+            echo "changelog<<EOF"
+            echo "$CHANGELOG"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check for open changelog PR
+        id: check_pr
+        if: steps.commits.outputs.empty != 'true'
+        shell: bash
+        run: |
+          OPEN_PRS=$(curl -sf "${GITEA_URL}/api/v1/repos/${GITEA_REPO}/pulls?state=open&limit=50" \
+            -H "Authorization: token ${{ secrets.GITEA_TOKEN }}")
+
+          PR_NUMBER=$(echo "$OPEN_PRS" | jq -r '[.[] | select(.title == "docs: changelog update")] | first | .number // ""')
+
+          if [ -n "$PR_NUMBER" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create changelog PR
+        if: steps.commits.outputs.empty != 'true' && steps.check_pr.outputs.exists == 'false'
+        shell: bash
+        run: |
+          CHANGELOG="${{ steps.generate.outputs.changelog }}"
+          BRANCH="changelog/update-${{ github.sha }}"
+
+          git config user.name "Gitea Actions"
+          git config user.email "actions@wiserisk.be"
+          git remote set-url origin "https://wiserisk:${{ secrets.GITEA_TOKEN }}@git.wiserisk.be/wiserisk/HomeLab.git"
+          git checkout -b "$BRANCH"
+
+          python3 - "$CHANGELOG" <<'PYEOF'
+          import sys, re
+
+          changelog = sys.argv[1]
+          content = open("README.md").read()
+
+          if "## Changelog" in content:
+              content = re.sub(r"## Changelog.*?(?=\n## |\Z)", changelog + "\n\n", content, flags=re.DOTALL)
+          else:
+              content = content.rstrip() + "\n\n" + changelog + "\n"
+
+          open("README.md", "w").write(content)
+          PYEOF
+
+          git add README.md
+          git commit -m "docs: update changelog [skip ci]"
+          git push origin "$BRANCH"
+
+          PR_BODY=$(jq -n --arg body "$CHANGELOG" '{
+            title: "docs: changelog update",
+            head: "'"$BRANCH"'",
+            base: "main",
+            body: $body
+          }')
+
+          curl -sf -X POST "${GITEA_URL}/api/v1/repos/${GITEA_REPO}/pulls" \
+            -H "Authorization: token ${{ secrets.GITEA_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "$PR_BODY"
+
+      - name: Update existing changelog PR
+        if: steps.commits.outputs.empty != 'true' && steps.check_pr.outputs.exists == 'true'
+        shell: bash
+        run: |
+          CHANGELOG="${{ steps.generate.outputs.changelog }}"
+          PR_NUMBER="${{ steps.check_pr.outputs.pr_number }}"
+
+          curl -sf -X PATCH "${GITEA_URL}/api/v1/repos/${GITEA_REPO}/pulls/${PR_NUMBER}" \
+            -H "Authorization: token ${{ secrets.GITEA_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg body "$CHANGELOG" '{body: $body}')"

@@ -129,6 +129,22 @@
       when: semaphore_admin_user not in semaphore_user_list.stdout
       no_log: true
 
+    - name: Ensure Semaphore admin password matches vault
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/semaphore
+          - user
+          - change-by-login
+          - --login
+          - "{{ semaphore_admin_user }}"
+          - --password
+          - "{{ vault_semaphore_admin_password }}"
+          - --config
+          - /etc/semaphore/config.json
+      when: semaphore_admin_user in semaphore_user_list.stdout
+      no_log: true
+      changed_when: true
+
   handlers:
     - name: Reload systemd
       ansible.builtin.systemd:

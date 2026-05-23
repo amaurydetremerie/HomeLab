@@ -47,6 +47,7 @@ IPs et détails de connexion → `Ansible/inventory/hosts.yml` et `Ansible/host_
 - `infrastructure/` — composants système : ArgoCD (app-of-apps), Traefik, Vault, Registry, Renovate
 - `monitoring/` — Prometheus, Grafana, AlertManager, Blackbox, exporters
 - `tools/` — applications (Nextcloud, Open-WebUI, Portainer, Graylog, Sonarqube…)
+- `utils/` — workloads transverses : gitea-runner (act runner Gitea Actions, label `k3s:host`)
 - `config/` — kubeconfig K3S
 - Secrets : Vault + argocd-vault-plugin
 - Stockage : NFS (Hermes) via StorageClass `nfs`
@@ -69,6 +70,27 @@ Reverse proxy interne sur les nœuds Proxmox — config file-based.
 ## Traefik-Edge (`Traefik-Edge/`)
 
 Reverse proxy sur le VPS — TLS via ACME DNS challenge (wildcard `*.wiserisk.be`).
-- `traefik.yaml` — entrypoints (web, websecure, DNS 53, graylog UDP)
+- `traefik.yaml` — entrypoints (web, websecure, DNS 53, graylog UDP, LDAP 389)
 - `traefik_dynamic/` — middlewares Authelia (forward-auth), redirect HTTPS, security headers, routers
 - Authelia SSO protège les services exposés publiquement
+- Bypass Authelia : voir bypass-auth dans Traefik-Edge/traefik_dynamic/catchall.yaml
+
+## Git & CI/CD
+
+**Gitea** (`git.wiserisk.be`) — plateforme Git primaire
+- GitHub (`github.com/amaurydetremerie/`) : miroir automatique (push mirror Gitea → GitHub à chaque commit)
+- Setup : `Ansible/playbooks/gitea.yml` (création de repos, LLDAP auth + SSO, push mirrors via API)
+
+**Semaphore** (`semaphore.wiserisk.be`) — CI Ansible, LXC 1101 sur Wasp
+- Exécute les playbooks Ansible déclenchés par les pipelines Gitea Actions
+- Projet HomeLab configuré via `Ansible/playbooks/semaphore_setup.yml` (idempotent, crée aussi les Gitea Actions secrets)
+- Setup : `Ansible/playbooks/semaphore.yml` (création de config, LLDAP auth + SSO)
+
+**Gitea Actions** (`.gitea/workflows/`)
+- `ansible.yml` — détecte les chemins modifiés → déclenche le template Semaphore correspondant
+- `monitoring-check.yml` — Claude Haiku analyse le diff + fichiers monitoring → Issue Gitea si gap détecté
+- `changelog.yml` — Claude Haiku génère un changelog → PR create/update sur README.md
+- Act runner : pod K3S `gitea-runner` (namespace `gitea-runner`), label `k3s:host` (exécution shell, pas Docker)
+
+**ArgoCD** pointe vers Gitea (plus GitHub) : `https://git.wiserisk.be/wiserisk/HomeLab.git`
+- Secret repo (`gitea-homelab-repo`) appliqué manuellement via kubectl (hors GitOps — dépendance circulaire)

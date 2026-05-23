@@ -1,0 +1,13 @@
+tcp:
+  services:
+    lldap-ldap:
+      loadBalancer:
+        servers:
+          - address: "127.0.0.1:3890"
+
+  routers:
+    lldap-ldap:
+      rule: "HostSNI(`*`)"
+      entryPoints:
+        - ldap
+      service: lldap-ldap@file

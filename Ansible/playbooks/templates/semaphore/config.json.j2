@@ -11,5 +11,18 @@
   "email_sender": "{{ semaphore_admin_email }}",
   "email_host": "smtp.gmail.com",
   "email_port": "587",
-  "web_host": "https://{{ semaphore_public_domain }}"
+  "web_host": "https://{{ semaphore_public_domain }}",
+  "ldap_enable": true,
+  "ldap_needtls": false,
+  "ldap_server": "{{ semaphore_lldap_host }}:{{ semaphore_lldap_port }}",
+  "ldap_binddn": "uid=admin,ou=people,dc=wiserisk,dc=be",
+  "ldap_bindpassword": "{{ vault_lldap_admin_password }}",
+  "ldap_searchdn": "ou=people,dc=wiserisk,dc=be",
+  "ldap_searchfilter": "(&(objectClass=person)(uid=%s))",
+  "ldap_mappings": {
+    "dn": "",
+    "mail": "mail",
+    "uid": "uid",
+    "cn": "cn"
+  }
 }

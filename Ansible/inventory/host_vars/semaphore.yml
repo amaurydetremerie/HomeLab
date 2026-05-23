@@ -17,3 +17,7 @@ hardening_ufw_rules:
   - port: "3000"
     proto: tcp
     rule: allow
+
+# ── LLDAP ─────────────────────────────────────────────────────────────────────
+semaphore_lldap_host: lldap.vps.wiserisk.be
+semaphore_lldap_port: 389

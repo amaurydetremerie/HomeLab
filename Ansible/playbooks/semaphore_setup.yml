@@ -1,0 +1,442 @@
+---
+# Configure Semaphore via API : projet, clés SSH/vault/gitea, dépôt, inventaire, templates
+# Puis crée les secrets Gitea Actions pour les pipelines.
+#
+# Prérequis :
+#   - Semaphore déployé et accessible sur https://semaphore.wiserisk.be
+#   - Gitea déployé et accessible sur https://git.wiserisk.be
+#   - vault_ansible_operator_ssh_private_key dans Ansible Vaultble)
+#   - ~/.vault_pass   (mot de passe Ansible Vault)
+#   - vault_semaphore_admin_password dans Ansible Vault
+#   - vault_claude_token dans Ansible Vault
+#
+# Utilisation :
+#   ansible-playbook playbooks/semaphore_setup.yml
+
+- name: Configure Semaphore and Gitea Actions secrets
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    semaphore_url: "https://semaphore.wiserisk.be"
+    semaphore_admin_login: "wiserisk"
+    gitea_url: "https://git.wiserisk.be"
+    gitea_repo_owner: "wiserisk"
+    gitea_repo_name: "HomeLab"
+    semaphore_playbook_list:
+      - name: traefik
+        playbook: Ansible/playbooks/traefik.yml
+      - name: traefik-edge
+        playbook: Ansible/playbooks/traefik_edge.yml
+      - name: vps
+        playbook: Ansible/playbooks/vps.yml
+      - name: proxmox
+        playbook: Ansible/playbooks/proxmox.yml
+      - name: gitea
+        playbook: Ansible/playbooks/gitea.yml
+      - name: semaphore
+        playbook: Ansible/playbooks/semaphore.yml
+      - name: adguard
+        playbook: Ansible/playbooks/adguard.yml
+      - name: wireguard
+        playbook: Ansible/playbooks/wireguard.yml
+      - name: lldap
+        playbook: Ansible/playbooks/lldap.yml
+      - name: authelia
+        playbook: Ansible/playbooks/authelia.yml
+      - name: k3s
+        playbook: Ansible/playbooks/k3s.yml
+
+  tasks:
+    # ── Auth ──────────────────────────────────────────────────────────────────
+
+    - name: Login to Semaphore
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/auth/login"
+        method: POST
+        body_format: json
+        body:
+          auth: "{{ semaphore_admin_login }}"
+          password: "{{ vault_semaphore_admin_password }}"
+        status_code: 204
+      register: semaphore_login
+      no_log: true
+
+    # ── Project ───────────────────────────────────────────────────────────────
+
+    - name: Get existing projects
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/projects"
+        headers:
+          Cookie: "{{ semaphore_login.cookies_string }}"
+        status_code: 200
+      register: semaphore_projects
+
+    - name: Create project HomeLab
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/projects"
+        method: POST
+        headers:
+          Cookie: "{{ semaphore_login.cookies_string }}"
+        body_format: json
+        body:
+          name: HomeLab
+          alert: false
+          alert_chat: ""
+          max_parallel_tasks: 0
+        status_code: 201
+      register: semaphore_project_created
+      when: semaphore_projects.json | selectattr('name', 'equalto', 'HomeLab') | list | length == 0
+
+    - name: Set project ID
+      ansible.builtin.set_fact:
+        semaphore_project_id: >-
+          {{ (semaphore_projects.json | selectattr('name', 'equalto', 'HomeLab') | list | first).id
+             if (semaphore_projects.json | selectattr('name', 'equalto', 'HomeLab') | list | length > 0)
+             else semaphore_project_created.json.id }}
+
+    # ── Keys ──────────────────────────────────────────────────────────────────
+
+    - name: Get existing keys
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/project/{{ semaphore_project_id }}/keys"
+        headers:
+          Cookie: "{{ semaphore_login.cookies_string }}"
+        status_code: 200
+      register: semaphore_keys
+
+    - name: Create SSH key for Ansible connections
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/project/{{ semaphore_project_id }}/keys"
+        method: POST
+        headers:
+          Cookie: "{{ semaphore_login.cookies_string }}"
+        body_format: json
+        body:
+          name: ansible-ssh
+          type: ssh
+          project_id: "{{ semaphore_project_id | int }}"
+          ssh:
+            login: ansible
+            private_key: "{{ vault_ansible_operator_ssh_private_key }}"
+        status_code: 201
+      register: semaphore_ssh_key_created
+      when: semaphore_keys.json | selectattr('name', 'equalto', 'ansible-ssh') | list | length == 0
+      no_log: true
+
+    - name: Set SSH key ID
+      ansible.builtin.set_fact:
+        semaphore_ssh_key_id: >-
+          {{ (semaphore_keys.json | selectattr('name', 'equalto', 'ansible-ssh') | list | first).id
+             if (semaphore_keys.json | selectattr('name', 'equalto', 'ansible-ssh') | list | length > 0)
+             else semaphore_ssh_key_created.json.id }}
+
+    - name: Create vault password key
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/project/{{ semaphore_project_id }}/keys"
+        method: POST
+        headers:
+          Cookie: "{{ semaphore_login.cookies_string }}"
+        body_format: json
+        body:
+          name: vault-pass
+          type: login_password
+          project_id: "{{ semaphore_project_id | int }}"
+          login_password:
+            login: ""
+            password: "{{ lookup('file', '~/.vault_pass') }}"
+        status_code: 201
+      register: semaphore_vault_key_created
+      when: semaphore_keys.json | selectattr('name', 'equalto', 'vault-pass') | list | length == 0
+      no_log: true
+
+    - name: Set vault key ID
+      ansible.builtin.set_fact:
+        semaphore_vault_key_id: >-
+          {{ (semaphore_keys.json | selectattr('name', 'equalto', 'vault-pass') | list | first).id
+             if (semaphore_keys.json | selectattr('name', 'equalto', 'vault-pass') | list | length > 0)
+             else semaphore_vault_key_created.json.id }}
+
+    - name: Create Gitea token key for repo clone
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/project/{{ semaphore_project_id }}/keys"
+        method: POST
+        headers:
+          Cookie: "{{ semaphore_login.cookies_string }}"
+        body_format: json
+        body:
+          name: gitea-token
+          type: login_password
+          project_id: "{{ semaphore_project_id | int }}"
+          login_password:
+            login: "{{ gitea_repo_owner }}"
+            password: "{{ vault_gitea_action_token }}"
+        status_code: 201
+      register: semaphore_gitea_key_created
+      when: semaphore_keys.json | selectattr('name', 'equalto', 'gitea-token') | list | length == 0
+      no_log: true
+
+    - name: Set Gitea key ID
+      ansible.builtin.set_fact:
+        semaphore_gitea_key_id: >-
+          {{ (semaphore_keys.json | selectattr('name', 'equalto', 'gitea-token') | list | first).id
+             if (semaphore_keys.json | selectattr('name', 'equalto', 'gitea-token') | list | length > 0)
+             else semaphore_gitea_key_created.json.id }}
+
+    # ── Repository ────────────────────────────────────────────────────────────
+
+    - name: Get existing repositories
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/project/{{ semaphore_project_id }}/repositories"
+        headers:
+          Cookie: "{{ semaphore_login.cookies_string }}"
+        status_code: 200
+      register: semaphore_repos
+
+    - name: Create HomeLab repository
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/project/{{ semaphore_project_id }}/repositories"
+        method: POST
+        headers:
+          Cookie: "{{ semaphore_login.cookies_string }}"
+        body_format: json
+        body:
+          name: HomeLab
+          project_id: "{{ semaphore_project_id | int }}"
+          git_url: "https://{{ gitea_url | regex_replace('^https?://', '') }}/{{ gitea_repo_owner }}/{{ gitea_repo_name }}.git"
+          git_branch: main
+          ssh_key_id: "{{ semaphore_gitea_key_id | int }}"
+        status_code: 201
+      register: semaphore_repo_created
+      when: semaphore_repos.json | selectattr('name', 'equalto', 'HomeLab') | list | length == 0
+
+    - name: Set repository ID
+      ansible.builtin.set_fact:
+        semaphore_repo_id: >-
+          {{ (semaphore_repos.json | selectattr('name', 'equalto', 'HomeLab') | list | first).id
+             if (semaphore_repos.json | selectattr('name', 'equalto', 'HomeLab') | list | length > 0)
+             else semaphore_repo_created.json.id }}
+
+    # ── Inventory ─────────────────────────────────────────────────────────────
+
+    - name: Get existing inventories
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/project/{{ semaphore_project_id }}/inventory"
+        headers:
+          Cookie: "{{ semaphore_login.cookies_string }}"
+        status_code: 200
+      register: semaphore_inventories
+
+    - name: Create inventory
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/project/{{ semaphore_project_id }}/inventory"
+        method: POST
+        headers:
+          Cookie: "{{ semaphore_login.cookies_string }}"
+        body_format: json
+        body:
+          name: hosts
+          project_id: "{{ semaphore_project_id | int }}"
+          inventory: "Ansible/inventory/hosts.yml"
+          ssh_key_id: "{{ semaphore_ssh_key_id | int }}"
+          become_key_id: null
+          type: file
+        status_code: 201
+      register: semaphore_inventory_created
+      when: semaphore_inventories.json | selectattr('name', 'equalto', 'hosts') | list | length == 0
+
+    - name: Set inventory ID
+      ansible.builtin.set_fact:
+        semaphore_inventory_id: >-
+          {{ (semaphore_inventories.json | selectattr('name', 'equalto', 'hosts') | list | first).id
+             if (semaphore_inventories.json | selectattr('name', 'equalto', 'hosts') | list | length > 0)
+             else semaphore_inventory_created.json.id }}
+
+    # ── Environment ───────────────────────────────────────────────────────────
+
+    - name: Get existing environments
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/project/{{ semaphore_project_id }}/environment"
+        headers:
+          Cookie: "{{ semaphore_login.cookies_string }}"
+        status_code: 200
+      register: semaphore_environments
+
+    - name: Create default environment
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/project/{{ semaphore_project_id }}/environment"
+        method: POST
+        headers:
+          Cookie: "{{ semaphore_login.cookies_string }}"
+        body_format: json
+        body:
+          name: default
+          project_id: "{{ semaphore_project_id | int }}"
+          json: "{}"
+        status_code: 201
+      register: semaphore_env_created
+      when: semaphore_environments.json | selectattr('name', 'equalto', 'default') | list | length == 0
+
+    - name: Set environment ID
+      ansible.builtin.set_fact:
+        semaphore_env_id: >-
+          {{ (semaphore_environments.json | selectattr('name', 'equalto', 'default') | list | first).id
+             if (semaphore_environments.json | selectattr('name', 'equalto', 'default') | list | length > 0)
+             else semaphore_env_created.json.id }}
+
+    # ── Task templates ────────────────────────────────────────────────────────
+
+    - name: Get existing task templates
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/project/{{ semaphore_project_id }}/templates"
+        headers:
+          Cookie: "{{ semaphore_login.cookies_string }}"
+        status_code: 200
+      register: semaphore_templates
+
+    - name: Create missing task templates
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/project/{{ semaphore_project_id }}/templates"
+        method: POST
+        headers:
+          Cookie: "{{ semaphore_login.cookies_string }}"
+        body_format: json
+        body:
+          name: "{{ item.name }}"
+          project_id: "{{ semaphore_project_id | int }}"
+          inventory_id: "{{ semaphore_inventory_id | int }}"
+          repository_id: "{{ semaphore_repo_id | int }}"
+          environment_id: "{{ semaphore_env_id | int }}"
+          vault_key_id: "{{ semaphore_vault_key_id | int }}"
+          playbook: "{{ item.playbook }}"
+          arguments: "[]"
+          type: ""
+          allow_override_args_in_task: false
+          suppress_success_alerts: false
+          autorun: false
+          app: ansible
+        status_code: 201
+      loop: "{{ semaphore_playbook_list }}"
+      when: semaphore_templates.json | selectattr('name', 'equalto', item.name) | list | length == 0
+
+    - name: Refresh template list
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/project/{{ semaphore_project_id }}/templates"
+        headers:
+          Cookie: "{{ semaphore_login.cookies_string }}"
+        status_code: 200
+      register: semaphore_templates_final
+
+    - name: Build template ID map
+      ansible.builtin.set_fact:
+        semaphore_template_ids: "{{ semaphore_template_ids | default({}) | combine({item.name: item.id}) }}"
+      loop: "{{ semaphore_templates_final.json | selectattr('name', 'in', semaphore_playbook_list | map(attribute='name') | list) | list }}"
+
+    # ── API Token ─────────────────────────────────────────────────────────────
+
+    - name: Get existing API tokens
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/user/tokens"
+        headers:
+          Cookie: "{{ semaphore_login.cookies_string }}"
+        status_code: 200
+      register: semaphore_api_tokens
+
+    - name: Create API token
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/user/tokens"
+        method: POST
+        headers:
+          Cookie: "{{ semaphore_login.cookies_string }}"
+        body_format: json
+        body: {}
+        status_code: 201
+      register: semaphore_new_token
+      when: semaphore_api_tokens.json | selectattr('expired', 'equalto', false) | list | length == 0
+      no_log: true
+
+    - name: Set API token value
+      ansible.builtin.set_fact:
+        semaphore_token_value: >-
+          {{ (semaphore_api_tokens.json | selectattr('expired', 'equalto', false) | list | first).id
+             if (semaphore_api_tokens.json | selectattr('expired', 'equalto', false) | list | length > 0)
+             else semaphore_new_token.json.id }}
+
+    # ── Gitea Actions secrets ─────────────────────────────────────────────────
+
+    - name: Create SEMAPHORE_TOKEN secret
+      ansible.builtin.uri:
+        url: "{{ gitea_url }}/api/v1/repos/{{ gitea_repo_owner }}/{{ gitea_repo_name }}/actions/secrets/SEMAPHORE_TOKEN"
+        method: PUT
+        headers:
+          Authorization: "token {{ vault_gitea_action_token }}"
+        body_format: json
+        body:
+          data: "{{ semaphore_token_value }}"
+        status_code: [201, 204]
+      no_log: true
+
+    - name: Create SEMAPHORE_BASE_URL secret
+      ansible.builtin.uri:
+        url: "{{ gitea_url }}/api/v1/repos/{{ gitea_repo_owner }}/{{ gitea_repo_name }}/actions/secrets/SEMAPHORE_BASE_URL"
+        method: PUT
+        headers:
+          Authorization: "token {{ vault_gitea_action_token }}"
+        body_format: json
+        body:
+          data: "{{ semaphore_url }}"
+        status_code: [201, 204]
+
+    - name: Create SEMAPHORE_PROJECT_ID secret
+      ansible.builtin.uri:
+        url: "{{ gitea_url }}/api/v1/repos/{{ gitea_repo_owner }}/{{ gitea_repo_name }}/actions/secrets/SEMAPHORE_PROJECT_ID"
+        method: PUT
+        headers:
+          Authorization: "token {{ vault_gitea_action_token }}"
+        body_format: json
+        body:
+          data: "{{ semaphore_project_id | string }}"
+        status_code: [201, 204]
+
+    - name: Create SEMAPHORE_TEMPLATE_* secrets
+      ansible.builtin.uri:
+        url: "{{ gitea_url }}/api/v1/repos/{{ gitea_repo_owner }}/{{ gitea_repo_name }}/actions/secrets/SEMAPHORE_TEMPLATE_{{ item.key | upper | replace('-', '_') }}"
+        method: PUT
+        headers:
+          Authorization: "token {{ vault_gitea_action_token }}"
+        body_format: json
+        body:
+          data: "{{ item.value | string }}"
+        status_code: [201, 204]
+      loop: "{{ semaphore_template_ids | dict2items }}"
+
+    - name: Create CLAUDE_API_KEY secret
+      ansible.builtin.uri:
+        url: "{{ gitea_url }}/api/v1/repos/{{ gitea_repo_owner }}/{{ gitea_repo_name }}/actions/secrets/CLAUDE_API_KEY"
+        method: PUT
+        headers:
+          Authorization: "token {{ vault_gitea_action_token }}"
+        body_format: json
+        body:
+          data: "{{ vault_claude_token }}"
+        status_code: [201, 204]
+      no_log: true
+
+    - name: Create GITEA_TOKEN secret
+      ansible.builtin.uri:
+        url: "{{ gitea_url }}/api/v1/repos/{{ gitea_repo_owner }}/{{ gitea_repo_name }}/actions/secrets/GITEA_TOKEN"
+        method: PUT
+        headers:
+          Authorization: "token {{ vault_gitea_action_token }}"
+        body_format: json
+        body:
+          data: "{{ vault_gitea_action_token }}"
+        status_code: [201, 204]
+      no_log: true
+
+    - name: Summary
+      ansible.builtin.debug:
+        msg:
+          - "Semaphore project ID : {{ semaphore_project_id }}"
+          - "Templates créés      : {{ semaphore_template_ids.keys() | list | join(', ') }}"
+          - "Gitea secrets        : OK"
