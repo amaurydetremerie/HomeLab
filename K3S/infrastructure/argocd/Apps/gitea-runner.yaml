@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://git.wiserisk.be/wiserisk/HomeLab.git
     targetRevision: HEAD
-    path: K3S/utils/gitea-runner
+    path: K3S/utils/gitea-runner/Manifest
     plugin:
       name: argocd-vault-plugin
       env:

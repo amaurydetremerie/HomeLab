@@ -1,0 +1,21 @@
+actions:
+  giteaRootURL: https://git.wiserisk.be
+
+  existingSecret: gitea-runner-secret
+  existingSecretKey: registration-token
+
+  statefulset:
+    replicas: 1
+    persistence:
+      size: 1Gi
+      storageClassName: local-path
+    runner:
+      config: |
+        log:
+          level: info
+        runner:
+          capacity: 2
+          labels:
+            - "ubuntu-latest:docker://gitea/runner-images:ubuntu-24.04"
+            - "ubuntu-22.04:docker://gitea/runner-images:ubuntu-22.04"
+            - "k3s:docker://gitea/runner-images:ubuntu-24.04"
