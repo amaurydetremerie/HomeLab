@@ -1,18 +1,24 @@
 actions:
-  giteaRootURL: https://git.wiserisk.be
+  enabled: true
 
+  giteaRootURL: https://git.wiserisk.be
   existingSecret: gitea-runner-secret
   existingSecretKey: registration-token
 
+  global:
+    storageClass: local-path
+
   statefulset:
     replicas: 1
-    persistence:
-      size: 1Gi
-      storageClassName: local-path
     runner:
       config: |
         log:
           level: info
+        cache:
+          enabled: false
+        container:
+          require_docker: true
+          docker_timeout: 300s
         runner:
           capacity: 2
           labels:
