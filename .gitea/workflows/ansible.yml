@@ -64,7 +64,10 @@ jobs:
           detect semaphore     '^Ansible/playbooks/semaphore\.yml' \
                                '^Ansible/inventory/host_vars/semaphore\.yml' \
                                '^Ansible/playbooks/templates/semaphore/'
-          detect k3s           '^K3S/'
+          detect k3s           '^Ansible/playbooks/k3s\.yml' \
+                               '^Ansible/inventory/group_vars/k3s' \
+                               '^K3S/infrastructure/argocd/Helm/' \
+                               '^K3S/infrastructure/traefik/traefik-config'
 
   trigger:
     needs: detect
