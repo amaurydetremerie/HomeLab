@@ -204,7 +204,7 @@
           sync_on_commit: true
           interval: "8h0m0s"
         status_code: [200, 201]
-      when: item.json | selectattr('remote_name', 'equalto', 'github') | list | length == 0
+      when: item.json | selectattr('remote_address', 'equalto', 'https://github.com/' + item.item.github_repo + '.git') | list | length == 0
       loop: "{{ gitea_push_mirrors.results }}"
       no_log: true
 
