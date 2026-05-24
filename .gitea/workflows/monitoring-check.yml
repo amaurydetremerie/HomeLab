@@ -14,13 +14,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Check for diff
         id: check
         shell: bash
         run: |
-          if git diff HEAD~1 HEAD --quiet; then
+          if git diff "${{ github.event.before }}" HEAD --quiet; then
             echo "has_diff=false" >> "$GITHUB_OUTPUT"
           else
             echo "has_diff=true" >> "$GITHUB_OUTPUT"
@@ -35,7 +35,7 @@ jobs:
           prompt: |
             Tu analyses le dernier commit d'un repo HomeLab IaC.
 
-            Exécute `git diff HEAD~1 HEAD` pour voir les changements.
+            Exécute `git diff ${{ github.event.before }} HEAD` pour voir les changements.
 
             Configs monitoring actuelles :
             @K3S/monitoring/Prometheus/scrape.yaml
