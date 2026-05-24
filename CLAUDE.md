@@ -41,14 +41,15 @@ IPs et détails de connexion → `Ansible/inventory/hosts.yml` et `Ansible/host_
 - `playbooks/` — un playbook par composant + `site.yml` (orchestration from-scratch)
 - Vault : mot de passe dans `~/.vault_pass`
 - Collections requises : `community.general`, `community.proxmox`
+- **Toujours lancer les commandes Ansible depuis le dossier `Ansible/`** — `ansible.cfg` y configure l'inventaire, le vault password et les chemins automatiquement
 
 ## K3S (`K3S/`)
 
 - `infrastructure/` — composants système : ArgoCD (app-of-apps), Traefik, Vault, Registry, Renovate
 - `monitoring/` — Prometheus, Grafana, AlertManager, Blackbox, exporters
 - `tools/` — applications (Nextcloud, Open-WebUI, Portainer, Graylog, Sonarqube…)
-- `utils/` — workloads transverses : gitea-runner (act runner Gitea Actions, label `k3s:host`)
-- `config/` — kubeconfig K3S
+- `utils/` — workloads transverses : gitea-runner (act runner Gitea Actions, labels `ubuntu-latest`, `ubuntu-22.04`, `k3s` — mode DIND)
+- `config/` — kubeconfig K3S (`k3s.yaml`, exporté dans `$KUBECONFIG`)
 - Secrets : Vault + argocd-vault-plugin
 - Stockage : NFS (Hermes) via StorageClass `nfs`
 
@@ -90,7 +91,7 @@ Reverse proxy sur le VPS — TLS via ACME DNS challenge (wildcard `*.wiserisk.be
 - `ansible.yml` — détecte les chemins modifiés → déclenche le template Semaphore correspondant
 - `monitoring-check.yml` — Claude Haiku analyse le diff + fichiers monitoring → Issue Gitea si gap détecté
 - `changelog.yml` — Claude Haiku génère un changelog → PR create/update sur README.md
-- Act runner : pod K3S `gitea-runner` (namespace `gitea-runner`), label `k3s:host` (exécution shell, pas Docker)
+- Act runner : pod K3S `gitea-runner` (namespace `gitea-runner`), labels `ubuntu-latest`/`ubuntu-22.04`/`k3s` → mode DIND (Docker-in-Docker), réseau overlay K3S standard
 
 **ArgoCD** pointe vers Gitea (plus GitHub) : `https://git.wiserisk.be/wiserisk/HomeLab.git`
 - Secret repo (`gitea-homelab-repo`) appliqué manuellement via kubectl (hors GitOps — dépendance circulaire)

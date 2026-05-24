@@ -10,7 +10,7 @@ semaphore_port: 3000
 semaphore_domain: "semaphore.wiserisk.home"
 semaphore_public_domain: "semaphore.wiserisk.be"
 
-semaphore_admin_user: "admin"
+semaphore_admin_user: "wiserisk"
 semaphore_admin_email: "{{ vault_admin_email }}"
 
 hardening_ufw_rules:

@@ -362,6 +362,42 @@
              if (semaphore_api_tokens.json | selectattr('expired', 'equalto', false) | list | length > 0)
              else semaphore_new_token.json.id }}
 
+    - name: Validate API token
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/projects"
+        headers:
+          Authorization: "Bearer {{ semaphore_token_value }}"
+        status_code: 200
+      register: token_validation
+      ignore_errors: true
+
+    - name: Rotate token if invalid
+      when: token_validation is failed
+      block:
+        - name: Delete invalid token
+          ansible.builtin.uri:
+            url: "{{ semaphore_url }}/api/user/tokens/{{ semaphore_token_value }}"
+            method: DELETE
+            headers:
+              Cookie: "{{ semaphore_login.cookies_string }}"
+            status_code: [200, 204]
+
+        - name: Create replacement token
+          ansible.builtin.uri:
+            url: "{{ semaphore_url }}/api/user/tokens"
+            method: POST
+            headers:
+              Cookie: "{{ semaphore_login.cookies_string }}"
+            body_format: json
+            body: {}
+            status_code: 201
+          register: semaphore_replacement_token
+          no_log: true
+
+        - name: Update token value
+          ansible.builtin.set_fact:
+            semaphore_token_value: "{{ semaphore_replacement_token.json.id }}"
+
     # ── Gitea Actions secrets ─────────────────────────────────────────────────
 
     - name: Create SEMAPHORE_TOKEN secret
