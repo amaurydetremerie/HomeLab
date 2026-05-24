@@ -124,7 +124,7 @@ jobs:
       - name: Trigger adguard
         if: needs.detect.outputs.adguard == 'true'
         run: |
-          curl -sf -X POST "${SEMAPHORE_BASE_URL}/api/project/${SEMAPHORE_PROJECT_ID}/tasks" \
+          curl --fail-with-body -s -X POST "${SEMAPHORE_BASE_URL}/api/project/${SEMAPHORE_PROJECT_ID}/tasks" \
             -H "Authorization: Bearer ${SEMAPHORE_TOKEN}" \
             -H "Content-Type: application/json" \
             -d "{\"template_id\": ${{ secrets.SEMAPHORE_TEMPLATE_ADGUARD }}, \"message\": \"Auto: ${{ github.sha }}\"}"
