@@ -3,12 +3,13 @@
 # Puis crée les secrets Gitea Actions pour les pipelines.
 #
 # Prérequis :
-#   - Semaphore déployé et accessible sur https://semaphore.wiserisk.be
+#   - Semaphore déployé et accessible (IP interne)
 #   - Gitea déployé et accessible sur https://git.wiserisk.be
-#   - vault_ansible_operator_ssh_private_key dans Ansible Vaultble)
-#   - ~/.vault_pass   (mot de passe Ansible Vault)
+#   - vault_ansible_operator_ssh_private_key dans Ansible Vault
+#   - vault_vault_password dans Ansible Vault  (mot de passe Ansible Vault)
 #   - vault_semaphore_admin_password dans Ansible Vault
 #   - vault_claude_token dans Ansible Vault
+#   - ~/.vault_pass en local pour exécuter ce playbook
 #
 # Utilisation :
 #   ansible-playbook playbooks/semaphore_setup.yml
@@ -18,7 +19,7 @@
   connection: local
   gather_facts: false
   vars:
-    semaphore_url: "https://semaphore.wiserisk.be"
+    semaphore_url: "http://{{ hostvars['semaphore']['ansible_host'] }}:{{ hostvars['semaphore']['semaphore_port'] }}"
     semaphore_admin_login: "{{ hostvars['semaphore']['semaphore_admin_user'] }}"
     gitea_url: "https://git.wiserisk.be"
     gitea_repo_owner: "wiserisk"
@@ -144,7 +145,7 @@
           project_id: "{{ semaphore_project_id | int }}"
           login_password:
             login: ""
-            password: "{{ lookup('file', '~/.vault_pass') }}"
+            password: "{{ vault_vault_password }}"
         status_code: 201
       register: semaphore_vault_key_created
       when: semaphore_keys.json | selectattr('name', 'equalto', 'vault-pass') | list | length == 0
@@ -273,6 +274,7 @@
           name: default
           project_id: "{{ semaphore_project_id | int }}"
           json: "{}"
+          env: '{}'
         status_code: 201
       register: semaphore_env_created
       when: semaphore_environments.json | selectattr('name', 'equalto', 'default') | list | length == 0
@@ -283,6 +285,21 @@
           {{ (semaphore_environments.json | selectattr('name', 'equalto', 'default') | list | first).id
              if (semaphore_environments.json | selectattr('name', 'equalto', 'default') | list | length > 0)
              else semaphore_env_created.json.id }}
+
+    - name: Update default environment
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/project/{{ semaphore_project_id }}/environment/{{ semaphore_env_id }}"
+        method: PUT
+        headers:
+          Cookie: "{{ semaphore_login.cookies_string }}"
+        body_format: json
+        body:
+          id: "{{ semaphore_env_id | int }}"
+          name: default
+          project_id: "{{ semaphore_project_id | int }}"
+          json: "{}"
+          env: '{}'
+        status_code: [200, 204]
 
     # ── Task templates ────────────────────────────────────────────────────────
 
@@ -307,7 +324,6 @@
           inventory_id: "{{ semaphore_inventory_id | int }}"
           repository_id: "{{ semaphore_repo_id | int }}"
           environment_id: "{{ semaphore_env_id | int }}"
-          vault_key_id: "{{ semaphore_vault_key_id | int }}"
           playbook: "{{ item.playbook }}"
           arguments: "[]"
           type: ""
@@ -315,9 +331,46 @@
           suppress_success_alerts: false
           autorun: false
           app: ansible
+          vaults:
+            - type: password
+              vault_key_id: "{{ semaphore_vault_key_id | int }}"
         status_code: 201
       loop: "{{ semaphore_playbook_list }}"
       when: semaphore_templates.json | selectattr('name', 'equalto', item.name) | list | length == 0
+
+    - name: Build template name-to-id map from existing templates
+      ansible.builtin.set_fact:
+        semaphore_existing_template_ids: >-
+          {{ semaphore_existing_template_ids | default({}) | combine({item.name: item.id}) }}
+      loop: "{{ semaphore_templates.json | selectattr('name', 'in', semaphore_playbook_list | map(attribute='name') | list) | list }}"
+
+    - name: Update existing task templates
+      ansible.builtin.uri:
+        url: "{{ semaphore_url }}/api/project/{{ semaphore_project_id }}/templates/{{ semaphore_existing_template_ids[item.name] }}"
+        method: PUT
+        headers:
+          Cookie: "{{ semaphore_login.cookies_string }}"
+        body_format: json
+        body:
+          id: "{{ semaphore_existing_template_ids[item.name] | int }}"
+          name: "{{ item.name }}"
+          project_id: "{{ semaphore_project_id | int }}"
+          inventory_id: "{{ semaphore_inventory_id | int }}"
+          repository_id: "{{ semaphore_repo_id | int }}"
+          environment_id: "{{ semaphore_env_id | int }}"
+          playbook: "{{ item.playbook }}"
+          arguments: "[]"
+          type: ""
+          allow_override_args_in_task: false
+          suppress_success_alerts: false
+          autorun: false
+          app: ansible
+          vaults:
+            - type: password
+              vault_key_id: "{{ semaphore_vault_key_id | int }}"
+        status_code: [200, 204]
+      loop: "{{ semaphore_playbook_list }}"
+      when: item.name in (semaphore_existing_template_ids | default({}))
 
     - name: Refresh template list
       ansible.builtin.uri:

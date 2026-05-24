@@ -42,6 +42,7 @@ IPs et détails de connexion → `Ansible/inventory/hosts.yml` et `Ansible/host_
 - Vault : mot de passe dans `~/.vault_pass`
 - Collections requises : `community.general`, `community.proxmox`
 - **Toujours lancer les commandes Ansible depuis le dossier `Ansible/`** — `ansible.cfg` y configure l'inventaire, le vault password et les chemins automatiquement
+- **Préférer les variables d'inventaire pour les URLs internes** (`ansible_host`, `*_port`…) plutôt que les URLs publiques passant par reverse proxy, VPN ou chaîne TLS — évite les timeouts et dépendances inutiles
 
 ## K3S (`K3S/`)
 
