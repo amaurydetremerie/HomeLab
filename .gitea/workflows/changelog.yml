@@ -10,6 +10,7 @@ jobs:
     env:
       GITEA_URL: https://git.wiserisk.be
       GITEA_REPO: wiserisk/HomeLab
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -37,111 +38,78 @@ jobs:
       - name: Generate changelog with Claude
         id: generate
         if: steps.commits.outputs.empty != 'true'
+        uses: ./.gitea/actions/claude-prompt
+        with:
+          allowed_tools: ""
+          prompt: |
+            Génère un changelog structuré et concis en français à partir de ces commits Git d'un repo HomeLab IaC.
+
+            COMMITS:
+            ${{ steps.commits.outputs.list }}
+
+            Instructions :
+            - Organise les changements en sections Markdown (### Titre) selon ce qui fait sens pour les commits
+            - Une ligne par changement
+            - Ignore les commits de merge, de style et les [skip ci]
+            - Sois concis
+            - Ne génère pas de titre ## Changelog ni de date — juste les sections et leurs entrées
+
+      - name: Compute release tag
+        id: tag
+        if: steps.commits.outputs.empty != 'true'
         shell: bash
-        run: |
-          COMMITS="${{ steps.commits.outputs.list }}"
+        run: echo "value=v$(date +%Y.%m.%d)-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
-          RESPONSE=$(curl -sf -X POST "https://api.anthropic.com/v1/messages" \
-            -H "x-api-key: ${{ secrets.CLAUDE_API_KEY }}" \
-            -H "anthropic-version: 2023-06-01" \
-            -H "content-type: application/json" \
-            -d "$(jq -n \
-              --arg commits "$COMMITS" \
-              '{
-                model: "claude-haiku-4-5-20251001",
-                max_tokens: 2048,
-                messages: [{
-                  role: "user",
-                  content: (
-                    "Génère un changelog structuré et concis en français à partir de ces commits Git d'\''un repo HomeLab IaC.\n\n"
-                    + "COMMITS:\n" + $commits + "\n\n"
-                    + "Format attendu (Markdown) — utilise uniquement les sections pertinentes :\n"
-                    + "## Changelog\n"
-                    + "### Infrastructure\n- ...\n"
-                    + "### Monitoring\n- ...\n"
-                    + "### CI/CD\n- ...\n"
-                    + "### K3S / Services\n- ...\n"
-                    + "### Sécurité\n- ...\n\n"
-                    + "Une ligne par changement. Ignore les commits de merge ou de style. Sois concis."
-                  )
-                }]
-              }')")
-
-          CHANGELOG=$(echo "$RESPONSE" | jq -r '.content[0].text // ""')
-
-          {
-            echo "changelog<<EOF"
-            echo "$CHANGELOG"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Check for open changelog PR
-        id: check_pr
+      - name: Setup git
         if: steps.commits.outputs.empty != 'true'
         shell: bash
         run: |
-          OPEN_PRS=$(curl -sf "${GITEA_URL}/api/v1/repos/${GITEA_REPO}/pulls?state=open&limit=50" \
-            -H "Authorization: token ${{ secrets.HOMELAB_TOKEN }}")
-
-          PR_NUMBER=$(echo "$OPEN_PRS" | jq -r '[.[] | select(.title == "docs: changelog update")] | first | .number // ""')
-
-          if [ -n "$PR_NUMBER" ]; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Create changelog PR
-        if: steps.commits.outputs.empty != 'true' && steps.check_pr.outputs.exists == 'false'
-        shell: bash
-        run: |
-          CHANGELOG="${{ steps.generate.outputs.changelog }}"
-          BRANCH="changelog/update-${{ github.sha }}"
-
           git config user.name "Gitea Actions"
           git config user.email "actions@wiserisk.be"
           git remote set-url origin "https://wiserisk:${{ secrets.HOMELAB_TOKEN }}@git.wiserisk.be/wiserisk/HomeLab.git"
-          git checkout -b "$BRANCH"
 
-          python3 - "$CHANGELOG" <<'PYEOF'
-          import sys, re
-
-          changelog = sys.argv[1]
-          content = open("README.md").read()
-
-          if "## Changelog" in content:
-              content = re.sub(r"## Changelog.*?(?=\n## |\Z)", changelog + "\n\n", content, flags=re.DOTALL)
-          else:
-              content = content.rstrip() + "\n\n" + changelog + "\n"
-
-          open("README.md", "w").write(content)
-          PYEOF
-
-          git add README.md
-          git commit -m "docs: update changelog [skip ci]"
-          git push origin "$BRANCH"
-
-          PR_BODY=$(jq -n --arg body "$CHANGELOG" '{
-            title: "docs: changelog update",
-            head: "'"$BRANCH"'",
-            base: "main",
-            body: $body
-          }')
-
-          curl -sf -X POST "${GITEA_URL}/api/v1/repos/${GITEA_REPO}/pulls" \
-            -H "Authorization: token ${{ secrets.HOMELAB_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d "$PR_BODY"
-
-      - name: Update existing changelog PR
-        if: steps.commits.outputs.empty != 'true' && steps.check_pr.outputs.exists == 'true'
+      - name: Create tag and Gitea release
+        if: steps.commits.outputs.empty != 'true'
         shell: bash
         run: |
-          CHANGELOG="${{ steps.generate.outputs.changelog }}"
-          PR_NUMBER="${{ steps.check_pr.outputs.pr_number }}"
+          TAG="${{ steps.tag.outputs.value }}"
+          CHANGELOG="${{ steps.generate.outputs.result }}"
 
-          curl -sf -X PATCH "${GITEA_URL}/api/v1/repos/${GITEA_REPO}/pulls/${PR_NUMBER}" \
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+
+          curl -sf -X POST "${GITEA_URL}/api/v1/repos/${GITEA_REPO}/releases" \
             -H "Authorization: token ${{ secrets.HOMELAB_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d "$(jq -n --arg body "$CHANGELOG" '{body: $body}')"
+            -d "$(jq -n --arg tag "$TAG" --arg body "$CHANGELOG" \
+              '{tag_name: $tag, name: $tag, body: $body, draft: false, prerelease: false}')"
+
+      - name: Update CHANGELOG.md
+        if: steps.commits.outputs.empty != 'true'
+        shell: bash
+        run: |
+          TAG="${{ steps.tag.outputs.value }}"
+          CHANGELOG="${{ steps.generate.outputs.result }}"
+
+          python3 - "$TAG" "$CHANGELOG" <<'PYEOF'
+          import sys
+
+          tag, entry = sys.argv[1], sys.argv[2]
+          new_section = f"## {tag}\n\n{entry}\n"
+
+          try:
+              content = open("CHANGELOG.md").read()
+              if content.startswith("# Changelog\n"):
+                  rest = content[len("# Changelog\n"):]
+                  content = "# Changelog\n\n" + new_section + "\n" + rest.lstrip("\n")
+              else:
+                  content = "# Changelog\n\n" + new_section + "\n" + content
+          except FileNotFoundError:
+              content = "# Changelog\n\n" + new_section
+
+          open("CHANGELOG.md", "w").write(content)
+          PYEOF
+
+          git add CHANGELOG.md
+          git commit -m "docs: update CHANGELOG.md [$TAG] [skip ci]"
+          git push origin main

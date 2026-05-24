@@ -499,9 +499,9 @@
         status_code: [201, 204]
       loop: "{{ semaphore_template_ids | dict2items }}"
 
-    - name: Create CLAUDE_API_KEY secret
+    - name: Create CLAUDE_CODE_OAUTH_TOKEN secret
       ansible.builtin.uri:
-        url: "{{ gitea_url }}/api/v1/repos/{{ gitea_repo_owner }}/{{ gitea_repo_name }}/actions/secrets/CLAUDE_API_KEY"
+        url: "{{ gitea_url }}/api/v1/repos/{{ gitea_repo_owner }}/{{ gitea_repo_name }}/actions/secrets/CLAUDE_CODE_OAUTH_TOKEN"
         method: PUT
         headers:
           Authorization: "token {{ vault_gitea_action_token }}"

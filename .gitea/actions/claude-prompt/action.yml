@@ -1,0 +1,44 @@
+name: Claude Prompt
+description: Run a prompt through Claude Code CLI using OAuth subscription
+inputs:
+  prompt:
+    description: Prompt text to send to Claude
+    required: true
+  model:
+    description: Model ID
+    required: false
+    default: claude-haiku-4-5-20251001
+  allowed_tools:
+    description: Comma-separated list of allowed Claude tools (e.g. "Read,Bash"). Empty string disables tool use.
+    required: false
+    default: "Read"
+outputs:
+  result:
+    description: Claude's text response
+    value: ${{ steps.run.outputs.result }}
+runs:
+  using: composite
+  steps:
+    - name: Install Claude CLI
+      shell: bash
+      run: npm install -g @anthropic-ai/claude-code
+
+    - name: Run prompt
+      id: run
+      shell: bash
+      env:
+        PROMPT: ${{ inputs.prompt }}
+        CLAUDE_MODEL: ${{ inputs.model }}
+        ALLOWED_TOOLS: ${{ inputs.allowed_tools }}
+      run: |
+        if [ -n "$ALLOWED_TOOLS" ]; then
+          RESPONSE=$(claude --bare -p "$PROMPT" --model "$CLAUDE_MODEL" --allowedTools "$ALLOWED_TOOLS" --output-format json)
+        else
+          RESPONSE=$(claude --bare -p "$PROMPT" --model "$CLAUDE_MODEL" --output-format json)
+        fi
+        RESULT=$(echo "$RESPONSE" | jq -r '.result // ""')
+        {
+          echo "result<<EOF"
+          echo "$RESULT"
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
