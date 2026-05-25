@@ -18,13 +18,12 @@ stringData:
         module: [http_2xx]
       static_configs:
         - targets:
+          - https://git.wiserisk.be
+          - https://semaphore.wiserisk.be
           - https://ha.wiserisk.be
           - https://jellyfin.wiserisk.be/health
-          - https://seedbox.wiserisk.be
-          - https://hermes.wiserisk.be
-          - https://hades.wiserisk.be
-          - https://hermes.syncthing.wiserisk.be
-          - https://hades.syncthing.wiserisk.be
+          - https://ollama.wiserisk.be
+          - https://k3s.wiserisk.be
           - https://registry.k3s.wiserisk.be
           - https://flaresolverr.k3s.wiserisk.be
           - https://graylog.k3s.wiserisk.be
@@ -45,6 +44,11 @@ stringData:
         module: [http_2xx_authelia]
       static_configs:
         - targets:
+          - https://seedbox.wiserisk.be
+          - https://hermes.wiserisk.be
+          - https://hades.wiserisk.be
+          - https://hermes.syncthing.wiserisk.be
+          - https://hades.syncthing.wiserisk.be
           - https://adguard.vps.wiserisk.be
           - https://unbound.vps.wiserisk.be
           - https://wireguard.vps.wiserisk.be
