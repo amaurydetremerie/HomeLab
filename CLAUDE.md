@@ -21,6 +21,8 @@ IPs et détails de connexion → `Ansible/inventory/hosts.yml` et `Ansible/host_
 - `vmbr1` : réseau services (VLAN 100)
 - WireGuard : tunnel VPS ↔ nœuds Proxmox
 - DNS wildcard : `*.wiserisk.be` (public) et `*.wiserisk.home` (interne)
+- **Traefik LXC = gateway pour les LXC de son nœud** — `traefik_wasp` (10.100.0.1) pour les LXC Wasp, `traefik_flash` (10.100.0.2) pour les LXC Flash — ip_forward + MASQUERADE vers `10.0.0.x` (activé via `gateway: true` dans host_vars)
+- **DNS `.wiserisk.home` depuis K3S** : CoreDNS forward la zone `home` → AdGuard Wasp (10.0.0.181). Ne pas utiliser le routeur (10.0.0.1) comme resolver pour `.home` — il a AdGuard VPS en DNS secondaire qui ne connaît pas les entrées `.home`, donc résolution aléatoire — config : `K3S/infrastructure/kube-system/coredns.yaml`
 
 ## VMID scheme
 
