@@ -8,7 +8,7 @@ data:
     modules:
       http_2xx:
         prober: http
-        timeout: 5s
+        timeout: 10s
         http:
           valid_status_codes: [200]
           preferred_ip_protocol: ip4
@@ -18,7 +18,7 @@ data:
             insecure_skip_verify: false
       http_2xx_authelia:
         prober: http
-        timeout: 5s
+        timeout: 10s
         http:
           valid_status_codes: [200]
           preferred_ip_protocol: ip4
@@ -31,7 +31,7 @@ data:
             password: <path:k3s/data/authelia#monitoring_password>
       http_2xx_bearer:
         prober: http
-        timeout: 5s
+        timeout: 10s
         http:
           valid_status_codes: [200]
           preferred_ip_protocol: ip4
