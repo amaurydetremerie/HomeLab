@@ -9,4 +9,5 @@ data:
         errors
         cache 30
         forward . 10.0.0.181
+      # forward . 10.0.0.181 10.0.0.191  # adguard_flash once deployed
     }
