@@ -13,7 +13,6 @@ spec:
       labels:
         app: blackbox-exporter
     spec:
-      hostNetwork: true
       containers:
         - name: blackbox-exporter
           image: prom/blackbox-exporter:v0.24.0

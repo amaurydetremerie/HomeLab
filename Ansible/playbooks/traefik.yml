@@ -54,6 +54,17 @@
         reload: true
       when: gateway | default(false) | bool
 
+    - name: MASQUERADE 10.100.0.0/24 → 10.0.0.0/24 (gateway uniquement)
+      ansible.builtin.iptables:
+        table: nat
+        chain: POSTROUTING
+        source: 10.100.0.0/24
+        destination: 10.0.0.0/24
+        jump: MASQUERADE
+        state: present
+      when: gateway | default(false) | bool
+      notify: Save iptables
+
     - name: Create directories
       ansible.builtin.file:
         path: "{{ item.path }}"
@@ -214,3 +225,7 @@
       ansible.builtin.systemd:
         name: traefik
         state: restarted
+
+    - name: Save iptables
+      ansible.builtin.shell:
+        cmd: iptables-save > /etc/iptables/rules.v4
