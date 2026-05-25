@@ -71,10 +71,10 @@ jobs:
       - name: Create tag and Gitea release
         if: steps.commits.outputs.empty != 'true'
         shell: bash
+        env:
+          TAG: ${{ steps.tag.outputs.value }}
+          CHANGELOG: ${{ steps.generate.outputs.result }}
         run: |
-          TAG="${{ steps.tag.outputs.value }}"
-          CHANGELOG="${{ steps.generate.outputs.result }}"
-
           git tag -a "$TAG" -m "Release $TAG"
           git push origin "$TAG"
 
@@ -87,10 +87,10 @@ jobs:
       - name: Update CHANGELOG.md
         if: steps.commits.outputs.empty != 'true'
         shell: bash
+        env:
+          TAG: ${{ steps.tag.outputs.value }}
+          CHANGELOG: ${{ steps.generate.outputs.result }}
         run: |
-          TAG="${{ steps.tag.outputs.value }}"
-          CHANGELOG="${{ steps.generate.outputs.result }}"
-
           python3 - "$TAG" "$CHANGELOG" <<'PYEOF'
           import sys
 

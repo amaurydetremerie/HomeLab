@@ -7,7 +7,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
-    - host: it-tools.k3s.wiserisk.com
+    - host: it-tools.k3s.wiserisk.be
       http:
         paths:
           - path: /
@@ -17,7 +17,7 @@ spec:
                 name: it-tools-svc
                 port:
                   number: 80
-    - host: it-tools.k3s.wiserisk.home
+    - host: it-tools.k3s.wiserisk.test
       http:
         paths:
           - path: /

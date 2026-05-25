@@ -64,6 +64,7 @@ stringData:
           - https://gatus.vps.wiserisk.be
           - https://traefik.wiserisk.be
           - https://traefik.k3s.wiserisk.be
+          - https://it-tools.k3s.wiserisk.be
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
@@ -131,7 +132,7 @@ stringData:
           - https://registry.k3s.wiserisk.home
           - https://sonarqube.k3s.wiserisk.home
           - https://vault.k3s.wiserisk.home
-          - https://webhook.wiserisk.home
+          - https://it-tools.k3s.wiserisk.home
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target

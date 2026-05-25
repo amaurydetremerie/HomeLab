@@ -77,8 +77,7 @@ jobs:
             --arg sha "$COMMIT_SHA" \
             '{
               title: ("Monitoring gap — " + $sha[:8]),
-              body: ("**Commit :** `" + $sha + "`\n\n" + $desc + "\n\n---\n*Généré automatiquement par le workflow monitoring-check.*"),
-              labels: ["monitoring-gap"]
+              body: ("**Commit :** `" + $sha + "`\n\n" + $desc + "\n\n---\n*Généré automatiquement par le workflow monitoring-check.*")
             }')
 
           curl -sf -X POST "${GITEA_URL}/api/v1/repos/${GITEA_REPO}/issues" \
