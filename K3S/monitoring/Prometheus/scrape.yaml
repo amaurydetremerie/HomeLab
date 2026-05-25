@@ -22,8 +22,6 @@ stringData:
           - https://semaphore.wiserisk.be
           - https://ha.wiserisk.be
           - https://jellyfin.wiserisk.be/health
-          - https://ollama.wiserisk.be
-          - https://k3s.wiserisk.be
           - https://registry.k3s.wiserisk.be
           - https://flaresolverr.k3s.wiserisk.be
           - https://graylog.k3s.wiserisk.be
@@ -102,7 +100,6 @@ stringData:
           - https://adguard.wiserisk.home
           - https://pbs.wiserisk.home
           - https://jellyfin.wiserisk.home/health
-          - https://pve.wiserisk.home
           - https://flash.pve.wiserisk.home
           - https://wasp.pve.wiserisk.home
           - https://qbittorrent.wiserisk.home
@@ -115,7 +112,6 @@ stringData:
           - https://ollama.wiserisk.home
           - https://git.wiserisk.home
           - https://semaphore.wiserisk.home
-          - https://adguard.vps.wiserisk.home
           - https://registry-ui.k3s.wiserisk.home
           - https://traefik.k3s.wiserisk.home
           - https://alertmanager.k3s.wiserisk.home
@@ -123,13 +119,11 @@ stringData:
           - https://ksm.k3s.wiserisk.home
           - https://prometheus.k3s.wiserisk.home
           - https://ai.k3s.wiserisk.home
-          - https://prowlarr.k3s.wiserisk.home
           - https://argocd.k3s.wiserisk.home
           - https://flaresolverr.k3s.wiserisk.home
           - https://gatus.wiserisk.home
           - https://grafana.k3s.wiserisk.home
           - https://graylog.k3s.wiserisk.home
-          - https://hlabmonitor.k3s.wiserisk.home
           - https://librespeed.k3s.wiserisk.home
           - https://nextcloud.k3s.wiserisk.home
           - https://portainer.k3s.wiserisk.home

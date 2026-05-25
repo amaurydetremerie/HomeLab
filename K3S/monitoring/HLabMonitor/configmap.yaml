@@ -128,11 +128,6 @@ data:
           target: https://jellyfin.wiserisk.home/health
           certificate:
             verify: false
-        pve-local:
-          internal: true
-          target: https://pve.wiserisk.home
-          certificate:
-            verify: false
         flash-pve-local:
           internal: true
           target: https://flash.pve.wiserisk.home

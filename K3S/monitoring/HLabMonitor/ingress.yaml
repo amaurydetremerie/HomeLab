@@ -17,13 +17,3 @@ spec:
                 name: hlabmonitor-svc
                 port:
                   number: 8080
-    - host: hlabmonitor.k3s.wiserisk.home
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: hlabmonitor-svc
-                port:
-                  number: 8080
