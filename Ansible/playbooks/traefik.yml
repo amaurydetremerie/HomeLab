@@ -26,7 +26,7 @@
     # ── Dépendances ──────────────────────────────────────────────────────────
     - name: Install dependencies
       ansible.builtin.apt:
-        name: [jq, curl]
+        name: [jq, curl, iptables, iptables-persistent]
         state: present
         update_cache: false
 
@@ -228,4 +228,4 @@
 
     - name: Save iptables
       ansible.builtin.shell:
-        cmd: iptables-save > /etc/iptables/rules.v4
+        cmd: mkdir -p /etc/iptables && iptables-save > /etc/iptables/rules.v4

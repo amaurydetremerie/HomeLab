@@ -42,8 +42,10 @@ jobs:
             echo "${key}=false" >> "$GITHUB_OUTPUT"
           }
 
-          detect traefik       '^Traefik/(?!\.)'
-          detect traefik_edge  '^Traefik-Edge/'
+          detect traefik       '^Ansible/playbooks/traefik\.yml' \
+                               '^Traefik/(?!\.)'
+          detect traefik_edge  '^Ansible/playbooks/traefik_edge\.yml' \
+                               '^Traefik-Edge/'
           detect vps           '^Ansible/playbooks/vps\.yml' \
                                '^Ansible/inventory/host_vars/debian_vps'
           detect wireguard     '^Ansible/playbooks/wireguard' \
