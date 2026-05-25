@@ -1,5 +1,11 @@
 # Changelog
 
+## v2026.05.25-b36fac5
+
+### DNS
+
+- Préparation du forwarder DNS pour AdGuard Flash (configuration commentée prête pour le déploiement)
+
 ## v2026.05.25-af6292a
 
 ### Monitoring
