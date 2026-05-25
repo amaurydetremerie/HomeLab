@@ -1,5 +1,12 @@
 # Changelog
 
+## v2026.05.25-af6292a
+
+### Monitoring
+
+- CoreDNS : mise à jour du serveur DNS forwarder (10.0.0.181)
+- Blackbox Exporter : activation du mode `hostNetwork` pour accès réseau direct
+
 ## v2026.05.25-2e3310d
 
 ### Applications
