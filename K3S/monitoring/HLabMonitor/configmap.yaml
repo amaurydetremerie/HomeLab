@@ -14,7 +14,7 @@ data:
         enabled: true
     monitoring:
       notification:
-        enabled: true
+        enabled: false
         email:
           enabled: true
           from: <path:k3s/data/monitoring#email>
@@ -63,8 +63,6 @@ data:
           target: 10.100.0.1
         hermes:
           target: 10.100.0.10
-        webhook:
-          target: 10.100.0.103
         qbittorrent:
           target: 10.100.0.105
         k3s-master:
