@@ -31,11 +31,9 @@ runs:
         CLAUDE_MODEL: ${{ inputs.model }}
         ALLOWED_TOOLS: ${{ inputs.allowed_tools }}
       run: |
-        if [ -n "$ALLOWED_TOOLS" ]; then
-          RESPONSE=$(claude --bare -p "$PROMPT" --model "$CLAUDE_MODEL" --allowedTools "$ALLOWED_TOOLS" --output-format json)
-        else
-          RESPONSE=$(claude --bare -p "$PROMPT" --model "$CLAUDE_MODEL" --output-format json)
-        fi
+        TOOLS_ARG=""
+        [ -n "$ALLOWED_TOOLS" ] && TOOLS_ARG="--allowedTools $ALLOWED_TOOLS"
+        RESPONSE=$(claude -p "$PROMPT" --model "$CLAUDE_MODEL" $TOOLS_ARG --output-format json 2>/dev/null)
         RESULT=$(echo "$RESPONSE" | jq -r '.result // ""')
         {
           echo "result<<EOF"
