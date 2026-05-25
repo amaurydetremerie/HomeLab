@@ -17,7 +17,7 @@ spec:
                 name: it-tools-svc
                 port:
                   number: 80
-    - host: it-tools.k3s.wiserisk.test
+    - host: it-tools.k3s.wiserisk.home
       http:
         paths:
           - path: /
