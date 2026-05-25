@@ -1,5 +1,14 @@
 # Changelog
 
+## v2026.05.25-5d82dc7
+
+### Réseau Traefik
+- Ajout de la règle MASQUERADE iptables (10.100.0.0/24 → 10.0.0.0/24) pour les nœuds gateway
+- Sauvegarde automatique des règles iptables
+
+### Monitoring
+- Suppression du mode `hostNetwork` pour Blackbox Exporter
+
 ## v2026.05.25-b36fac5
 
 ### DNS
