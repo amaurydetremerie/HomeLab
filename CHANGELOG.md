@@ -1,5 +1,21 @@
 # Changelog
 
+## v2026.05.25-0f9cb29
+
+### Monitoring
+
+- Suppression des targets Prometheus redondantes ou inutilisées (ollama, k3s publiques, pve local, adguard VPS, prowlarr, hlabmonitor)
+- Simplification des ingress : HLabMonitor et Prowlarr au seul domaine `.k3s.wiserisk.home` (suppression des `.k3s.wiserisk.be`)
+- Retrait du target `pve-local` dans HLabMonitor
+
+### Observabilité
+
+- Ajustement des timeouts Blackbox
+
+### Documentation
+
+- Mise à jour du CLAUDE.md
+
 ## v2026.05.25-52e2b39
 
 ### CI/CD
