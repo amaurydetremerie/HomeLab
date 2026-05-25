@@ -1,5 +1,16 @@
 # Changelog
 
+## v2026.05.25-52e2b39
+
+### CI/CD
+
+- Amélioration du système de détection des changements dans les workflows Gitea Actions pour inclure les playbooks Ansible Traefik
+
+### Infrastructure
+
+- Ajout des dépendances `iptables` et `iptables-persistent` au playbook Traefik
+- Correction de la sauvegarde des règles iptables avec création préalable du répertoire `/etc/iptables`
+
 ## v2026.05.25-5d82dc7
 
 ### Réseau Traefik
