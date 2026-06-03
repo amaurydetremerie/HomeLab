@@ -3,7 +3,7 @@ kind: CronJob
 metadata:
   name: nextcloud-cron
 spec:
-  schedule: "*/5 * * * *"  # Toutes les 5 minutes
+  schedule: "0 6 * * *"  # Toutes les jours à 6 heure
   jobTemplate:
     spec:
       template:
