@@ -1,5 +1,20 @@
 # Changelog
 
+## v2026.06.07-d699a97
+
+### VPS & Réseau
+- Mise à jour du nouveau VPS
+- Ajout d'un watchdog pour le VPN
+
+### Monitoring
+- Mise à jour des configurations de monitoring
+
+### Applications
+- Désactivation de l'application de synchronisation
+
+### Tâches planifiées
+- Ajustement du spacing des tâches cron
+
 ## v2026.05.25-0f9cb29
 
 ### Monitoring
