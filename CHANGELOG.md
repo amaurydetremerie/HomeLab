@@ -1,5 +1,11 @@
 # Changelog
 
+## v2026.06.07-9aa9f3e
+
+### Infrastructure K3S
+
+- Ajout de Termix avec deployment, ingress, et volumes persistants
+
 ## v2026.06.07-d699a97
 
 ### VPS & Réseau
