@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: termix
-          image: ghcr.io/lukegus/termix:2.3.2
+          image: ghcr.io/lukegus/termix:release-2.3.2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
