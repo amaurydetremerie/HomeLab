@@ -1,0 +1,7 @@
+[Unit]
+Description=WireGuard watchdog – {{ wireguard_interface | default('wg0') }}
+After=network.target wg-quick@{{ wireguard_interface | default('wg0') }}.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/wg-watchdog.sh

@@ -288,7 +288,7 @@ créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fo
   **Ordre de déploiement testé et validé :**
   ```bash
   # Pré-requis : ssh-copy-id root sur les deux machines
-  ssh-copy-id -i ~/.ssh/ansibleWiseRiskHomelab.pub root@77.90.52.180   # VPS
+  ssh-copy-id -i ~/.ssh/ansibleWiseRiskHomelab.pub root@5.231.119.55   # VPS
   ssh-copy-id -i ~/.ssh/ansibleWiseRiskHomelab.pub root@10.0.0.82      # Wasp
 
   # Dans le dossier Ansible/

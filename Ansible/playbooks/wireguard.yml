@@ -60,3 +60,38 @@
         enabled: true
         state: started
         daemon_reload: true
+
+    - name: Deploy WireGuard watchdog script
+      ansible.builtin.template:
+        src: templates/wireguard/wg-watchdog.sh.j2
+        dest: /usr/local/bin/wg-watchdog.sh
+        owner: root
+        group: root
+        mode: '0750'
+      when: wireguard_role | default('client') == 'client'
+
+    - name: Deploy WireGuard watchdog service
+      ansible.builtin.template:
+        src: templates/wireguard/wg-watchdog.service.j2
+        dest: /etc/systemd/system/wg-watchdog.service
+        owner: root
+        group: root
+        mode: '0644'
+      when: wireguard_role | default('client') == 'client'
+
+    - name: Deploy WireGuard watchdog timer
+      ansible.builtin.template:
+        src: templates/wireguard/wg-watchdog.timer.j2
+        dest: /etc/systemd/system/wg-watchdog.timer
+        owner: root
+        group: root
+        mode: '0644'
+      when: wireguard_role | default('client') == 'client'
+
+    - name: Enable and start WireGuard watchdog timer
+      ansible.builtin.systemd:
+        name: wg-watchdog.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+      when: wireguard_role | default('client') == 'client'

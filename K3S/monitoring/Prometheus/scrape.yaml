@@ -58,7 +58,6 @@ stringData:
           - https://vault.k3s.wiserisk.be
           - https://grafana.k3s.wiserisk.be
           - https://portainer.k3s.wiserisk.be
-          - https://hlabmonitor.k3s.wiserisk.be/actuator/health
           - https://ai.k3s.wiserisk.be
           - https://prowlarr.k3s.wiserisk.be
           - https://adguard.wiserisk.be
@@ -182,7 +181,7 @@ stringData:
           - 10.100.0.202 # jellyfin
           - 10.100.0.220 # tailscale
           # VPS
-          - 77.90.52.180 # debian_vps
+          - 5.231.119.55 # debian_vps
           # Others
           - 10.0.0.49    # P1
           - 10.0.0.142   # Shelly

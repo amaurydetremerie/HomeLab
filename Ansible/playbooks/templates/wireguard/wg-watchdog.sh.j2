@@ -1,0 +1,16 @@
+#!/bin/bash
+INTERFACE="{{ wireguard_interface | default('wg0') }}"
+THRESHOLD=185
+
+if ! ip link show "$INTERFACE" 2>/dev/null | grep -q "UP"; then
+    logger -t wg-watchdog "Interface $INTERFACE is down — restarting"
+    systemctl restart "wg-quick@$INTERFACE"
+    exit 0
+fi
+
+LAST=$(wg show "$INTERFACE" latest-handshakes | awk '{print $2}')
+AGE=$(( $(date +%s) - ${LAST:-0} ))
+if [ "$AGE" -gt "$THRESHOLD" ]; then
+    logger -t wg-watchdog "Handshake ${AGE}s ago — restarting $INTERFACE"
+    systemctl restart "wg-quick@$INTERFACE"
+fi

@@ -9,3 +9,4 @@
 # Fichiers temporaires Ansible
 **/*.retry
 **/.ansible/
+/.claude/settings.local.json

@@ -3,7 +3,7 @@ ansible_user: root  # Proxmox hypervisors, TrueNAS, PBS — toujours root
                     # LXC/VMs/K3S/VPS : surcharge via group_vars/<groupe>/vars.yml → ansible_user: ansible
 
 # ── VPS ────────────────────────────────────────────────────────────────────────
-vps_public_ip: "77.90.52.180"    # IP publique du VPS (OVH) — mettre à jour ici si elle change
+vps_public_ip: "5.231.119.55"    # IP publique du VPS (OVH) — mettre à jour ici si elle change
 vps_wg_endpoint: "vpn.wiserisk.be:51820"  # Endpoint WireGuard (DNS, résolu dynamiquement)
 
 # ── Clés SSH publiques (pas des secrets) ───────────────────────────────────────
