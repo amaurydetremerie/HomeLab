@@ -1,5 +1,10 @@
 # Changelog
 
+## v2026.06.07-e885705
+
+### Outils K3S
+- Mise à jour de la version Termix
+
 ## v2026.06.07-9aa9f3e
 
 ### Infrastructure K3S
