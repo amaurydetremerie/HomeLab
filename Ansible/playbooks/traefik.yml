@@ -77,8 +77,6 @@
         - { path: "{{ traefik_log_dir }}" }
         - { path: "{{ traefik_config_dir }}" }
         - { path: "{{ traefik_config_dir }}/traefik_dynamic" }
-        - { path: "{{ traefik_config_dir }}/scripts", owner: root }
-
 
     # ── Binaire (conditionnel) ───────────────────────────────────────────────
     - name: Download Traefik binary
