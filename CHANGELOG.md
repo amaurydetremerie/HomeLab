@@ -1,5 +1,13 @@
 # Changelog
 
+## v2026.06.13-0f9cf5c
+
+### Déprécations
+- Webhook déprécié
+
+### Suppressions
+- Dossier `script/` supprimé
+
 ## v2026.06.13-544df48
 
 ### Infrastructure
