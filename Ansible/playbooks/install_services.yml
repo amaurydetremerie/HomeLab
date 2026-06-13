@@ -58,7 +58,3 @@
 # ── Seedbox (*arr) ────────────────────────────────────────────────────────
 - import_playbook: seedbox.yml
   tags: [seedbox]
-
-# ── Ollama ────────────────────────────────────────────────────────────────
-- import_playbook: ollama.yml
-  tags: [ollama]

@@ -73,13 +73,6 @@ stringData:
           target_label: instance
         - target_label: __address__
           replacement: blackbox-exporter.monitoring.svc.cluster.local:9115
-    - job_name: 'blackbox-bearer'
-      metrics_path: /probe
-      params:
-        module: [http_2xx_bearer]
-      static_configs:
-        - targets:
-          - https://ollama.wiserisk.be
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
@@ -108,7 +101,6 @@ stringData:
           - https://hades.wiserisk.home
           - https://hermes.syncthing.wiserisk.home
           - https://hades.syncthing.wiserisk.home
-          - https://ollama.wiserisk.home
           - https://git.wiserisk.home
           - https://semaphore.wiserisk.home
           - https://registry-ui.k3s.wiserisk.home
@@ -171,7 +163,6 @@ stringData:
           - 10.100.0.100 # gitea
           - 10.100.0.101 # semaphore
           - 10.100.0.102 # gatus
-          - 10.100.0.104 # ollama
           - 10.100.0.105 # qbittorrent
           # K3S
           - 10.100.0.151 # k3s_master

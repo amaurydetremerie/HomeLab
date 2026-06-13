@@ -81,14 +81,6 @@ créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fo
   Template `interfaces.j2` nettoyé (doublons supprimés). Interface Wasp corrigée : `enp1s0f0` (était `eno1`). Flash : bond0 sur eno1+eno2, vmbr1 VLAN 100 sur bond0.100.
   ⚠️ **Divergence à vérifier** : `host_vars/proxmox_wasp.yml` a `enp1s0` mais la mémoire et ce doc disent `enp1s0f0`. Confirmer avec `ip link show` sur Wasp avant le prochain run.
 
-- [x] **GPU passthrough Flash**
-  Directives `lxc_raw` décommentées et corrigées dans `host_vars/proxmox_flash.yml` :
-  - Ollama (1104) : cgroup2 + nvidia (195) + nvidia-uvm (509) + nvidia-caps (234) + dri (226) + mounts
-  - Jellyfin (1202) : idem + mount `/dev/dri`
-  - card0 = Matrox iLO (ne pas passer), card1 = Quadro P2200 (le vrai GPU)
-  Driver Nvidia automatisé dans `playbooks/proxmox_gpu.yml` (jouable seul) + importé par le bootstrap.
-  `proxmox_gpus` dans host_vars : dict keyed par vendor (nvidia/amd/intel), extensible sans modifier les playbooks.
-
 - [x] **Ciblage par nœud**
   `playbooks/proxmox.yml` supporte `-e target=proxmox_flash` ou `-e target=proxmox_wasp` pour cibler un seul nœud.
 
@@ -163,7 +155,7 @@ créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fo
 - [x] **Traefik** *(reverse proxy — interne)*
   `playbooks/traefik.yml` — déploie binaire (optionnel), `Traefik/` → `/etc/Homelab/Traefik/`, overrides systemd avec secrets vault.
   Tag `--tags config` pour ne pousser que les configs sans toucher au binaire.
-  Secrets : `vault_traefik_my_auth`, `vault_traefik_basic_auth`, `vault_traefik_vault_token`, `vault_traefik_vault_addr`.
+  Secrets : `vault_traefik_my_auth`, `vault_traefik_basic_auth`.
   Deux instances : `traefik_wasp` (10.0.0.182) + `traefik_flash` (10.0.0.192).
 
 - [x] **Traefik — architecture cible : certs OVH sur VPS + LB interne** ✅ partiellement déployé
@@ -208,8 +200,8 @@ créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fo
   LXC 1220 (10.100.0.220). Après déploiement : approuver subnet routes + exit node dans l'admin Tailscale.
 
 - [x] **Jellyfin**
-  `playbooks/jellyfin.yml` — apt repo officiel, user `jellyfin` ajouté aux groupes `video`+`render` pour GPU NVENC.
-  GPU passthrough déjà configuré dans `proxmox_flash.yml`. Médias sur NFS `/mnt/media/seedbox`.
+  `playbooks/jellyfin.yml` — apt repo officiel.
+  Médias sur NFS `/mnt/media/seedbox`.
   LXC 1202 (10.100.0.202). Config initiale (librairies, users, NVENC) via web UI : http://10.100.0.202:8096.
 
 - [x] **qBittorrent**
@@ -250,11 +242,6 @@ créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fo
   Actuellement : Radarr v6.1.1 + Sonarr v4.0.17. Extensible sans modifier le playbook.
   LXC 1201 (10.100.0.201) — supprimer Swizzin avant de lancer le playbook.
   Prowlarr et Flaresolverr restent dans K3S.
-
-- [x] **Ollama**
-  `playbooks/ollama.yml` — install script officiel, override systemd (`OLLAMA_HOST=0.0.0.0`, `OLLAMA_MODELS=/mnt/ollama`).
-  Modèles dans `host_vars/ollama.yml` (`ollama_models`) — le playbook pull les manquants à chaque run.
-  GPU passthrough déjà configuré dans `proxmox_flash.yml`. LXC 1104 (10.100.0.104).
 
 - [x] **site.yml step [10]**
   Délègue à `install_services.yml` — tous les services dans l'ordre de dépendances.
@@ -354,10 +341,6 @@ créer un groupe `hardening_bootstrap` (hosts à hardeniser pour la première fo
 
 - [ ] **Monitoring stack K3S**
   Vérifier que les exporters (node_exporter sur LXC/VMs, iLO exporter, TrueNAS exporter) remontent correctement dans la stack monitoring ArgoCD
-
-- [ ] **Open WebUI ↔ Ollama LXC**
-  Open WebUI tourne dans K3S (10.100.0.151/152), Ollama dans un LXC (10.100.0.104).
-  Vérifier que l'URL Ollama configurée dans Open WebUI est accessible depuis les pods K3S.
 
 - [ ] **Vérification des apps ArgoCD après fresh bootstrap**
   Après un reinstall complet, valider que toutes les ArgoCD apps passent Healthy dans l'ordre des waves :
@@ -501,7 +484,7 @@ Si le routeur Asus supporte ECMP : ajouter une seconde route via 10.0.0.192 (tra
 ## Bloc 12 — Flash reinstall + onboarding Ansible
 
 > **Prérequis :** Wasp + VPS 100% stables, K3S sain, B2/B-NIC/B10 corrigés dans Ansible, Gitea migré.
-> Flash héberge actuellement (non géré Ansible) : K3S master+worker, TrueNAS Hermes, PBS, Ollama, Jellyfin, qBittorrent, SeedBox, Tailscale, HomeAssistant.
+> Flash héberge actuellement (non géré Ansible) : K3S master+worker, TrueNAS Hermes, PBS, Jellyfin, qBittorrent, SeedBox, Tailscale, HomeAssistant.
 
 - [x] **~~Corriger les fichiers Ansible avant reinstall~~** ✅ tout corrigé
   - ~~B-NIC~~ ✅ `proxmox_phys_ifaces: [ens6f0, ens6f1]`
@@ -554,9 +537,8 @@ Si le routeur Asus supporte ECMP : ajouter une seconde route via 10.0.0.192 (tra
   ansible-playbook playbooks/adguard.yml --limit adguard_flash
 
   # 5. Services Flash via Ansible (LXC existants, hardening + service)
-  # hardening de chaque LXC (ollama, jellyfin, qbittorrent, seedbox, tailscale)
+  # hardening de chaque LXC (jellyfin, qbittorrent, seedbox, tailscale)
   # puis les playbooks service
-  ansible-playbook playbooks/ollama.yml
   ansible-playbook playbooks/jellyfin.yml
   ansible-playbook playbooks/qbittorrent.yml
   ansible-playbook playbooks/seedbox.yml

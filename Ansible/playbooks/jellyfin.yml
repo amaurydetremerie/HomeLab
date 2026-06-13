@@ -1,6 +1,5 @@
 ---
 # Jellyfin media server — LXC 1202 (10.100.0.202) sur Flash
-# GPU Nvidia Quadro P2200 passthrough + /dev/dri (défini dans proxmox_flash.yml)
 # Médias : NFS Plex monté à /mnt/media/seedbox par Proxmox
 #
 # Utilisation :
@@ -33,13 +32,6 @@
         name: jellyfin
         state: present
         update_cache: true
-
-    - name: Add jellyfin user to video and render groups (accès GPU)
-      ansible.builtin.user:
-        name: jellyfin
-        groups: [video, render]
-        append: true
-      notify: Restart jellyfin
 
     - name: Enable and start Jellyfin
       ansible.builtin.systemd:

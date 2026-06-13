@@ -70,8 +70,6 @@ vault_tailscale_auth_key: ""
 # ── Traefik ───────────────────────────────────────────────────────────────────
 vault_traefik_my_auth: ""           # Format : user:realm:ha1 (digest auth)
 vault_traefik_basic_auth: ""        # Format : user:$2y$hash (bcrypt)
-vault_traefik_vault_token: ""       # Token Vault pour sync-ollama-bearer
-vault_traefik_vault_addr: ""        # Ex : https://vault.k3s.wiserisk.be/v1/k3s/data
 
 # ── Traefik Edge — OVH DNS challenge (wildcard *.wiserisk.be) ─────────────────
 # Créer l'application OVH : https://eu.api.ovh.com/createApp/

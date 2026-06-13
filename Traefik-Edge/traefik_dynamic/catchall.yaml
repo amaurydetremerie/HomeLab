@@ -30,7 +30,6 @@ http:
         Host(`semaphore.wiserisk.be`) ||
         Host(`ha.wiserisk.be`) ||
         Host(`jellyfin.wiserisk.be`) ||
-        Host(`ollama.wiserisk.be`) ||
         Host(`k3s.wiserisk.be`) ||
         Host(`registry.k3s.wiserisk.be`) ||
         Host(`flaresolverr.k3s.wiserisk.be`) ||

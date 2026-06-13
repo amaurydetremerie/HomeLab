@@ -152,6 +152,6 @@
 # ── [11] Applications LXC/VM + VPS ───────────────────────────────────────
 # AUTO  : VPS (WG serveur + DNS + Traefik + Gatus), WG clients, DNS interne,
 #         Traefik interne, Gitea, Semaphore, Tailscale, Gatus LXC,
-#         Jellyfin, qBittorrent, Seedbox, Ollama
+#         Jellyfin, qBittorrent, Seedbox
 # Ciblage précis : ansible-playbook playbooks/install_services.yml --tags gitea
 - import_playbook: install_services.yml

@@ -25,11 +25,6 @@ spec:
             - name: open-webui-volume
               mountPath: /app/backend/data
               subPath: open-webui
-          env:
-            - name: OLLAMA_BASE_URL
-              value: https://ollama.wiserisk.home
-            - name: AIOHTTP_CLIENT_SESSION_SSL
-              value: 'false'
       volumes:
         - name: open-webui-volume
           persistentVolumeClaim:
