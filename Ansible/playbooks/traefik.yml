@@ -124,15 +124,6 @@
       tags: config
       notify: Restart traefik
 
-    - name: Deploy scripts
-      ansible.builtin.copy:
-        src: "{{ traefik_src }}/scripts/"
-        dest: "{{ traefik_config_dir }}/scripts/"
-        owner: root
-        group: traefik
-        mode: '0750'
-      tags: config
-
     # ── Systemd units ────────────────────────────────────────────────────────
     - name: Deploy traefik.service
       ansible.builtin.copy:
