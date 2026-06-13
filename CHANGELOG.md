@@ -1,5 +1,11 @@
 # Changelog
 
+## v2026.06.13-544df48
+
+### Infrastructure
+- GPU retiré du nœud Flash
+- Ollama supprimé
+
 ## v2026.06.07-e885705
 
 ### Outils K3S
