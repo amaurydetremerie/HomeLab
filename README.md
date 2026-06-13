@@ -37,7 +37,7 @@ All my servers run under Proxmox, and my data is managed in a TrueNas Scale virt
 12) Configure [Tautulli](DEPRECATED/Kubernetes/K3S/Tautulli/tautulli.yaml)
 13) Configure [Speedtest Tracker](DEPRECATED/Kubernetes/K3S/SpeedtestTracker/speedtestTracker.yaml)
     1) https://github.com/maximemoreillon/kubernetes-manifests/tree/master/speedtest-tracker
-14) Create [webhook](Webhook) to automatically update Traefik configurations with [GitHub Actions](.github/workflows/traefik.yml)
+14) Create [webhook](DEPRECATED/Webhook) to automatically update Traefik configurations with [GitHub Actions](.github/workflows/traefik.yml)
 ### To Do
 1) Check to migrate CT in K3S (Still Graphana, Influx, Prometheus)
 2) Find some new interesting apps
