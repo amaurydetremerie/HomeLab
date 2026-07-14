@@ -1,5 +1,12 @@
 # Changelog
 
+## v2026.07.14-9c1d846
+
+### Monitoring
+
+- Mise à jour des cibles de scrape Prometheus : ajustement des adresses IP des appareils (APC, P1, Shelly)
+- Ajout de Hue dans le monitoring Prometheus
+
 ## v2026.07.14-1794e90
 
 ### Nettoyage
