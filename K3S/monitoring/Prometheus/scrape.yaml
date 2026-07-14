@@ -182,9 +182,10 @@ stringData:
           # VPS
           - 5.231.119.55 # debian_vps
           # Others
-          - 10.0.0.49    # P1
-          - 10.0.0.142   # Shelly
-          - 10.0.0.185   # APC
+          - 10.0.0.4   # APC
+          - 10.0.0.11    # P1
+          - 10.0.0.12   # Shelly
+          - 10.0.0.196   # Hue
           
       relabel_configs:
         - source_labels: [__address__]
