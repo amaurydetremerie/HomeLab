@@ -1,5 +1,32 @@
 # Changelog
 
+## v2026.07.14-f0c1803
+
+### Infrastructure Proxmox
+- Mise à jour des configurations Flash et Wasp
+- Améliorations de la provisioning des VMs/LXC
+
+### Services *arr (Sonarr/Radarr/Lidarr)
+- Nouveau stack complet : playbook `arr.yml`, host_vars, et configuration Docker Compose
+- Intégration Traefik pour exposition externe
+- Templates : config homer, routeur ebook, worker KCC
+
+### Qualité de service
+- Amélioration configuration qBittorrent (Ansible + Traefik)
+- Mise à jour de la configuration Authelia
+
+### Monitoring & Observabilité
+- Reconfiguration scrapes Prometheus
+- Mise à jour HLabMonitor
+
+### Cleanup K3S
+- Suppression application Prowlarr (migré vers stack ARR)
+
+### Infrastructure générale
+- Ajout requirements Ansible manquants
+- Mise à jour .gitignore
+- Documentation mise à jour (NEXT_STEPS.md)
+
 ## v2026.06.13-0f9cf5c
 
 ### Déprécations
