@@ -1,5 +1,11 @@
 # Changelog
 
+## v2026.07.14-1794e90
+
+### Nettoyage
+
+- Suppression d'une configuration relabel oubliée dans Prometheus
+
 ## v2026.07.14-f0c1803
 
 ### Infrastructure Proxmox
