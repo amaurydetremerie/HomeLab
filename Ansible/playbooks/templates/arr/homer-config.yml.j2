@@ -1,0 +1,72 @@
+---
+# Homer dashboard config — généré par Ansible (arr.yml)
+# Éditer le template : playbooks/templates/arr/homer-config.yml.j2
+
+title: "Arr Suite"
+subtitle: "Media management"
+header: true
+footer: false
+columns: 3
+connectivityCheck: false
+
+services:
+  - name: "Media"
+    icon: "fas fa-film"
+    items:
+      - name: "Sonarr"
+        logo: "https://github.com/Sonarr/Sonarr/raw/develop/Logo/128.png"
+        subtitle: "Séries TV"
+        url: "https://sonarr.{{ homer_domain }}"
+        target: "_blank"
+      - name: "Radarr"
+        logo: "https://github.com/Radarr/Radarr/raw/develop/Logo/128.png"
+        subtitle: "Films"
+        url: "https://radarr.{{ homer_domain }}"
+        target: "_blank"
+      - name: "Prowlarr"
+        logo: "https://github.com/Prowlarr/Prowlarr/raw/develop/Logo/128.png"
+        subtitle: "Indexers"
+        url: "https://prowlarr.{{ homer_domain }}"
+        target: "_blank"
+      - name: "Profilarr"
+        icon: "fas fa-sliders-h"
+        subtitle: "Quality profiles"
+        url: "https://profilarr.{{ homer_domain }}"
+        target: "_blank"
+
+  - name: "Livres"
+    icon: "fas fa-book"
+    items:
+      - name: "Shelfmark"
+        icon: "fas fa-search"
+        subtitle: "Recherche livres"
+        url: "https://shelfmark.{{ homer_domain }}"
+        target: "_blank"
+      - name: "Calibre"
+        icon: "fas fa-book-open"
+        subtitle: "Bibliothèque & Kindle"
+        url: "https://calibre.{{ homer_domain }}"
+        target: "_blank"
+
+  - name: "Téléchargement"
+    icon: "fas fa-download"
+    items:
+      - name: "qBittorrent"
+        icon: "fas fa-magnet"
+        subtitle: "Torrent client"
+        url: "https://qbittorrent.{{ homer_domain }}"
+        target: "_blank"
+
+  - name: "Média"
+    icon: "fas fa-play"
+    items:
+      - name: "Jellyfin"
+        icon: "fas fa-tv"
+        subtitle: "Media server"
+        url: "https://jellyfin.{{ homer_domain }}"
+        target: "_blank"
+      - name: "Jellyseerr"
+        logo: "https://raw.githubusercontent.com/fallenbagel/jellyseerr/develop/public/logo_full.svg"
+        subtitle: "Requêtes média"
+        url: "https://jellyseerr.{{ homer_domain }}"
+        target: "_blank"

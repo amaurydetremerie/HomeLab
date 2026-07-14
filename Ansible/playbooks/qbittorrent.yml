@@ -1,12 +1,13 @@
 ---
-# qBittorrent — LXC 1105 (10.100.0.105) sur Flash
+# qBittorrent — baremetal (LXC 1106)
 # NFS SeedBox monté à /media/seedbox par Proxmox
 #
-# Accès web : http://10.100.0.105:{{ qbittorrent_webui_port }}
+# Accès web : http://<host>:{{ qbittorrent_webui_port }}
 # Credentials par défaut : admin / adminadmin (à changer à la première connexion)
 #
 # Config : host_vars/qbittorrent.yml
 # Template : playbooks/templates/qbittorrent/qbittorrent-nox.service.j2
+# VPN futur : ansible-playbook playbooks/wireguard.yml --extra-vars "target=qbittorrent"
 #
 # Utilisation :
 #   ansible-playbook playbooks/qbittorrent.yml

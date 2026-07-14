@@ -18,17 +18,10 @@ proxmox_storages:
     nodes: [wasp]
     sparse: true
 
-  - name: Plex
-    type: nfs
-    server: 10.100.0.10
-    export: /mnt/Hermes/Data/Media/Videos
-    path: /mnt/pve/Plex
-    content: [snippets]
-
   - name: SeedBox
     type: nfs
     server: 10.100.0.10
-    export: /mnt/Hermes/Data/Media
+    export: /mnt/Hermes/Seedbox
     path: /mnt/pve/SeedBox
     content: [snippets]
 
@@ -128,5 +121,37 @@ proxmox_lxc:
     unprivileged: true
     netif:
       net0: "name=eth0,bridge=vmbr1,ip=10.100.0.102/24,gw=10.100.0.1"
+
+  - vmid: 1200                                              # 1 + 200 (10.100.0.200)
+    backup: critical
+    hostname: arr
+    description: "*arr suite + Homer dashboard (Docker Compose)"
+    cores: 2
+    memory: 4096
+    swap: 2048
+    disk: 32
+    unprivileged: true
+    onboot: true
+    features:
+      - nesting=1
+    mounts:
+      mp0: "/mnt/pve/SeedBox,mp=/media/seedbox,shared=1"
+    netif:
+      net0: "name=eth0,bridge=vmbr1,ip=10.100.0.200/24,gw=10.100.0.1"
+
+  - vmid: 1106                                              # 1 + 106 (10.100.0.106)
+    backup: non_critical
+    hostname: qbittorrent
+    description: "qBittorrent baremetal — VPN-ready (WireGuard + tun)"
+    cores: 1
+    memory: 1024
+    swap: 1024
+    disk: 16
+    unprivileged: true
+    onboot: true
+    mounts:
+      mp0: "/mnt/pve/SeedBox,mp=/media/seedbox,shared=1"
+    netif:
+      net0: "name=eth0,bridge=vmbr1,ip=10.100.0.106/24,gw=10.100.0.1"
 
 proxmox_vms: []

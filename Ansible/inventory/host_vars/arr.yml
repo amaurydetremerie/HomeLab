@@ -1,0 +1,53 @@
+---
+# arr — LXC 1200 (10.100.0.200) sur Wasp
+# *arr suite (Sonarr, Radarr, Prowlarr, Profilarr) + Homer dashboard via Docker Compose
+# NFS SeedBox : /mnt/pve/SeedBox → /media/seedbox
+
+arr_config_base: /opt/arr
+arr_media_path: /media/seedbox
+
+# PUID/PGID pour les containers linuxserver.io — root car TrueNAS mappe tout en root sur le NFS
+arr_puid: "0"
+arr_pgid: "0"
+arr_tz: "Europe/Brussels"
+
+# Adresse du LXC qBittorrent (Wasp)
+arr_qbittorrent_host: "10.100.0.106"
+arr_qbittorrent_port: 8090
+
+# KCC (Kindle Comic Converter) — profiles: KPW5, KV, K11, KS, KoMT, KoA, KoAHD, ...
+# format: EPUB, MOBI, AZW3 — reading_dir: 1=LTR (BD), 2=RTL (manga)
+kcc_profile: "KCS"
+kcc_format: "EPUB"
+kcc_reading_dir: "1"
+kcc_target_size_mb: "45"
+kcc_quality: "50"
+
+hardening_ufw_rules:
+  - port: "8080"
+    proto: tcp
+    rule: allow
+  - port: "8081"
+    proto: tcp
+    rule: allow
+  - port: "7878"
+    proto: tcp
+    rule: allow
+  - port: "8989"
+    proto: tcp
+    rule: allow
+  - port: "9696"
+    proto: tcp
+    rule: allow
+  - port: "6868"
+    proto: tcp
+    rule: allow
+  - port: "5055"
+    proto: tcp
+    rule: allow
+  - port: "8083"
+    proto: tcp
+    rule: allow
+  - port: "8084"
+    proto: tcp
+    rule: allow

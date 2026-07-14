@@ -42,7 +42,15 @@ stringData:
         module: [http_2xx_authelia]
       static_configs:
         - targets:
-          - https://seedbox.wiserisk.be
+          - https://qbittorrent.wiserisk.be
+          - https://arr.wiserisk.be
+          - https://sonarr.wiserisk.be
+          - https://radarr.wiserisk.be
+          - https://prowlarr.wiserisk.be
+          - https://profilarr.wiserisk.be
+          - https://shelfmark.wiserisk.be
+          - https://calibre.wiserisk.be
+          - https://jellyseerr.wiserisk.be
           - https://hermes.wiserisk.be
           - https://hades.wiserisk.be
           - https://hermes.syncthing.wiserisk.be
@@ -59,7 +67,6 @@ stringData:
           - https://grafana.k3s.wiserisk.be
           - https://portainer.k3s.wiserisk.be
           - https://ai.k3s.wiserisk.be
-          - https://prowlarr.k3s.wiserisk.be
           - https://adguard.wiserisk.be
           - https://gatus.wiserisk.be
           - https://gatus.vps.wiserisk.be
@@ -95,7 +102,14 @@ stringData:
           - https://flash.pve.wiserisk.home
           - https://wasp.pve.wiserisk.home
           - https://qbittorrent.wiserisk.home
-          - https://seedbox.wiserisk.home
+          - https://arr.wiserisk.home
+          - https://sonarr.wiserisk.home
+          - https://radarr.wiserisk.home
+          - https://prowlarr.wiserisk.home
+          - https://profilarr.wiserisk.home
+          - https://shelfmark.wiserisk.home
+          - https://calibre.wiserisk.home
+          - https://jellyseerr.wiserisk.home
           - https://traefik.wiserisk.home
           - https://hermes.wiserisk.home
           - https://hades.wiserisk.home
@@ -122,6 +136,7 @@ stringData:
           - https://sonarqube.k3s.wiserisk.home
           - https://vault.k3s.wiserisk.home
           - https://it-tools.k3s.wiserisk.home
+          - https://termix.k3s.wiserisk.home
       relabel_configs:
         - source_labels: [__address__]
           target_label: __param_target
@@ -163,12 +178,12 @@ stringData:
           - 10.100.0.100 # gitea
           - 10.100.0.101 # semaphore
           - 10.100.0.102 # gatus
-          - 10.100.0.105 # qbittorrent
+          - 10.100.0.106 # qbittorrent
           # K3S
           - 10.100.0.151 # k3s_master
           - 10.100.0.152 # k3s_worker
           # VMs
-          - 10.100.0.201 # seedbox
+          - 10.100.0.200 # *arr
           - 10.100.0.202 # jellyfin
           - 10.100.0.220 # tailscale
           # VPS

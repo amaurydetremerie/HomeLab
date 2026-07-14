@@ -1,0 +1,34 @@
+#!/bin/sh
+# Routes files from staging to the right destination by extension:
+#   cbz/cbr → kcc-in  (kcc-worker converts to Kindle EPUB → ingest)
+#   pdf     → ghostscript downsample → ingest
+#   others  → ingest directly
+STAGING=/staging
+INGEST=/ingest
+KCC_IN=/kcc-in
+
+inotifywait -m -e moved_to --format '%f' "$STAGING" | while IFS= read -r file; do
+  case "$file" in .*) continue ;; esac
+  src="$STAGING/$file"
+  ext=$(printf '%s' "${file##*.}" | tr '[:upper:]' '[:lower:]')
+  case "$ext" in
+    cbz|cbr)
+      # .tmp extension is ignored by kcc-worker (filters by cbz/cbr).
+      # mv within the same volume is an atomic rename — one IN_MOVED_TO event,
+      # complete file guaranteed. Plain cross-device mv is non-atomic (EXDEV).
+      cp "$src" "$KCC_IN/${file}.tmp" \
+        && mv "$KCC_IN/${file}.tmp" "$KCC_IN/$file" \
+        && rm -f "$src"
+      ;;
+    pdf)
+      gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.6 \
+         -dPDFSETTINGS=/ebook -dNOPAUSE -dQUIET -dBATCH \
+         -dDownsampleColorImages=true -dColorImageResolution=150 \
+         -dDownsampleGrayImages=true -dGrayImageResolution=150 \
+         -sOutputFile="$INGEST/$file" "$src" && rm "$src"
+      ;;
+    *)
+      mv "$src" "$INGEST/$file"
+      ;;
+  esac
+done

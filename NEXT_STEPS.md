@@ -541,7 +541,7 @@ Si le routeur Asus supporte ECMP : ajouter une seconde route via 10.0.0.192 (tra
   # puis les playbooks service
   ansible-playbook playbooks/jellyfin.yml
   ansible-playbook playbooks/qbittorrent.yml
-  ansible-playbook playbooks/seedbox.yml
+  ansible-playbook playbooks/arr.yml
   ansible-playbook playbooks/tailscale.yml
 
   # 6. VMs K3S, TrueNAS, PBS, HomeAssistant (hardening + services)

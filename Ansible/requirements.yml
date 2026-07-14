@@ -3,5 +3,7 @@ collections:
   - name: community.general
     version: ">=9.0.0"
   - name: community.proxmox
+  - name: community.docker
+    version: ">=3.0.0"
 
 roles: []

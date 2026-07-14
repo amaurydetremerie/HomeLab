@@ -5,6 +5,7 @@
     api_user: "{{ proxmox_api_user }}"
     api_token_id: "{{ proxmox_api_token_id }}"
     api_token_secret: "{{ proxmox_api_token_secret }}"
+    validate_certs: false
     node: "{{ proxmox_node }}"
     vmid: "{{ item.vmid }}"
     hostname: "{{ item.hostname }}"
@@ -27,9 +28,10 @@
     netif: "{{ item.netif }}"
     mounts: "{{ (item.mounts | default({}) | dict2items | rejectattr('value', 'match', '^/') | items2dict) or omit }}"
     unprivileged: "{{ item.unprivileged | default(true) }}"
-    features: "{{ item.features | default([]) }}"
+    features: "{{ item.features | default(omit) }}"
     startup: "{{ item.startup | default(omit) }}"
     onboot: "{{ item.onboot | default(true) }}"
+    cmode: "{{ item.cmode | default('tty') }}"
     password: "{{ vault_root_password }}"
     state: present
   loop: "{{ proxmox_lxc }}"

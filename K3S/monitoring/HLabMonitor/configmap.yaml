@@ -64,13 +64,13 @@ data:
         hermes:
           target: 10.100.0.10
         qbittorrent:
-          target: 10.100.0.105
+          target: 10.100.0.106
         k3s-master:
           target: 10.100.0.151
         k3s-worker-01:
           target: 10.100.0.152
-        seedbox:
-          target: 10.100.0.201
+        arr:
+          target: 10.100.0.200
         jellyfin:
           target: 10.100.0.202
         tailscale:
@@ -81,8 +81,7 @@ data:
         jellyfin:
           target: https://jellyfin.wiserisk.be/health
         seedbox:
-          status-code: 429
-          target: https://seedbox.wiserisk.be/login
+          target: https://arr.wiserisk.be
         hermes:
           target: https://hermes.wiserisk.be/ui/
         argocd:
@@ -140,8 +139,7 @@ data:
             verify: false
         seedbox-local:
           internal: true
-          status-code: 429
-          target: https://seedbox.wiserisk.home/login
+          target: https://arr.wiserisk.home
           certificate:
             verify: false
         traefik-local:

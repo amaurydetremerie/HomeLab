@@ -10,3 +10,4 @@
 **/*.retry
 **/.ansible/
 /.claude/settings.local.json
+/Ansible/collections/

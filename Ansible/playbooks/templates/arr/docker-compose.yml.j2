@@ -1,0 +1,145 @@
+---
+# *arr stack — généré par Ansible (arr.yml)
+# Éditer le template : playbooks/templates/arr/docker-compose.yml.j2
+
+services:
+
+  homer:
+    image: b4bz/homer:latest
+    container_name: homer
+    ports:
+      - "8080:8080"
+    volumes:
+      - {{ arr_config_base }}/homer:/www/assets
+    restart: unless-stopped
+
+  homer-be:
+    image: b4bz/homer:latest
+    container_name: homer-be
+    ports:
+      - "8081:8080"
+    volumes:
+      - {{ arr_config_base }}/homer-be:/www/assets
+    restart: unless-stopped
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      PUID: "{{ arr_puid }}"
+      PGID: "{{ arr_pgid }}"
+      TZ: "{{ arr_tz }}"
+    ports:
+      - "8989:8989"
+    volumes:
+      - {{ arr_config_base }}/sonarr:/config
+      - {{ arr_media_path }}:{{ arr_media_path }}
+    restart: unless-stopped
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      PUID: "{{ arr_puid }}"
+      PGID: "{{ arr_pgid }}"
+      TZ: "{{ arr_tz }}"
+    ports:
+      - "7878:7878"
+    volumes:
+      - {{ arr_config_base }}/radarr:/config
+      - {{ arr_media_path }}:{{ arr_media_path }}
+    restart: unless-stopped
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      PUID: "{{ arr_puid }}"
+      PGID: "{{ arr_pgid }}"
+      TZ: "{{ arr_tz }}"
+    ports:
+      - "9696:9696"
+    volumes:
+      - {{ arr_config_base }}/prowlarr:/config
+    restart: unless-stopped
+
+  profilarr:
+    # Image officielle — vérifier le nom exact sur https://github.com/Dictionarry-Hub/profilarr
+    image: ghcr.io/dictionarry-hub/profilarr:latest
+    container_name: profilarr
+    environment:
+      TZ: "{{ arr_tz }}"
+      ORIGIN: "https://profilarr.wiserisk.home"
+    ports:
+      - "6868:6868"
+    volumes:
+      - {{ arr_config_base }}/profilarr:/config
+    restart: unless-stopped
+
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    environment:
+      TZ: "{{ arr_tz }}"
+    ports:
+      - "5055:5055"
+    volumes:
+      - {{ arr_config_base }}/jellyseerr:/app/config
+    restart: unless-stopped
+
+  calibre-web-automated:
+    image: crocodilestick/calibre-web-automated:latest
+    container_name: calibre-web-automated
+    environment:
+      PUID: "{{ arr_puid }}"
+      PGID: "{{ arr_pgid }}"
+      TZ: "{{ arr_tz }}"
+      TRUSTED_PROXY_COUNT: "1"
+    ports:
+      - "8083:8083"
+    volumes:
+      - {{ arr_config_base }}/calibre-web-automated:/config
+      - {{ arr_config_base }}/calibre-library:/calibre-library
+      - {{ arr_config_base }}/ebooks-ingest:/cwa-book-ingest
+    restart: unless-stopped
+
+  shelfmark:
+    image: ghcr.io/calibrain/shelfmark-lite:latest
+    container_name: shelfmark
+    environment:
+      PUID: "{{ arr_puid }}"
+      PGID: "{{ arr_pgid }}"
+      TZ: "{{ arr_tz }}"
+      FLASK_PORT: "8084"
+      SEARCH_MODE: "universal"
+      INGEST_DIR: "/books"
+      EXT_BYPASSER_URL: "https://flaresolverr.k3s.wiserisk.home"
+    ports:
+      - "8084:8084"
+    volumes:
+      - {{ arr_config_base }}/shelfmark:/config
+      - {{ arr_config_base }}/ebooks-staging:/books
+      - {{ arr_media_path }}:{{ arr_media_path }}
+    restart: unless-stopped
+
+  kcc-worker:
+    image: ghcr.io/ciromattia/kcc:latest
+    container_name: kcc-worker
+    entrypoint: ["/bin/bash", "-c", "sed -i 's/main$/main non-free/' /etc/apt/sources.list && apt-get update -qq && apt-get install -y -qq inotify-tools procps unrar libarchive-tools p7zip-rar && exec bash /scripts/kcc-worker.sh"]
+    volumes:
+      - {{ arr_config_base }}/arr-scripts:/scripts:ro
+      - {{ arr_config_base }}/kcc-in:/kcc-in
+      - {{ arr_config_base }}/ebooks-ingest:/ingest
+    restart: unless-stopped
+
+  ebook-router:
+    image: alpine:latest
+    container_name: ebook-router
+    command: >-
+      sh -c "apk add --no-cache inotify-tools ghostscript && exec sh /scripts/router.sh"
+    volumes:
+      - {{ arr_config_base }}/arr-scripts:/scripts:ro
+      - {{ arr_config_base }}/ebooks-staging:/staging
+      - {{ arr_config_base }}/ebooks-ingest:/ingest
+      - {{ arr_config_base }}/kcc-in:/kcc-in
+    restart: unless-stopped

@@ -32,6 +32,7 @@
     api_user: "{{ proxmox_api_user }}"
     api_token_id: "{{ proxmox_api_token_id }}"
     api_token_secret: "{{ proxmox_api_token_secret }}"
+    validate_certs: false
     node: "{{ proxmox_node }}"
     storage: local
     template: "{{ proxmox_lxc_ostemplate | split(':') | last | split('/') | last }}"

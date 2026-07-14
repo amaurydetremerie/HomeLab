@@ -51,10 +51,10 @@
 - import_playbook: jellyfin.yml
   tags: [jellyfin]
 
-# ── qBittorrent ───────────────────────────────────────────────────────────
+# ── qBittorrent (Wasp) ────────────────────────────────────────────────────
 - import_playbook: qbittorrent.yml
   tags: [qbittorrent]
 
-# ── Seedbox (*arr) ────────────────────────────────────────────────────────
-- import_playbook: seedbox.yml
-  tags: [seedbox]
+# ── *arr suite + Homer dashboard (Wasp) ───────────────────────────────────
+- import_playbook: arr.yml
+  tags: [arr]

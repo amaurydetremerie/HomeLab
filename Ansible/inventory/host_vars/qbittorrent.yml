@@ -1,6 +1,8 @@
 ---
-# qBittorrent — LXC 1105 (10.100.0.105) sur Flash
+# qBittorrent — LXC 1106 (10.100.0.106)
 # NFS SeedBox : /mnt/pve/SeedBox → /media/seedbox
+#
+# VPN futur : WireGuard pré-installé, configurer /etc/wireguard/wg0.conf au moment voulu
 
 qbittorrent_webui_port: 8090
 

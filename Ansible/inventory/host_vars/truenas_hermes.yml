@@ -8,9 +8,7 @@ truenas_pool_name: Hermes
 
 # --- Datasets ---
 truenas_datasets:
-  - name: Hermes/Data
-  - name: Hermes/Data/Media
-  - name: Hermes/Data/Media/Videos
+  - name: Hermes/Seedbox
   - name: Hermes/Git
   - name: Hermes/K3S
   - name: Hermes/K3S/mongodb-data
@@ -26,12 +24,9 @@ truenas_zvols:
 
 # --- NFS ---
 truenas_nfs_shares:
-  - path: /mnt/Hermes/Data/Media
+  - path: /mnt/Hermes/Seedbox
     networks: ["10.100.0.0/24"]
-    comment: "Media — réseau services"
-  - path: /mnt/Hermes/Data/Media/Videos
-    networks: ["10.100.0.0/24"]
-    comment: "Videos — réseau services"
+    comment: "Seedbox — réseau services"
   - path: /mnt/Hermes/Git
     networks: [ "10.100.0.0/24" ]
     comment: "Git — réseau services"
@@ -50,8 +45,8 @@ truenas_smb_users:
 
 truenas_smb_shares:
   - name: Media
-    path: /mnt/Hermes/Data/Media
-    comment: "Media files"
+    path: /mnt/Hermes/Seedbox
+    comment: "Seedbox files"
   - name: Nas
     path: /mnt/Hermes/Nas
     comment: "NAS storage"

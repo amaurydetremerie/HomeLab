@@ -1,0 +1,247 @@
+http:
+  services:
+    arr:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.200:8080"
+    arr-be:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.200:8081"
+    sonarr:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.200:8989"
+    radarr:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.200:7878"
+    prowlarr:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.200:9696"
+    profilarr:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.200:6868"
+    jellyseerr:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.200:5055"
+    calibre:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.200:8083"
+    shelfmark:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.200:8084"
+
+  routers:
+    # ── Homer dashboard ────────────────────────────────────────────────────────
+    arr:
+      rule: "Host(`arr.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: arr-be@file
+    arr-home:
+      rule: "Host(`arr.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: noop@internal
+    arr-local-secure:
+      rule: "Host(`arr.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: arr@file
+      tls: {}
+
+    # ── Sonarr ─────────────────────────────────────────────────────────────────
+    sonarr:
+      rule: "Host(`sonarr.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: sonarr@file
+    sonarr-home:
+      rule: "Host(`sonarr.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: noop@internal
+    sonarr-local-secure:
+      rule: "Host(`sonarr.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: sonarr@file
+      tls: {}
+
+    # ── Radarr ─────────────────────────────────────────────────────────────────
+    radarr:
+      rule: "Host(`radarr.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: radarr@file
+    radarr-home:
+      rule: "Host(`radarr.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: noop@internal
+    radarr-local-secure:
+      rule: "Host(`radarr.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: radarr@file
+      tls: {}
+
+    # ── Prowlarr ───────────────────────────────────────────────────────────────
+    prowlarr:
+      rule: "Host(`prowlarr.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: prowlarr@file
+    prowlarr-home:
+      rule: "Host(`prowlarr.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: noop@internal
+    prowlarr-local-secure:
+      rule: "Host(`prowlarr.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: prowlarr@file
+      tls: {}
+
+    # ── Profilarr ──────────────────────────────────────────────────────────────
+    profilarr:
+      rule: "Host(`profilarr.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: profilarr@file
+    profilarr-home:
+      rule: "Host(`profilarr.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: noop@internal
+    profilarr-local-secure:
+      rule: "Host(`profilarr.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: profilarr@file
+      tls: {}
+
+    # ── Jellyseerr ─────────────────────────────────────────────────────────────
+    jellyseerr:
+      rule: "Host(`jellyseerr.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: jellyseerr@file
+    jellyseerr-home:
+      rule: "Host(`jellyseerr.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: noop@internal
+    jellyseerr-local-secure:
+      rule: "Host(`jellyseerr.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: jellyseerr@file
+      tls: {}
+
+    # ── Calibre Web Automated ──────────────────────────────────────────────────
+    calibre:
+      rule: "Host(`calibre.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: calibre@file
+    calibre-home:
+      rule: "Host(`calibre.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: noop@internal
+    calibre-local-secure:
+      rule: "Host(`calibre.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: calibre@file
+      tls: {}
+
+    # ── Shelfmark ──────────────────────────────────────────────────────────────
+    shelfmark:
+      rule: "Host(`shelfmark.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: shelfmark@file
+    shelfmark-home:
+      rule: "Host(`shelfmark.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: noop@internal
+    shelfmark-local-secure:
+      rule: "Host(`shelfmark.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: shelfmark@file
+      tls: {}

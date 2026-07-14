@@ -46,7 +46,7 @@ spec:
             name: nextcloud-config
         - name: media
           nfs:
-            path: /mnt/Hermes/Data/Media
+            path: /mnt/Hermes/Seedbox
             server: 10.100.0.10
         - name: nas
           nfs:

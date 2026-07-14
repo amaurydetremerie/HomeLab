@@ -1,0 +1,299 @@
+---
+# *arr suite — LXC 1200 (10.100.0.200) sur Wasp
+# Sonarr, Radarr, Prowlarr, Profilarr + Homer dashboard via Docker Compose
+# NFS SeedBox monté à /media/seedbox par Proxmox
+#
+# Config     : host_vars/arr.yml
+# Templates  : playbooks/templates/arr/docker-compose.yml.j2
+#              playbooks/templates/arr/homer-config.yml.j2
+#
+# Utilisation :
+#   ansible-playbook playbooks/arr.yml              # déploiement complet
+#   ansible-playbook playbooks/arr.yml --tags configure  # liaisons inter-services uniquement
+
+- name: Deploy arr stack
+  hosts: arr
+  gather_facts: true
+  become: true
+
+  tasks:
+    # ── Docker ─────────────────────────────────────────────────────────────────
+
+    - name: Install Docker prerequisites
+      ansible.builtin.apt:
+        name: [ca-certificates, curl, gnupg]
+        state: present
+        update_cache: true
+
+    - name: Add Docker GPG key
+      ansible.builtin.shell:
+        cmd: |
+          install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/debian/gpg \
+            | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          chmod a+r /etc/apt/keyrings/docker.gpg
+        creates: /etc/apt/keyrings/docker.gpg
+
+    - name: Add Docker apt repository
+      ansible.builtin.apt_repository:
+        repo: >-
+          deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg]
+          https://download.docker.com/linux/debian
+          {{ ansible_distribution_release }} stable
+        state: present
+        filename: docker
+
+    - name: Install Docker CE and Compose plugin
+      ansible.builtin.apt:
+        name: [docker-ce, docker-ce-cli, containerd.io, docker-compose-plugin]
+        state: present
+        update_cache: true
+
+    - name: Configure Docker daemon (registry mirror)
+      ansible.builtin.copy:
+        dest: /etc/docker/daemon.json
+        content: |
+          {
+            "registry-mirrors": ["http://registry.k3s.wiserisk.home"],
+            "insecure-registries": ["registry.k3s.wiserisk.home"]
+          }
+        mode: '0644'
+      notify: Restart Docker
+
+    - name: Enable and start Docker
+      ansible.builtin.systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    # ── Config directories ─────────────────────────────────────────────────────
+
+    - name: Create arr config directories
+      ansible.builtin.file:
+        path: "{{ arr_config_base }}/{{ item }}"
+        state: directory
+        mode: '0755'
+      loop: [sonarr, radarr, prowlarr, profilarr, jellyseerr, homer, homer-be, calibre-web-automated, calibre-library, shelfmark, ebooks-ingest, ebooks-staging, kcc-in, arr-scripts]
+
+    # ── Deploy ─────────────────────────────────────────────────────────────────
+
+    - name: Deploy docker-compose.yml
+      ansible.builtin.template:
+        src: templates/arr/docker-compose.yml.j2
+        dest: "{{ arr_config_base }}/docker-compose.yml"
+        mode: '0644'
+      notify: Restart arr stack
+
+    - name: Deploy Homer config (.home)
+      ansible.builtin.template:
+        src: templates/arr/homer-config.yml.j2
+        dest: "{{ arr_config_base }}/homer/config.yml"
+        mode: '0644'
+      vars:
+        homer_domain: "wiserisk.home"
+
+    - name: Deploy Homer config (.be)
+      ansible.builtin.template:
+        src: templates/arr/homer-config.yml.j2
+        dest: "{{ arr_config_base }}/homer-be/config.yml"
+        mode: '0644'
+      vars:
+        homer_domain: "wiserisk.be"
+
+    - name: Deploy ebook-router script
+      ansible.builtin.template:
+        src: templates/arr/ebook-router.sh.j2
+        dest: "{{ arr_config_base }}/arr-scripts/router.sh"
+        mode: '0755'
+      notify: Restart arr stack
+
+    - name: Deploy kcc-worker script
+      ansible.builtin.template:
+        src: templates/arr/kcc-worker.sh.j2
+        dest: "{{ arr_config_base }}/arr-scripts/kcc-worker.sh"
+        mode: '0755'
+      notify: Restart arr stack
+
+    - name: Start arr stack
+      ansible.builtin.command:
+        cmd: docker compose up -d --pull=always
+        chdir: "{{ arr_config_base }}"
+      register: compose_up
+      changed_when: >
+        'Started' in compose_up.stdout or
+        'Created' in compose_up.stdout or
+        'Pulled' in compose_up.stdout
+
+    # ── Wait for readiness ─────────────────────────────────────────────────────
+
+    - name: Wait for Sonarr
+      ansible.builtin.wait_for:
+        port: 8989
+        timeout: 60
+
+    - name: Wait for Radarr
+      ansible.builtin.wait_for:
+        port: 7878
+        timeout: 60
+
+    - name: Wait for Prowlarr
+      ansible.builtin.wait_for:
+        port: 9696
+        timeout: 60
+
+    - name: Wait for Jellyseerr
+      ansible.builtin.wait_for:
+        port: 5055
+        timeout: 60
+
+    - name: Wait for Calibre Web Automated
+      ansible.builtin.wait_for:
+        port: 8083
+        timeout: 60
+
+    - name: Wait for Shelfmark
+      ansible.builtin.wait_for:
+        port: 8084
+        timeout: 60
+
+    - name: Wait for kcc-worker (inotifywait ready)
+      ansible.builtin.command:
+        cmd: docker exec kcc-worker pgrep inotifywait
+      register: kcc_inotify
+      until: kcc_inotify.rc == 0
+      retries: 18
+      delay: 10
+      changed_when: false
+
+    - name: Wait for ebook-router (inotifywait ready)
+      ansible.builtin.command:
+        cmd: docker exec ebook-router pgrep inotifywait
+      register: inotify_check
+      until: inotify_check.rc == 0
+      retries: 12
+      delay: 5
+      changed_when: false
+
+    # ── Inter-service liaison (idempotent) ─────────────────────────────────────
+    # Lancer séparément si config.xml pas encore générée (fresh install) :
+    #   ansible-playbook playbooks/arr.yml --tags configure
+
+    - name: Wait for Sonarr config.xml
+      ansible.builtin.wait_for:
+        path: "{{ arr_config_base }}/sonarr/config.xml"
+        timeout: 30
+      tags: configure
+
+    - name: Wait for Radarr config.xml
+      ansible.builtin.wait_for:
+        path: "{{ arr_config_base }}/radarr/config.xml"
+        timeout: 30
+      tags: configure
+
+    - name: Wait for Prowlarr config.xml
+      ansible.builtin.wait_for:
+        path: "{{ arr_config_base }}/prowlarr/config.xml"
+        timeout: 30
+      tags: configure
+
+    - name: Read Sonarr API key
+      ansible.builtin.shell:
+        cmd: grep -oP '(?<=<ApiKey>)[^<]+' {{ arr_config_base }}/sonarr/config.xml
+      register: sonarr_api_key
+      changed_when: false
+      tags: configure
+
+    - name: Read Radarr API key
+      ansible.builtin.shell:
+        cmd: grep -oP '(?<=<ApiKey>)[^<]+' {{ arr_config_base }}/radarr/config.xml
+      register: radarr_api_key
+      changed_when: false
+      tags: configure
+
+    - name: Read Prowlarr API key
+      ansible.builtin.shell:
+        cmd: grep -oP '(?<=<ApiKey>)[^<]+' {{ arr_config_base }}/prowlarr/config.xml
+      register: prowlarr_api_key
+      changed_when: false
+      tags: configure
+
+    - name: Get existing Prowlarr applications
+      ansible.builtin.uri:
+        url: "http://localhost:9696/api/v1/applications"
+        headers:
+          X-Api-Key: "{{ prowlarr_api_key.stdout }}"
+        method: GET
+      register: prowlarr_apps
+      tags: configure
+
+    - name: Set existing Prowlarr app facts
+      ansible.builtin.set_fact:
+        existing_sonarr_app: "{{ prowlarr_apps.json | selectattr('implementation', 'equalto', 'Sonarr') | list | first | default({}) }}"
+        existing_radarr_app: "{{ prowlarr_apps.json | selectattr('implementation', 'equalto', 'Radarr') | list | first | default({}) }}"
+      tags: configure
+
+    - name: Add or update Sonarr in Prowlarr
+      vars:
+        _body:
+          name: "Sonarr"
+          syncLevel: "fullSync"
+          implementation: "Sonarr"
+          configContract: "SonarrSettings"
+          tags: []
+          fields:
+            - name: "prowlarrUrl"
+              value: "http://prowlarr:9696"
+            - name: "baseUrl"
+              value: "http://sonarr:8989"
+            - name: "apiKey"
+              value: "{{ sonarr_api_key.stdout }}"
+            - name: "syncCategories"
+              value: [5030, 5040, 5045, 5070]
+      ansible.builtin.uri:
+        url: "http://localhost:9696/api/v1/applications{{ '/' + (existing_sonarr_app.id | string) if 'id' in existing_sonarr_app else '' }}"
+        headers:
+          X-Api-Key: "{{ prowlarr_api_key.stdout }}"
+        method: "{{ 'PUT' if 'id' in existing_sonarr_app else 'POST' }}"
+        body_format: json
+        body: "{{ _body | combine({'id': existing_sonarr_app.id} if 'id' in existing_sonarr_app else {}) }}"
+        status_code: [200, 201, 202]
+      tags: configure
+
+    - name: Add or update Radarr in Prowlarr
+      vars:
+        _body:
+          name: "Radarr"
+          syncLevel: "fullSync"
+          implementation: "Radarr"
+          configContract: "RadarrSettings"
+          tags: []
+          fields:
+            - name: "prowlarrUrl"
+              value: "http://prowlarr:9696"
+            - name: "baseUrl"
+              value: "http://radarr:7878"
+            - name: "apiKey"
+              value: "{{ radarr_api_key.stdout }}"
+            - name: "syncCategories"
+              value: [2000, 2010, 2020, 2030, 2040, 2045, 2050]
+      ansible.builtin.uri:
+        url: "http://localhost:9696/api/v1/applications{{ '/' + (existing_radarr_app.id | string) if 'id' in existing_radarr_app else '' }}"
+        headers:
+          X-Api-Key: "{{ prowlarr_api_key.stdout }}"
+        method: "{{ 'PUT' if 'id' in existing_radarr_app else 'POST' }}"
+        body_format: json
+        body: "{{ _body | combine({'id': existing_radarr_app.id} if 'id' in existing_radarr_app else {}) }}"
+        status_code: [200, 201, 202]
+      tags: configure
+
+
+  handlers:
+    - name: Restart Docker
+      ansible.builtin.systemd:
+        name: docker
+        state: restarted
+
+    - name: Restart arr stack
+      ansible.builtin.command:
+        cmd: docker compose restart
+        chdir: "{{ arr_config_base }}"

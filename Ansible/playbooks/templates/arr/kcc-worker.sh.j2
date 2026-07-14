@@ -1,0 +1,49 @@
+#!/bin/bash
+# Converts CBZ/CBR to Kindle-optimized EPUB via KCC, then moves to CWA ingest.
+# Triggered by IN_MOVED_TO on /kcc-in — file is always complete (atomic rename from ebook-router).
+KCC_IN=/kcc-in
+INGEST=/ingest
+
+inotifywait -m -e moved_to --format '%f' "$KCC_IN" | while IFS= read -r file; do
+  ext=$(printf '%s' "${file##*.}" | tr '[:upper:]' '[:lower:]')
+  case "$ext" in cbz|cbr) ;; *) continue ;; esac
+
+  src="$KCC_IN/$file"
+  tmpdir=$(mktemp -d)
+
+  base="${file%.*}"
+  case "$base" in
+    *" - "*)
+      meta_author="${base%% - *}"
+      meta_title=$(printf '%s' "${base#* - }" | sed 's/ ([0-9]\{4\})$//')
+      ;;
+    *)
+      meta_author=""
+      meta_title="$base"
+      ;;
+  esac
+
+  c2e \
+    -p {{ kcc_profile }} \
+    -f {{ kcc_format }} \
+    -r {{ kcc_reading_dir }} \
+    -u \
+    -c 0 \
+    --jpeg-quality {{ kcc_quality }} \
+    --ts {{ kcc_target_size_mb }} \
+    ${meta_author:+-a "$meta_author"} \
+    -t "$meta_title" \
+    -o "$tmpdir" \
+    "$src" && {
+      for out in "$tmpdir"/*.epub; do
+        [ -f "$out" ] || continue
+        base="${out##*/}"
+        cp "$out" "$INGEST/${base}.tmp" \
+          && mv "$INGEST/${base}.tmp" "$INGEST/${base}" \
+          && rm -f "$out"
+      done
+      rm -f "$src"
+  }
+
+  rm -rf "$tmpdir"
+done
