@@ -1,5 +1,10 @@
 # Changelog
 
+## v2026.08.25-4fa4dd7
+
+### Nouvelles applications
+- Jellyglance ajouté au stack ARR avec configuration Traefik et Docker Compose
+
 ## v2026.07.14-9c1d846
 
 ### Monitoring
