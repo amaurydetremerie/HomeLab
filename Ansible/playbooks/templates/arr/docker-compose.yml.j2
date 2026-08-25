@@ -143,3 +143,43 @@ services:
       - {{ arr_config_base }}/ebooks-ingest:/ingest
       - {{ arr_config_base }}/kcc-in:/kcc-in
     restart: unless-stopped
+
+  jellyglance-db:
+    image: postgres:16-alpine
+    container_name: jellyglance-db
+    restart: unless-stopped
+    shm_size: "256mb"
+    environment:
+      POSTGRES_USER: jellyglance
+      POSTGRES_PASSWORD: "{{ arr_jellyglance_db_password }}"
+      POSTGRES_DB: jellyglance
+    volumes:
+      - {{ arr_config_base }}/jellyglance-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --dbname=jellyglance --username=jellyglance"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  jellyglance:
+    image: ghcr.io/nerdy-technician/jellyglance:latest
+    container_name: jellyglance
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: jellyglance
+      POSTGRES_PASSWORD: "{{ arr_jellyglance_db_password }}"
+      POSTGRES_IP: jellyglance-db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: jellyglance
+      JWT_SECRET: "{{ arr_jellyglance_jwt_secret }}"
+      TZ: "{{ arr_tz }}"
+      CONFIG_DIR: /app/config
+      BACKUP_DIR: /app/backups
+    volumes:
+      - {{ arr_config_base }}/jellyglance:/app/config
+      - {{ arr_config_base }}/jellyglance-backups:/app/backups
+    ports:
+      - "3000:3000"
+    depends_on:
+      jellyglance-db:
+        condition: service_healthy

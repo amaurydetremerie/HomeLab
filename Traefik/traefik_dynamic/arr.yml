@@ -36,6 +36,10 @@ http:
       loadBalancer:
         servers:
           - url: "http://10.100.0.200:8084"
+    jellyglance:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.200:3000"
 
   routers:
     # ── Homer dashboard ────────────────────────────────────────────────────────
@@ -244,4 +248,30 @@ http:
         - "security@file"
         - "compression@file"
       service: shelfmark@file
+      tls: {}
+
+    # ── Jellyglance ────────────────────────────────────────────────────────────
+    jellyglance:
+      rule: "Host(`jellyglance.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: jellyglance@file
+    jellyglance-home:
+      rule: "Host(`jellyglance.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: noop@internal
+    jellyglance-local-secure:
+      rule: "Host(`jellyglance.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: jellyglance@file
       tls: {}

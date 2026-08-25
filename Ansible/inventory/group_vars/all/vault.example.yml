@@ -119,3 +119,11 @@ vault_wg_vps_pubkey: ""
 # vault_wg_flash_pubkey: ""
 # vault_wg_wasp_pubkey: ""
 # vault_wg_laptop_pubkey: ""
+
+# ── Arr stack ─────────────────────────────────────────────────────────────────
+vault_jellyglance_jwt_secret: ""       # openssl rand -hex 32
+vault_jellyglance_db_password: ""      # mot de passe PostgreSQL Jellyglance (défini librement)
+vault_jellyglance_admin_password: ""   # mot de passe du compte admin Jellyglance (défini librement)
+vault_jellyglance_jellyfin_api_key: "" # Jellyfin UI → Dashboard → API Keys → Ajouter une clé
+vault_qbittorrent_username: ""         # identifiant WebUI qBittorrent
+vault_qbittorrent_password: ""         # mot de passe WebUI qBittorrent

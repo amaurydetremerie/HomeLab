@@ -73,7 +73,7 @@
         path: "{{ arr_config_base }}/{{ item }}"
         state: directory
         mode: '0755'
-      loop: [sonarr, radarr, prowlarr, profilarr, jellyseerr, homer, homer-be, calibre-web-automated, calibre-library, shelfmark, ebooks-ingest, ebooks-staging, kcc-in, arr-scripts]
+      loop: [sonarr, radarr, prowlarr, profilarr, jellyseerr, homer, homer-be, calibre-web-automated, calibre-library, shelfmark, ebooks-ingest, ebooks-staging, kcc-in, arr-scripts, jellyglance, jellyglance-backups, jellyglance-db]
 
     # ── Deploy ─────────────────────────────────────────────────────────────────
 
@@ -156,14 +156,68 @@
         port: 8084
         timeout: 60
 
+    - name: Wait for Jellyglance
+      ansible.builtin.wait_for:
+        port: 3000
+        timeout: 60
+
+    # ── Jellyglance first-time setup (idempotent) ─────────────────────────────
+    # Lancer séparément si pas encore initialisé :
+    #   ansible-playbook playbooks/arr.yml --tags configure
+
+    - name: Check Jellyglance setup state
+      ansible.builtin.uri:
+        url: "http://localhost:3000/auth/isConfigured"
+        method: GET
+      register: jellyglance_state
+      until: jellyglance_state.status == 200
+      retries: 12
+      delay: 5
+      tags: configure
+
+    - name: Configure Jellyglance → Jellyfin connection
+      ansible.builtin.uri:
+        url: "http://localhost:3000/auth/configSetup"
+        method: POST
+        body_format: json
+        body:
+          JF_HOST: "{{ arr_jellyfin_url }}"
+          JF_API_KEY: "{{ arr_jellyglance_jellyfin_api_key }}"
+        status_code: [200]
+      when: jellyglance_state.json.state == 0
+      tags: configure
+
+    - name: Hash Jellyglance admin password (Keccak-512 via crypto-js)
+      ansible.builtin.shell:
+        cmd: >
+          docker exec jellyglance node -e
+          "const c=require('/app/node_modules/crypto-js');process.stdout.write(c.SHA3('{{ arr_jellyglance_admin_password }}').toString())"
+      register: jellyglance_pwd_hash
+      changed_when: false
+      tags: configure
+
+    - name: Setup Jellyglance auth (local) and create admin
+      ansible.builtin.uri:
+        url: "http://localhost:3000/auth/setup-auth"
+        method: POST
+        body_format: json
+        body:
+          mode: "local"
+          username: "admin"
+          password: "{{ jellyglance_pwd_hash.stdout }}"
+        status_code: [200]
+      when: jellyglance_state.json.state < 2
+      tags: configure
+
     - name: Wait for kcc-worker (inotifywait ready)
       ansible.builtin.command:
         cmd: docker exec kcc-worker pgrep inotifywait
       register: kcc_inotify
       until: kcc_inotify.rc == 0
-      retries: 18
+      retries: 36
       delay: 10
       changed_when: false
+      ignore_errors: true
 
     - name: Wait for ebook-router (inotifywait ready)
       ansible.builtin.command:
@@ -173,6 +227,7 @@
       retries: 12
       delay: 5
       changed_when: false
+      ignore_errors: true
 
     # ── Inter-service liaison (idempotent) ─────────────────────────────────────
     # Lancer séparément si config.xml pas encore générée (fresh install) :
@@ -284,6 +339,80 @@
         body_format: json
         body: "{{ _body | combine({'id': existing_radarr_app.id} if 'id' in existing_radarr_app else {}) }}"
         status_code: [200, 201, 202]
+      tags: configure
+
+    # ── Jellyglance integrations (idempotent — skipped si déjà configuré) ─────
+
+    - name: Login to Jellyglance
+      ansible.builtin.uri:
+        url: "http://localhost:3000/auth/login"
+        method: POST
+        body_format: json
+        body:
+          username: "admin"
+          password: "{{ jellyglance_pwd_hash.stdout }}"
+      register: jellyglance_login
+      tags: configure
+
+    - name: Get existing Jellyglance integrations
+      ansible.builtin.uri:
+        url: "http://localhost:3000/api/integrations"
+        headers:
+          Authorization: "Bearer {{ jellyglance_login.json.token }}"
+        method: GET
+      register: jellyglance_integrations
+      tags: configure
+
+    - name: Configure Jellyglance integrations (Sonarr, Radarr, Prowlarr, qBittorrent)
+      ansible.builtin.uri:
+        url: "http://localhost:3000/api/integrations"
+        headers:
+          Authorization: "Bearer {{ jellyglance_login.json.token }}"
+        method: POST
+        body_format: json
+        body:
+          arrApps:
+            - instanceId: "sonarr-arr-stack"
+              slug: "sonarr"
+              name: "Sonarr"
+              connected: true
+              values:
+                url: "http://sonarr:8989"
+                secret: "{{ sonarr_api_key.stdout }}"
+            - instanceId: "radarr-arr-stack"
+              slug: "radarr"
+              name: "Radarr"
+              connected: true
+              values:
+                url: "http://radarr:7878"
+                secret: "{{ radarr_api_key.stdout }}"
+            - instanceId: "prowlarr-arr-stack"
+              slug: "prowlarr"
+              name: "Prowlarr"
+              connected: true
+              values:
+                url: "http://prowlarr:9696"
+                secret: "{{ prowlarr_api_key.stdout }}"
+          clients:
+            - instanceId: "qbittorrent-arr-stack"
+              slug: "qbittorrent"
+              name: "qBittorrent"
+              connected: true
+              values:
+                url: "http://{{ arr_qbittorrent_host }}:{{ arr_qbittorrent_port }}"
+                username: "{{ arr_qbittorrent_username }}"
+                secret: "{{ arr_qbittorrent_password }}"
+          thirdParty: []
+        status_code: [200]
+      when: jellyglance_integrations.json.arrApps | length == 0
+      tags: configure
+
+    - name: Clear Jellyglance first-run flag
+      ansible.builtin.command:
+        cmd: >
+          docker exec jellyglance-db psql -U jellyglance -d jellyglance -c
+          "UPDATE app_config SET settings = jsonb_set(settings::jsonb, '{firstRunExtrasPending}', 'false'::jsonb);"
+      changed_when: false
       tags: configure
 
 
