@@ -100,10 +100,13 @@ data:
           api_key: os.environ/OPENAI_API_KEY
 
       # ── copilot ──────────────────────────────────────────────────────────────
-      - model_name: copilot
-        litellm_params:
-          model: github_copilot/gpt-4o
-          api_key: os.environ/GITHUB_COPILOT_API_KEY
+      # Désactivé : LiteLLM tente le device flow OAuth au démarrage si pas de token
+      # Pour activer : générer api-key.json localement (litellm --model github_copilot/gpt-4o),
+      # stocker dans Vault, et monter comme secret dans /root/.config/litellm/github_copilot/
+      # - model_name: copilot
+      #   litellm_params:
+      #     model: github_copilot/gpt-4o
+      #     api_key: os.environ/GITHUB_COPILOT_API_KEY
 
       # ── 1minai ───────────────────────────────────────────────────────────────
       # Nécessite l'adaptateur 1min.AI (1minai-adapter-svc) — à décommenter quand prêt
@@ -145,10 +148,10 @@ data:
           model: openai/*
           api_key: os.environ/OPENAI_API_KEY
 
-      - model_name: github_copilot/*
-        litellm_params:
-          model: github_copilot/*
-          api_key: os.environ/GITHUB_COPILOT_API_KEY
+      # - model_name: github_copilot/*
+      #   litellm_params:
+      #     model: github_copilot/*
+      #     api_key: os.environ/GITHUB_COPILOT_API_KEY
           
       - model_name: ollama/*
         litellm_params:
@@ -173,11 +176,11 @@ data:
 
       fallbacks:
         # hermes : free first (xhigh→high→medium), then paid one and finish with low free tier
-        - hermes: ["free-xhigh", "free-high", "free-medium", "openai", "1minai", "free-low", "free-xlow", "copilot", "ollama-local"]
+        - hermes: ["free-xhigh", "free-high", "free-medium", "openai", "1minai", "free-low", "free-xlow", "ollama-local"]
         # free : free only
         - free: ["free-xhigh", "free-high", "free-medium", "free-low", "free-xlow", "ollama-local"]
         # premium : paid first then free one
-        - premium: ["openai", "1minai", "copilot", "free-xhigh", "free-high", "free-medium", "free-low", "free-xlow", "ollama-local"]
+        - premium: ["openai", "1minai", "free-xhigh", "free-high", "free-medium", "free-low", "free-xlow", "ollama-local"]
 
       num_retries: 2
       allowed_fails: 2
