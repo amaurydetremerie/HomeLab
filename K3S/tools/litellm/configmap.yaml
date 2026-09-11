@@ -130,7 +130,7 @@ data:
 
       - model_name: openrouter/*
         litellm_params:
-          model: openrouter/*
+          model: openrouter/*:free
           api_key: os.environ/OPENROUTER_API_KEY
 
       - model_name: gemini/*
