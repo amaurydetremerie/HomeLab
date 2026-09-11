@@ -190,4 +190,3 @@ data:
     # ═══════════════════════════════════════════════════════════════════════════
     general_settings:
       master_key: os.environ/LITELLM_MASTER_KEY
-      database_url: "sqlite:////data/litellm.db"
