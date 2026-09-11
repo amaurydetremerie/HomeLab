@@ -1,5 +1,10 @@
 # Changelog
 
+## v2026.09.11-f33021b
+
+### Outils
+- Ajout de LiteLLM
+
 ## v2026.08.25-4fa4dd7
 
 ### Nouvelles applications
