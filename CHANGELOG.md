@@ -1,5 +1,10 @@
 # Changelog
 
+## v2026.09.11-e86edb1
+
+### Infrastructure
+- Suppression de Copilot
+
 ## v2026.09.11-96e7f5d
 
 ### Optimisations
