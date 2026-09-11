@@ -5,6 +5,8 @@ metadata:
     app: litellm
   name: litellm
   namespace: litellm
+  annotations:
+    configmap.reloader.stakater.com/reload: "litellm-config"
 spec:
   replicas: 1
   selector:
