@@ -1,5 +1,15 @@
 # Changelog
 
+## v2026.09.11-684734f
+
+### Nouvelles fonctionnalités
+
+- Ajout d'un reloader
+
+### Tests
+
+- Tests limités à la version gratuite
+
 ## v2026.09.11-e86edb1
 
 ### Infrastructure
