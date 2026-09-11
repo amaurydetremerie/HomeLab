@@ -1,5 +1,11 @@
 # Changelog
 
+## v2026.09.11-96e7f5d
+
+### Optimisations
+
+- Suppression de la dépendance base de données pour LiteLLM (PersistentVolume et PersistentVolumeClaim)
+
 ## v2026.09.11-f33021b
 
 ### Outils
