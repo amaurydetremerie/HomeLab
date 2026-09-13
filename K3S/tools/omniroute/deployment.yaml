@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: omniroute
+  name: omniroute
+  namespace: omniroute
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: omniroute
+  template:
+    metadata:
+      labels:
+        app: omniroute
+    spec:
+      containers:
+        - name: omniroute
+          image: diegosouzapw/omniroute:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 20128
+          volumeMounts:
+            - name: omniroute-volume
+              mountPath: /app/data
+              subPath: omniroute
+      volumes:
+        - name: omniroute-volume
+          persistentVolumeClaim:
+            claimName: omniroute-pvc

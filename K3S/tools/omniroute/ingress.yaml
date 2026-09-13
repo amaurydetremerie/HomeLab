@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: omniroute-http
+  namespace: omniroute
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  rules:
+    - host: omniroute.k3s.wiserisk.be
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: omniroute-svc
+                port:
+                  number: 20128
+    - host: omniroute.k3s.wiserisk.home
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: omniroute-svc
+                port:
+                  number: 20128
