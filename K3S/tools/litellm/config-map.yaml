@@ -248,8 +248,9 @@ data:
       # ═══════════════════════════════════════════════════════════════════════
       - model_name: tts
         litellm_params:
-          model: gemini/gemini-2.5-flash-preview-tts
-          api_key: os.environ/GEMINI_API_KEY
+          model: openai/deepgram/flux-tts:free
+          api_base: https://openrouter.ai/api/v1
+          api_key: os.environ/OPENROUTER_API_KEY
       
       # ═══════════════════════════════════════════════════════════════════════
       # WILDCARDS
