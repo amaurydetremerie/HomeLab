@@ -299,6 +299,7 @@ data:
         litellm_params:
           model: glm-5.2
           custom_llm_provider: openai
+          use_chat_completions_api: true
           api_base: os.environ/OPENCODE_API_BASE_OPENAI
           api_key: os.environ/OPENCODE_API_KEY
           headers:
@@ -308,6 +309,7 @@ data:
         litellm_params:
           model: kimi-k2.7-code
           custom_llm_provider: openai
+          use_chat_completions_api: true
           api_base: os.environ/OPENCODE_API_BASE_OPENAI
           api_key: os.environ/OPENCODE_API_KEY
           headers:
@@ -317,6 +319,7 @@ data:
         litellm_params:
           model: deepseek-v4.1-flash
           custom_llm_provider: openai
+          use_chat_completions_api: true
           api_base: os.environ/OPENCODE_API_BASE_OPENAI
           api_key: os.environ/OPENCODE_API_KEY
           headers:
