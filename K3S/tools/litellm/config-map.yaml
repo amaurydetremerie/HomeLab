@@ -21,7 +21,7 @@ data:
       # ═══════════════════════════════════════════════════════════════════════
       - model_name: paid
         litellm_params:
-          model: openai/qwen/qwen3.7-flash
+          model: qwen/qwen3.7-flash
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
       
@@ -30,7 +30,7 @@ data:
       # ═══════════════════════════════════════════════════════════════════════
       - model_name: subscription
         litellm_params:
-          model: openai/deepseek-v4.1-flash
+          model: deepseek-v4.1-flash
           api_base: os.environ/OPENCODE_API_BASE
           api_key: os.environ/OPENCODE_API_KEY
           headers:
@@ -69,12 +69,12 @@ data:
           api_key: os.environ/GEMINI_API_KEY
       - model_name: free-medium
         litellm_params:
-          model: openai/z-ai/glm-5.3-flash-free
+          model: z-ai/glm-5.3-flash-free
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
       - model_name: free-medium
         litellm_params:
-          model: openai/deepseek/deepseek-v4-flash-free
+          model: deepseek/deepseek-v4-flash-free
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
       - model_name: free-medium
@@ -139,17 +139,17 @@ data:
           api_key: os.environ/MISTRAL_API_KEY
       - model_name: free-low
         litellm_params:
-          model: openai/stealth/union-alpha-free
+          model: stealth/union-alpha-free
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
       - model_name: free-low
         litellm_params:
-          model: openai/tencent/hy3-free
+          model: tencent/hy3-free
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
       - model_name: free-low
         litellm_params:
-          model: openai/union-alpha
+          model: union-alpha
           api_base: os.environ/OPENCODE_API_BASE
           api_key: os.environ/OPENCODE_API_KEY
           headers:
@@ -172,7 +172,7 @@ data:
       # ═══════════════════════════════════════════════════════════════════════
       - model_name: free-xlow
         litellm_params:
-          model: openai/orcarouter/free
+          model: orcarouter/free
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
       - model_name: free-xlow
@@ -217,22 +217,22 @@ data:
       # ═══════════════════════════════════════════════════════════════════════
       - model_name: image
         litellm_params:
-          model: openai/openai/gpt-image-2
+          model: openai/gpt-image-2
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
       - model_name: image
         litellm_params:
-          model: openai/openai/gpt-image-1.5
+          model: openai/gpt-image-1.5
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
       - model_name: image
         litellm_params:
-          model: openai/openai/gpt-image-1
+          model: openai/gpt-image-1
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
       - model_name: image
         litellm_params:
-          model: openai/openai/gpt-image-1-mini
+          model: openai/gpt-image-1-mini
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
       # ═══════════════════════════════════════════════════════════════════════
@@ -281,13 +281,13 @@ data:
       
       - model_name: orcarouter/*
         litellm_params:
-          model: openai/*
+          model: *
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
       
       - model_name: opencodego/*
         litellm_params:
-          model: openai/*
+          model: *
           api_base: os.environ/OPENCODE_API_BASE
           api_key: os.environ/OPENCODE_API_KEY
           headers:
