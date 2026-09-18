@@ -281,13 +281,13 @@ data:
       
       - model_name: orcarouter/*
         litellm_params:
-          model: *
+          model: "*"
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
       
       - model_name: opencodego/*
         litellm_params:
-          model: *
+          model: "*"
           api_base: os.environ/OPENCODE_API_BASE
           api_key: os.environ/OPENCODE_API_KEY
           headers:
