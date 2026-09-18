@@ -248,9 +248,8 @@ data:
       # ═══════════════════════════════════════════════════════════════════════
       - model_name: tts
         litellm_params:
-          model: openai/deepgram/flux-tts:free
-          api_base: https://openrouter.ai/api/v1
-          api_key: os.environ/OPENROUTER_API_KEY
+          model: groq/canopylabs/orpheus-v1-english
+          api_key: os.environ/GROQ_API_KEY
       
       # ═══════════════════════════════════════════════════════════════════════
       # WILDCARDS
