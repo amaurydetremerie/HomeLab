@@ -36,7 +36,8 @@ http:
         Host(`graylog.k3s.wiserisk.be`) ||
         Host(`librespeed.k3s.wiserisk.be`) ||
         Host(`nextcloud.k3s.wiserisk.be`) ||
-        Host(`sonarqube.k3s.wiserisk.be`)
+        Host(`sonarqube.k3s.wiserisk.be`) ||
+        Host(`litellm.k3s.wiserisk.be`)
       entryPoints:
         - websecure
       service: traefik-internal@file
