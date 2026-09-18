@@ -15,7 +15,7 @@ data:
       - model_name: oauth
         litellm_params:
           model: github_copilot/gpt-5.6-terra
-
+      
       # ═══════════════════════════════════════════════════════════════════════
       # PAID GROUP
       # ═══════════════════════════════════════════════════════════════════════
@@ -24,18 +24,18 @@ data:
           model: openai/qwen/qwen3.7-flash
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
-
+      
       # ═══════════════════════════════════════════════════════════════════════
       # SUBSCRIPTION GROUP
       # ═══════════════════════════════════════════════════════════════════════
       - model_name: subscription
         litellm_params:
-          model: openai/opencodego/deepseek-v4.1-flash
+          model: openai/deepseek-v4.1-flash
           api_base: os.environ/OPENCODE_API_BASE
           api_key: os.environ/OPENCODE_API_KEY
           headers:
             x-opencode-session: os.environ/OPENCODE_SESSION
-
+      
       # ═══════════════════════════════════════════════════════════════════════
       # FREE-HIGH GROUP
       # ═══════════════════════════════════════════════════════════════════════
@@ -51,7 +51,7 @@ data:
         litellm_params:
           model: openrouter/z-ai/glm-5.2:free
           api_key: os.environ/OPENROUTER_API_KEY
-
+      
       # ═══════════════════════════════════════════════════════════════════════
       # FREE-MEDIUM GROUP
       # ═══════════════════════════════════════════════════════════════════════
@@ -87,13 +87,45 @@ data:
           api_key: os.environ/OPENROUTER_API_KEY
       - model_name: free-medium
         litellm_params:
+          model: openrouter/poolside/laguna-s-2.1:free
+          api_key: os.environ/OPENROUTER_API_KEY
+      - model_name: free-medium
+        litellm_params:
+          model: openrouter/qwen/qwen3.8-27b:free
+          api_key: os.environ/OPENROUTER_API_KEY
+      - model_name: free-medium
+        litellm_params:
+          model: openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
+          api_key: os.environ/OPENROUTER_API_KEY
+      - model_name: free-medium
+        litellm_params:
+          model: openrouter/nvidia/nemotron-3.5-lightning:free
+          api_key: os.environ/OPENROUTER_API_KEY
+      - model_name: free-medium
+        litellm_params:
+          model: openrouter/nex-agi/nex-n2.5-pro:free
+          api_key: os.environ/OPENROUTER_API_KEY
+      - model_name: free-medium
+        litellm_params:
+          model: nvidia_nim/nvidia/nemotron-3.5-lightning-30b-a3b
+          api_key: os.environ/NVIDIA_NIM_API_KEY
+      - model_name: free-medium
+        litellm_params:
+          model: nvidia_nim/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
+          api_key: os.environ/NVIDIA_NIM_API_KEY
+      - model_name: free-medium
+        litellm_params:
+          model: nvidia_nim/poolside/laguna-xs-2.1
+          api_key: os.environ/NVIDIA_NIM_API_KEY
+      - model_name: free-medium
+        litellm_params:
           model: mistral/ministral-14b-latest
           api_key: os.environ/MISTRAL_API_KEY
       - model_name: free-medium
         litellm_params:
           model: mistral/codestral-2508
           api_key: os.environ/MISTRAL_API_KEY
-
+      
       # ═══════════════════════════════════════════════════════════════════════
       # FREE-LOW GROUP
       # ═══════════════════════════════════════════════════════════════════════
@@ -117,25 +149,41 @@ data:
           api_base: os.environ/ORCAROUTER_API_BASE
       - model_name: free-low
         litellm_params:
-          model: openai/opencodego/union-alpha
+          model: openai/union-alpha
           api_base: os.environ/OPENCODE_API_BASE
           api_key: os.environ/OPENCODE_API_KEY
           headers:
             x-opencode-session: os.environ/OPENCODE_SESSION
-    
-    # ═══════════════════════════════════════════════════════════════════════
-    # FREE-XLOW GROUP
-    # ═══════════════════════════════════════════════════════════════════════
-      - model_name: free-xlow
+      - model_name: free-low
         litellm_params:
-          model: openrouter/openrouter/free
+          model: openrouter/cohere/north-mini-code:free
           api_key: os.environ/OPENROUTER_API_KEY
+      - model_name: free-low
+        litellm_params:
+          model: nvidia_nim/meta/llama-3.2-11b-vision-instruct
+          api_key: os.environ/NVIDIA_NIM_API_KEY
+      - model_name: free-low
+        litellm_params:
+          model: nvidia_nim/mistralai/mistral-nemotron
+          api_key: os.environ/NVIDIA_NIM_API_KEY
+      
+      # ═══════════════════════════════════════════════════════════════════════
+      # FREE-XLOW GROUP
+      # ═══════════════════════════════════════════════════════════════════════
       - model_name: free-xlow
         litellm_params:
           model: openai/orcarouter/free
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
-
+      - model_name: free-xlow
+        litellm_params:
+          model: openrouter/liquid/lfm-2.5-2.6b:free
+          api_key: os.environ/OPENROUTER_API_KEY
+      - model_name: free-xlow
+        litellm_params:
+          model: openrouter/nex-agi/nex-n2.5-mini:free
+          api_key: os.environ/OPENROUTER_API_KEY
+      
       # ═══════════════════════════════════════════════════════════════════════
       # FREE-XHIGH GROUP (no fallback)
       # ═══════════════════════════════════════════════════════════════════════
@@ -145,13 +193,25 @@ data:
           api_key: os.environ/OPENROUTER_API_KEY
       - model_name: free-xhigh
         litellm_params:
+          model: openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+          api_key: os.environ/OPENROUTER_API_KEY
+      - model_name: free-xhigh
+        litellm_params:
+          model: nvidia_nim/nvidia/nemotron-3-super-120b-a12b
+          api_key: os.environ/NVIDIA_NIM_API_KEY
+      - model_name: free-xhigh
+        litellm_params:
+          model: nvidia_nim/nvidia/nemotron-3-ultra-550b-a55b
+          api_key: os.environ/NVIDIA_NIM_API_KEY
+      - model_name: free-xhigh
+        litellm_params:
           model: openrouter/google/gemma-4-31b-it:free
           api_key: os.environ/OPENROUTER_API_KEY
       - model_name: free-xhigh
         litellm_params:
-          model: gemini-3.1-pro-preview
+          model: gemini/gemini-3.1-pro-preview
           api_key: os.environ/GEMINI_API_KEY
-
+      
       # ═══════════════════════════════════════════════════════════════════════
       # IMAGE GROUP
       # ═══════════════════════════════════════════════════════════════════════
@@ -175,11 +235,6 @@ data:
           model: openai/openai/gpt-image-1-mini
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
-      - model_name: image
-        litellm_params:
-          model: openrouter/openai/gpt-image-2
-          api_key: os.environ/OPENROUTER_API_KEY
-
       # ═══════════════════════════════════════════════════════════════════════
       # WHISPER GROUP
       # ═══════════════════════════════════════════════════════════════════════
@@ -187,7 +242,7 @@ data:
         litellm_params:
           model: groq/whisper-large-v3-turbo
           api_key: os.environ/GROQ_API_KEY
-
+      
       # ═══════════════════════════════════════════════════════════════════════
       # TTS GROUP
       # ═══════════════════════════════════════════════════════════════════════
@@ -195,7 +250,7 @@ data:
         litellm_params:
           model: gemini/gemini-2.5-flash-preview-tts
           api_key: os.environ/GEMINI_API_KEY
-
+      
       # ═══════════════════════════════════════════════════════════════════════
       # WILDCARDS
       # ═══════════════════════════════════════════════════════════════════════
@@ -203,28 +258,33 @@ data:
         litellm_params:
           model: openrouter/*
           api_key: os.environ/OPENROUTER_API_KEY
-
+      
       - model_name: gemini/*
         litellm_params:
           model: gemini/*
           api_key: os.environ/GEMINI_API_KEY
-
+      
       - model_name: groq/*
         litellm_params:
           model: groq/*
           api_key: os.environ/GROQ_API_KEY
-
+      
       - model_name: mistral/*
         litellm_params:
           model: mistral/*
           api_key: os.environ/MISTRAL_API_KEY
-
+      
+      - model_name: nvidia_nim/*
+        litellm_params:
+          model: nvidia_nim/*
+          api_key: os.environ/NVIDIA_NIM_API_KEY
+      
       - model_name: orcarouter/*
         litellm_params:
           model: openai/*
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
-
+      
       - model_name: opencodego/*
         litellm_params:
           model: openai/*
@@ -232,7 +292,7 @@ data:
           api_key: os.environ/OPENCODE_API_KEY
           headers:
             x-opencode-session: os.environ/OPENCODE_SESSION
-
+    
     # ═══════════════════════════════════════════════════════════════════════
     # SEARCH TOOLS
     # ═══════════════════════════════════════════════════════════════════════
@@ -241,7 +301,7 @@ data:
         litellm_params:
           search_provider: brave
           api_key: os.environ/BRAVE_API_KEY
-
+    
     # ═══════════════════════════════════════════════════════════════════════
     # MCP SERVERS
     # ═══════════════════════════════════════════════════════════════════════
@@ -251,38 +311,38 @@ data:
         transport: "http"
         auth_type: "bearer_token"
         auth_value: os.environ/CONTEXT7_API_KEY
-
+    
     # ═══════════════════════════════════════════════════════════════════════
     # ROUTER SETTINGS
     # ═══════════════════════════════════════════════════════════════════════
     router_settings:
       routing_strategy: simple-shuffle
       enable_weighted_failover: true
-
+      
       model_group_alias:
         hermes: free-high
         free: free-xhigh
         premium: subscription
         fast: free-medium
-
+      
       fallbacks:
         - hermes: ["free-high", "free-medium", "free-low", "oauth", "free-xlow", "subscription", "paid"]
         - free: ["free-xhigh", "free-high", "free-medium", "free-low", "free-xlow", "oauth"]
         - premium: ["subscription", "oauth", "free-high", "free-medium", "free-low", "free-xhigh", "free-xlow", "paid"]
         - fast: ["free-medium", "free-low", "free-xlow", "free-high", "free-xhigh"]
-    
+      
       num_retries: 0
       allowed_fails: 2
       cooldown_time: 300
       timeout: 180
-
+      
       retry_policy:
         AuthenticationErrorRetries: 0
         TimeoutErrorRetries: 0
         RateLimitErrorRetries: 0
         ContentPolicyViolationErrorRetries: 0
         InternalServerErrorRetries: 0
-
+      
       allowed_fails_policy:
         BadRequestErrorAllowedFails: 1000
         AuthenticationErrorAllowedFails: 1
@@ -290,13 +350,13 @@ data:
         RateLimitErrorAllowedFails: 1
         ContentPolicyViolationErrorAllowedFails: 15
         InternalServerErrorAllowedFails: 2
-
+    
     # ═══════════════════════════════════════════════════════════════════════
     # GENERAL SETTINGS
     # ═══════════════════════════════════════════════════════════════════════
     general_settings:
       master_key: os.environ/LITELLM_MASTER_KEY
-
+    
     # ═══════════════════════════════════════════════════════════════════════
     # LITELLM SETTINGS
     # ═══════════════════════════════════════════════════════════════════════
