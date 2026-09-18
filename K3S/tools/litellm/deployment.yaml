@@ -29,9 +29,6 @@ spec:
           envFrom:
             - secretRef:
                 name: litellm-secret
-          env:
-            - name: LITELLM_LOG
-              value: "DEBUG"
           volumeMounts:
             - name: litellm-config
               mountPath: /app/config.yaml
