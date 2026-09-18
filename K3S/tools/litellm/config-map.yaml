@@ -297,7 +297,8 @@ data:
       # OpenAI-compatible
       - model_name: opencodego/glm-5.2
         litellm_params:
-          model: openai/glm-5.2
+          model: glm-5.2
+          custom_llm_provider: openai
           api_base: os.environ/OPENCODE_API_BASE_OPENAI
           api_key: os.environ/OPENCODE_API_KEY
           headers:
@@ -305,7 +306,8 @@ data:
     
       - model_name: opencodego/kimi-k2.7-code
         litellm_params:
-          model: openai/kimi-k2.7-code
+          model: kimi-k2.7-code
+          custom_llm_provider: openai
           api_base: os.environ/OPENCODE_API_BASE_OPENAI
           api_key: os.environ/OPENCODE_API_KEY
           headers:
@@ -313,7 +315,8 @@ data:
     
       - model_name: opencodego/deepseek-v4.1-flash
         litellm_params:
-          model: openai/deepseek-v4.1-flash
+          model: deepseek-v4.1-flash
+          custom_llm_provider: openai
           api_base: os.environ/OPENCODE_API_BASE_OPENAI
           api_key: os.environ/OPENCODE_API_KEY
           headers:
@@ -322,7 +325,8 @@ data:
       # Anthropic-compatible
       - model_name: opencodego/minimax-m3
         litellm_params:
-          model: anthropic/minimax-m3
+          model: minimax-m3
+          custom_llm_provider: anthropic
           api_base: os.environ/OPENCODE_API_BASE_ANTHROPIC
           api_key: os.environ/OPENCODE_API_KEY
           headers:
@@ -330,7 +334,8 @@ data:
     
       - model_name: opencodego/qwen3.7-plus
         litellm_params:
-          model: anthropic/qwen3.7-plus
+          model: qwen3.7-plus
+          custom_llm_provider: anthropic
           api_base: os.environ/OPENCODE_API_BASE_ANTHROPIC
           api_key: os.environ/OPENCODE_API_KEY
           headers:
@@ -338,7 +343,8 @@ data:
     
       - model_name: opencodego/qwen3.8-flash
         litellm_params:
-          model: anthropic/qwen3.8-flash
+          model: qwen3.8-flash
+          custom_llm_provider: anthropic
           api_base: os.environ/OPENCODE_API_BASE_ANTHROPIC
           api_key: os.environ/OPENCODE_API_KEY
           headers:
