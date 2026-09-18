@@ -29,6 +29,9 @@ spec:
           envFrom:
             - secretRef:
                 name: litellm-secret
+          env:
+            - name: LITELLM_LOG
+              value: "DEBUG"
           volumeMounts:
             - name: litellm-config
               mountPath: /app/config.yaml
@@ -40,14 +43,20 @@ spec:
             httpGet:
               path: /health/liveliness
               port: 4000
+            failureThreshold: 3
             initialDelaySeconds: 120
             periodSeconds: 15
+            successThreshold: 1
+            timeoutSeconds: 10
           readinessProbe:
             httpGet:
               path: /health/readiness
               port: 4000
+            failureThreshold: 5
             initialDelaySeconds: 120
             periodSeconds: 15
+            successThreshold: 1
+            timeoutSeconds: 10
       volumes:
         - name: litellm-config
           configMap:
