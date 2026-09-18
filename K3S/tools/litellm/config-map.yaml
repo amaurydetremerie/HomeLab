@@ -22,6 +22,7 @@ data:
       - model_name: paid
         litellm_params:
           model: qwen/qwen3.7-flash
+          custom_llm_provider: openai
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
       
@@ -31,7 +32,8 @@ data:
       - model_name: subscription
         litellm_params:
           model: deepseek-v4.1-flash
-          api_base: os.environ/OPENCODE_API_BASE
+          custom_llm_provider: openai
+          api_base: os.environ/OPENCODE_API_BASE_OPENAI
           api_key: os.environ/OPENCODE_API_KEY
           headers:
             x-opencode-session: os.environ/OPENCODE_SESSION
@@ -70,11 +72,13 @@ data:
       - model_name: free-medium
         litellm_params:
           model: z-ai/glm-5.3-flash-free
+          custom_llm_provider: openai
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
       - model_name: free-medium
         litellm_params:
           model: deepseek/deepseek-v4-flash-free
+          custom_llm_provider: openai
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
       - model_name: free-medium
@@ -140,17 +144,20 @@ data:
       - model_name: free-low
         litellm_params:
           model: stealth/union-alpha-free
+          custom_llm_provider: openai
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
       - model_name: free-low
         litellm_params:
           model: tencent/hy3-free
+          custom_llm_provider: openai
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
       - model_name: free-low
         litellm_params:
           model: union-alpha
-          api_base: os.environ/OPENCODE_API_BASE
+          custom_llm_provider: openai
+          api_base: os.environ/OPENCODE_API_BASE_OPENAI
           api_key: os.environ/OPENCODE_API_KEY
           headers:
             x-opencode-session: os.environ/OPENCODE_SESSION
@@ -173,6 +180,7 @@ data:
       - model_name: free-xlow
         litellm_params:
           model: orcarouter/free
+          custom_llm_provider: openai
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
       - model_name: free-xlow
@@ -282,13 +290,56 @@ data:
       - model_name: orcarouter/*
         litellm_params:
           model: "*"
+          custom_llm_provider: openai
           api_key: os.environ/ORCAROUTER_API_KEY
           api_base: os.environ/ORCAROUTER_API_BASE
       
-      - model_name: opencodego/*
+      # OpenAI-compatible
+      - model_name: opencodego/glm-5.2
         litellm_params:
-          model: "*"
-          api_base: os.environ/OPENCODE_API_BASE
+          model: openai/glm-5.2
+          api_base: os.environ/OPENCODE_API_BASE_OPENAI
+          api_key: os.environ/OPENCODE_API_KEY
+          headers:
+            x-opencode-session: os.environ/OPENCODE_SESSION
+    
+      - model_name: opencodego/kimi-k2.7-code
+        litellm_params:
+          model: openai/kimi-k2.7-code
+          api_base: os.environ/OPENCODE_API_BASE_OPENAI
+          api_key: os.environ/OPENCODE_API_KEY
+          headers:
+            x-opencode-session: os.environ/OPENCODE_SESSION
+    
+      - model_name: opencodego/deepseek-v4.1-flash
+        litellm_params:
+          model: openai/deepseek-v4.1-flash
+          api_base: os.environ/OPENCODE_API_BASE_OPENAI
+          api_key: os.environ/OPENCODE_API_KEY
+          headers:
+            x-opencode-session: os.environ/OPENCODE_SESSION
+      
+      # Anthropic-compatible
+      - model_name: opencodego/minimax-m3
+        litellm_params:
+          model: anthropic/minimax-m3
+          api_base: os.environ/OPENCODE_API_BASE_ANTHROPIC
+          api_key: os.environ/OPENCODE_API_KEY
+          headers:
+            x-opencode-session: os.environ/OPENCODE_SESSION
+    
+      - model_name: opencodego/qwen3.7-plus
+        litellm_params:
+          model: anthropic/qwen3.7-plus
+          api_base: os.environ/OPENCODE_API_BASE_ANTHROPIC
+          api_key: os.environ/OPENCODE_API_KEY
+          headers:
+            x-opencode-session: os.environ/OPENCODE_SESSION
+    
+      - model_name: opencodego/qwen3.8-flash
+        litellm_params:
+          model: anthropic/qwen3.8-flash
+          api_base: os.environ/OPENCODE_API_BASE_ANTHROPIC
           api_key: os.environ/OPENCODE_API_KEY
           headers:
             x-opencode-session: os.environ/OPENCODE_SESSION
