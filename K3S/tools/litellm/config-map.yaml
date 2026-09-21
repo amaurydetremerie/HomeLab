@@ -371,6 +371,10 @@ data:
         transport: "http"
         auth_type: "bearer_token"
         auth_value: os.environ/CONTEXT7_API_KEY
+      gh_grep:
+        url: "https://mcp.grep.app"
+        transport: "http"
+        auth_type: "none"
     
     # ═══════════════════════════════════════════════════════════════════════
     # ROUTER SETTINGS
