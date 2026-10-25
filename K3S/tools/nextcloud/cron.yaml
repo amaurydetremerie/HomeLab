@@ -2,12 +2,19 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: nextcloud-cron
+  namespace: nextcloud
 spec:
   schedule: "0 6 * * *"  # Toutes les jours à 6 heure
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
       template:
         spec:
+          securityContext:
+            runAsUser: 33
+            runAsGroup: 33
           containers:
             - name: nextcloud-cron
               image: nextcloud:35.0.2-apache
