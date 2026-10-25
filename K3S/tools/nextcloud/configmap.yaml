@@ -20,7 +20,7 @@ data:
     <?php
       $CONFIG = array (
         'datadirectory' => '/var/www/html/data',
-        'version' => '31.0.14',
+        'version' => '32.0.15',
         'overwrite.cli.url' => 'https://nextcloud.k3s.wiserisk.be',
         'default_language' => 'fr',
         'default_locale' => 'fr_FR',
