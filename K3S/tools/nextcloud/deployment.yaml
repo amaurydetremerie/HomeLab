@@ -41,9 +41,6 @@ spec:
         - name: nextcloud-volume
           persistentVolumeClaim:
             claimName: nextcloud-pvc
-        - name: nextcloud-config
-          configMap:
-            name: nextcloud-config
         - name: media
           nfs:
             path: /mnt/Hermes/Seedbox
