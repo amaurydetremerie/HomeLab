@@ -10,7 +10,7 @@ spec:
         spec:
           containers:
             - name: nextcloud-cron
-              image: nextcloud:35.0.2-apache
+              image: nextcloud:31-apache
               command:
                 - /bin/sh
                 - -c
