@@ -63,13 +63,27 @@ services:
       - {{ arr_config_base }}/prowlarr:/config
     restart: unless-stopped
 
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    environment:
+      PUID: "{{ arr_puid }}"
+      PGID: "{{ arr_pgid }}"
+      TZ: "{{ arr_tz }}"
+    ports:
+      - "6767:6767"
+    volumes:
+      - {{ arr_config_base }}/bazarr:/config
+      - {{ arr_media_path }}:{{ arr_media_path }}
+    restart: unless-stopped
+
   profilarr:
     # Image officielle — vérifier le nom exact sur https://github.com/Dictionarry-Hub/profilarr
     image: ghcr.io/dictionarry-hub/profilarr:latest
     container_name: profilarr
     environment:
       TZ: "{{ arr_tz }}"
-      ORIGIN: "https://profilarr.wiserisk.home"
+      ORIGIN: "https://profilarr.wiserisk.home,https://profilarr.wiserisk.be"
     ports:
       - "6868:6868"
     volumes:

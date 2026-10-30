@@ -20,6 +20,10 @@ http:
       loadBalancer:
         servers:
           - url: "http://10.100.0.200:9696"
+    bazarr:
+      loadBalancer:
+        servers:
+          - url: "http://10.100.0.200:6767"
     profilarr:
       loadBalancer:
         servers:
@@ -144,6 +148,32 @@ http:
         - "security@file"
         - "compression@file"
       service: prowlarr@file
+      tls: {}
+
+    # ── Bazarr ─────────────────────────────────────────────────────────────────
+    bazarr:
+      rule: "Host(`bazarr.wiserisk.be`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: bazarr@file
+    bazarr-home:
+      rule: "Host(`bazarr.wiserisk.home`)"
+      entryPoints:
+        - "web"
+      middlewares:
+        - "redirect-to-https@file"
+      service: noop@internal
+    bazarr-local-secure:
+      rule: "Host(`bazarr.wiserisk.home`)"
+      entryPoints:
+        - "websecure"
+      middlewares:
+        - "security@file"
+        - "compression@file"
+      service: bazarr@file
       tls: {}
 
     # ── Profilarr ──────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 ---
 # arr — LXC 1200 (10.100.0.200) sur Wasp
-# *arr suite (Sonarr, Radarr, Prowlarr, Profilarr) + Homer dashboard via Docker Compose
+# *arr suite (Sonarr, Radarr, Prowlarr, Bazarr, Profilarr) + Homer dashboard via Docker Compose
 # NFS SeedBox : /mnt/pve/SeedBox → /media/seedbox
 
 arr_config_base: /opt/arr
@@ -45,6 +45,9 @@ hardening_ufw_rules:
     proto: tcp
     rule: allow
   - port: "9696"
+    proto: tcp
+    rule: allow
+  - port: "6767"
     proto: tcp
     rule: allow
   - port: "6868"
